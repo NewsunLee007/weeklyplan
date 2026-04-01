@@ -37,8 +37,13 @@ async function initDatabase() {
       CREATE TABLE IF NOT EXISTS sys_department (
         id SERIAL PRIMARY KEY,
         name VARCHAR(50) UNIQUE NOT NULL,
+        code VARCHAR(50) UNIQUE NOT NULL,
         sort_order INTEGER DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        description TEXT,
+        status INTEGER DEFAULT 1,
+        is_deleted BOOLEAN DEFAULT FALSE,
+        create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
@@ -127,8 +132,13 @@ async function initDatabase() {
       CREATE TABLE IF NOT EXISTS sys_department (
         id SERIAL PRIMARY KEY,
         name VARCHAR(50) UNIQUE NOT NULL,
+        code VARCHAR(50) UNIQUE NOT NULL,
         sort_order INTEGER DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        description TEXT,
+        status INTEGER DEFAULT 1,
+        is_deleted BOOLEAN DEFAULT FALSE,
+        create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
@@ -161,20 +171,20 @@ async function insertDefaultData() {
 
   // 插入默认部门
   const departments = [
-    { name: '办公室', sort_order: 0 },
-    { name: '教务处', sort_order: 1 },
-    { name: '政教处', sort_order: 2 },
-    { name: '后勤部', sort_order: 3 },
-    { name: '生活中心', sort_order: 4 },
-    { name: '七年级', sort_order: 5 },
-    { name: '八年级', sort_order: 6 },
-    { name: '九年级', sort_order: 7 }
+    { name: '办公室', code: 'office', sort_order: 0 },
+    { name: '教务处', code: 'academic', sort_order: 1 },
+    { name: '政教处', code: 'student', sort_order: 2 },
+    { name: '后勤部', code: 'logistics', sort_order: 3 },
+    { name: '生活中心', code: 'life', sort_order: 4 },
+    { name: '七年级', code: 'grade7', sort_order: 5 },
+    { name: '八年级', code: 'grade8', sort_order: 6 },
+    { name: '九年级', code: 'grade9', sort_order: 7 }
   ];
 
   for (const dept of departments) {
     await pool.query(
-      'INSERT INTO sys_department (name, sort_order) VALUES ($1, $2)',
-      [dept.name, dept.sort_order]
+      'INSERT INTO sys_department (name, code, sort_order) VALUES ($1, $2, $3)',
+      [dept.name, dept.code, dept.sort_order]
     );
   }
 

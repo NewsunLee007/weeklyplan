@@ -64,7 +64,7 @@
                 <div class="stat-label">{{ card.label }}</div>
               </div>
               <div class="stat-trend" v-if="card.trend">
-                <el-icon :size="16" :style="{ color: card.trend > 0 ? '#22C55E' : '#EF4444' }">{{ card.trend > 0 ? ArrowUp : ArrowDown }}</el-icon>
+                <el-icon :size="16" :style="{ color: card.trend > 0 ? '#22C55E' : '#EF4444' }"><component :is="card.trend > 0 ? ArrowUp : ArrowDown" /></el-icon>
                 <span :style="{ color: card.trend > 0 ? '#22C55E' : '#EF4444' }">{{ Math.abs(card.trend) }}%</span>
               </div>
             </div>
