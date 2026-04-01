@@ -11,7 +11,7 @@ let db = null;
 let pool = null;
 
 // 初始化数据库
-function initDatabase() {
+async function initDatabase() {
   if (DATABASE_URL && DATABASE_URL.startsWith('postgresql://')) {
     // 使用 PostgreSQL (Neon)
     console.log('📦 使用 PostgreSQL 数据库');
@@ -21,7 +21,7 @@ function initDatabase() {
     });
 
     // 创建数据库表（如果不存在）
-    pool.query(`
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS sys_user (
         id SERIAL PRIMARY KEY,
         username VARCHAR(50) UNIQUE NOT NULL,
@@ -34,7 +34,7 @@ function initDatabase() {
       )
     `);
 
-    pool.query(`
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS sys_department (
         id SERIAL PRIMARY KEY,
         name VARCHAR(50) UNIQUE NOT NULL,
@@ -43,7 +43,7 @@ function initDatabase() {
       )
     `);
 
-    pool.query(`
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS sys_config (
         id SERIAL PRIMARY KEY,
         config_key VARCHAR(50) UNIQUE NOT NULL,
@@ -51,7 +51,7 @@ function initDatabase() {
       )
     `);
 
-    pool.query(`
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS biz_week_plan (
         id SERIAL PRIMARY KEY,
         title VARCHAR(200) NOT NULL,
@@ -70,7 +70,7 @@ function initDatabase() {
       )
     `);
 
-    pool.query(`
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS biz_plan_item (
         id SERIAL PRIMARY KEY,
         plan_id INTEGER REFERENCES biz_week_plan(id) ON DELETE CASCADE,
@@ -84,7 +84,7 @@ function initDatabase() {
       )
     `);
 
-    pool.query(`
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS biz_feedback (
         id SERIAL PRIMARY KEY,
         plan_item_id INTEGER REFERENCES biz_plan_item(id),
@@ -97,7 +97,7 @@ function initDatabase() {
     `);
 
     // 插入默认数据
-    insertDefaultData();
+    await insertDefaultData();
 
     return 'postgres';
   } else {
@@ -343,8 +343,10 @@ async function getLastInsertId() {
   }
 }
 
-// 初始化数据库
-initDatabase();
+// 初始化数据库（不等待，在后台运行）
+initDatabase().catch(err => {
+  console.error('数据库初始化失败:', err);
+});
 
 // run 是 execute 的别名
 const run = execute;
