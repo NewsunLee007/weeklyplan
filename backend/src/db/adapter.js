@@ -280,12 +280,20 @@ function getDatabaseType() {
   return DATABASE_URL && DATABASE_URL.startsWith('postgresql://') ? 'postgres' : 'sqlite';
 }
 
+// 将 SQLite 的 ? 占位符转换为 PostgreSQL 的 $1, $2, ...
+function convertPlaceholders(sql) {
+  let count = 0;
+  return sql.replace(/\?/g, () => `$${++count}`);
+}
+
 // 执行查询（用于 SELECT）
 async function query(sql, params = []) {
   const adapter = getDatabaseType();
 
   if (adapter === 'postgres') {
-    const result = await pool.query(sql, params);
+    // 将 ? 占位符转换为 $1, $2, ...
+    const pgSql = convertPlaceholders(sql);
+    const result = await pool.query(pgSql, params);
     return result.rows;
   } else {
     const stmt = db.prepare(sql);
@@ -298,7 +306,9 @@ async function queryOne(sql, params = []) {
   const adapter = getDatabaseType();
 
   if (adapter === 'postgres') {
-    const result = await pool.query(sql, params);
+    // 将 ? 占位符转换为 $1, $2, ...
+    const pgSql = convertPlaceholders(sql);
+    const result = await pool.query(pgSql, params);
     return result.rows[0] || null;
   } else {
     const stmt = db.prepare(sql);
@@ -311,7 +321,9 @@ async function execute(sql, params = []) {
   const adapter = getDatabaseType();
 
   if (adapter === 'postgres') {
-    return await pool.query(sql, params);
+    // 将 ? 占位符转换为 $1, $2, ...
+    const pgSql = convertPlaceholders(sql);
+    return await pool.query(pgSql, params);
   } else {
     const stmt = db.prepare(sql);
     return stmt.run(...params);
