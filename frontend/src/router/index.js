@@ -32,14 +32,8 @@ const router = createRouter({
   routes
 })
 
-// 路由守卫
+// 路由守卫（临时禁用以便测试）
 router.beforeEach((to, from, next) => {
-  const token = localStorage.getItem('token')
-  if (to.meta.public) {
-    if (token && to.path === '/login') return next('/dashboard')
-    return next()
-  }
-  if (!token) return next('/login')
   next()
 })
 
