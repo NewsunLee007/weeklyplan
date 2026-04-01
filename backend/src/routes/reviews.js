@@ -55,7 +55,7 @@ router.post('/:planId/approve', authMiddleware, requireRole(...REVIEW_ROLES), (r
   const { comment = '', updatedItems } = req.body; // updatedItems: 编辑后的计划条目 [{id, content, responsible, plan_date, weekday}]
   const { role, userId, departmentId } = req.user;
 
-  const plan = queryOne(`SELECT * FROM biz_week_plan WHERE id = ? AND is_deleted = 0`, [planId]);
+  const plan = queryOne(`SELECT * FROM biz_week_plan WHERE id = $1 AND is_deleted = 0`, [planId]);
   if (!plan) return fail(res, '计划不存在', 404);
 
   const step = plan.current_step;
@@ -81,13 +81,13 @@ router.post('/:planId/approve', authMiddleware, requireRole(...REVIEW_ROLES), (r
       if (item.id) {
         // 更新已有条目
         run(
-          `UPDATE biz_plan_item SET content=?, responsible=?, plan_date=?, weekday=?, update_time=? WHERE id=?`,
+          `UPDATE biz_plan_item SET content=?, responsible=?, plan_date=?, weekday=?, update_time=? WHERE id=$1`,
           [item.content || '', item.responsible || '', item.plan_date || '', item.weekday || '', n, item.id]
         );
       } else if (item._isNew) {
         // 新增条目（虽然审核时很少新增，但支持）
         run(
-          `INSERT INTO biz_plan_item (plan_id, plan_date, weekday, content, responsible, create_time, update_time) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          `INSERT INTO biz_plan_item (plan_id, plan_date, weekday, content, responsible, create_time, update_time) VALUES ($1)`,
           [planId, item.plan_date || '', item.weekday || '', item.content || '', item.responsible || '', n, n]
         );
       }
@@ -96,7 +96,7 @@ router.post('/:planId/approve', authMiddleware, requireRole(...REVIEW_ROLES), (r
 
   // 记录审核日志
   run(
-    `INSERT INTO biz_review_record (plan_id, reviewer_id, step, result, comment, create_time) VALUES (?, ?, ?, 'APPROVED', ?, ?)`,
+    `INSERT INTO biz_review_record (plan_id, reviewer_id, step, result, comment, create_time) VALUES ($1)`,
     [planId, userId, step, comment, n]
   );
 
@@ -108,13 +108,13 @@ router.post('/:planId/approve', authMiddleware, requireRole(...REVIEW_ROLES), (r
     sql += `, published_at=?`;
     updates.push(n);
   }
-  sql += ` WHERE id=?`;
+  sql += ` WHERE id=$1`;
   updates.push(planId);
   run(sql, updates);
 
   // 发布后推送企微
   if (flow.to === 'PUBLISHED') {
-    const updatedPlan = queryOne(`SELECT * FROM biz_week_plan WHERE id=?`, [planId]);
+    const updatedPlan = queryOne(`SELECT * FROM biz_week_plan WHERE id=$1`, [planId]);
     wechatService.notifyPublished(updatedPlan).catch(e => console.error('企微推送失败', e));
   }
 
@@ -128,7 +128,7 @@ router.post('/:planId/reject', authMiddleware, requireRole(...REVIEW_ROLES), (re
   if (!comment || !comment.trim()) return fail(res, '退回意见不能为空');
 
   const { role, userId, departmentId } = req.user;
-  const plan = queryOne(`SELECT * FROM biz_week_plan WHERE id = ? AND is_deleted = 0`, [planId]);
+  const plan = queryOne(`SELECT * FROM biz_week_plan WHERE id = $1 AND is_deleted = 0`, [planId]);
   if (!plan) return fail(res, '计划不存在', 404);
 
   const step = plan.current_step;
@@ -138,10 +138,10 @@ router.post('/:planId/reject', authMiddleware, requireRole(...REVIEW_ROLES), (re
 
   const n = now();
   run(
-    `INSERT INTO biz_review_record (plan_id, reviewer_id, step, result, comment, create_time) VALUES (?, ?, ?, 'REJECTED', ?, ?)`,
+    `INSERT INTO biz_review_record (plan_id, reviewer_id, step, result, comment, create_time) VALUES ($1)`,
     [planId, userId, step, comment, n]
   );
-  run(`UPDATE biz_week_plan SET status='REJECTED', update_time=? WHERE id=?`, [n, planId]);
+  run(`UPDATE biz_week_plan SET status='REJECTED', update_time=? WHERE id=$1`, [n, planId]);
 
   return success(res, null, '已退回');
 });
@@ -219,7 +219,7 @@ router.post('/consolidated/:weekNumber/:semester/approve', authMiddleware, requi
     for (const item of updatedItems) {
       if (item.id) {
         run(
-          `UPDATE biz_plan_item SET content=?, responsible=?, plan_date=?, weekday=?, update_time=? WHERE id=?`,
+          `UPDATE biz_plan_item SET content=?, responsible=?, plan_date=?, weekday=?, update_time=? WHERE id=$1`,
           [item.content || '', item.responsible || '', item.plan_date || '', item.weekday || '', n, item.id]
         );
       }
@@ -235,7 +235,7 @@ router.post('/consolidated/:weekNumber/:semester/approve', authMiddleware, requi
 
     // 记录审核日志
     run(
-      `INSERT INTO biz_review_record (plan_id, reviewer_id, step, result, comment, create_time) VALUES (?, ?, ?, 'APPROVED', ?, ?)`,
+      `INSERT INTO biz_review_record (plan_id, reviewer_id, step, result, comment, create_time) VALUES ($1)`,
       [plan.id, userId, step, comment, n]
     );
 
@@ -247,7 +247,7 @@ router.post('/consolidated/:weekNumber/:semester/approve', authMiddleware, requi
       sql += `, published_at=?`;
       updates.push(n);
     }
-    sql += ` WHERE id=?`;
+    sql += ` WHERE id=$1`;
     updates.push(plan.id);
     run(sql, updates);
 
