@@ -4,6 +4,9 @@
   "description": "学校周工作计划管理系统 — 后端",
   "main": "src/app.js",
   "type": "commonjs",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "start": "node src/app.js",
     "dev": "nodemon src/app.js"
