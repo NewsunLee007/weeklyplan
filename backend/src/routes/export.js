@@ -278,7 +278,7 @@ async function buildWeeklySummary(plans, weekNumber, schoolName, schoolSubName) 
   // 收集所有部门的条目
   const allItems = [];
   for (const plan of plans) {
-    const items = query(
+    const items = await query(
       `SELECT * FROM biz_plan_item WHERE plan_id = ? AND is_deleted = 0 ORDER BY plan_date, sort_order`,
       [plan.id]
     );
@@ -589,19 +589,19 @@ async function buildWeeklySummary(plans, weekNumber, schoolName, schoolSubName) 
 // GET /plan/:planId 导出单个部门计划
 router.get('/plan/:planId', authMiddleware, async (req, res) => {
   const { planId } = req.params;
-  const plan = queryOne(
+  const plan = await queryOne(
     `SELECT p.*, d.name as dept_name FROM biz_week_plan p LEFT JOIN sys_department d ON p.department_id=d.id WHERE p.id=? AND p.is_deleted=0`,
     [planId]
   );
   if (!plan) return fail(res, '计划不存在', 404);
 
-  const items = query(
+  const items = await query(
     `SELECT * FROM biz_plan_item WHERE plan_id = ? AND is_deleted = 0 ORDER BY plan_date, sort_order`,
     [planId]
   );
 
-  const schoolName = queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_name'`)?.config_value || '';
-  const schoolSubName = queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_sub_name'`)?.config_value || '';
+  const schoolName = await queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_name'`)?.config_value || '';
+  const schoolSubName = await queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_sub_name'`)?.config_value || '';
 
   try {
     const doc = buildDocxFromPlan(plan, items, schoolName, schoolSubName);
@@ -625,14 +625,14 @@ router.get('/weekly-summary/:weekNumber', authMiddleware, async (req, res) => {
   const params = [weekNumber];
   if (semester) { where += ` AND p.semester=?`; params.push(semester); }
 
-  const plans = query(
+  const plans = await query(
     `SELECT p.*, d.name as dept_name FROM biz_week_plan p LEFT JOIN sys_department d ON p.department_id=d.id ${where} ORDER BY d.sort_order`,
     params
   );
   if (!plans.length) return fail(res, '该周暂无已发布计划');
 
-  const schoolName = queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_name'`)?.config_value || '';
-  const schoolSubName = queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_sub_name'`)?.config_value || '';
+  const schoolName = await queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_name'`)?.config_value || '';
+  const schoolSubName = await queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_sub_name'`)?.config_value || '';
 
   try {
     const doc = await buildWeeklySummary(plans, weekNumber, schoolName, schoolSubName);
@@ -715,19 +715,19 @@ async function convertWordToPdf(wordBuffer, outputPdfPath) {
 // GET /plan/:planId/pdf 导出单个部门计划为 PDF
 router.get('/plan/:planId/pdf', authMiddleware, async (req, res) => {
   const { planId } = req.params;
-  const plan = queryOne(
+  const plan = await queryOne(
     `SELECT p.*, d.name as dept_name FROM biz_week_plan p LEFT JOIN sys_department d ON p.department_id=d.id WHERE p.id=? AND p.is_deleted=0`,
     [planId]
   );
   if (!plan) return fail(res, '计划不存在', 404);
 
-  const items = query(
+  const items = await query(
     `SELECT * FROM biz_plan_item WHERE plan_id = ? AND is_deleted = 0 ORDER BY plan_date, sort_order`,
     [planId]
   );
 
-  const schoolName = queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_name'`)?.config_value || '';
-  const schoolSubName = queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_sub_name'`)?.config_value || '';
+  const schoolName = await queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_name'`)?.config_value || '';
+  const schoolSubName = await queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_sub_name'`)?.config_value || '';
 
   try {
     const doc = buildDocxFromPlan(plan, items, schoolName, schoolSubName);
@@ -760,14 +760,14 @@ router.get('/weekly-summary/:weekNumber/pdf', authMiddleware, async (req, res) =
   const params = [weekNumber];
   if (semester) { where += ` AND p.semester=?`; params.push(semester); }
 
-  const plans = query(
+  const plans = await query(
     `SELECT p.*, d.name as dept_name FROM biz_week_plan p LEFT JOIN sys_department d ON p.department_id=d.id ${where} ORDER BY d.sort_order`,
     params
   );
   if (!plans.length) return fail(res, '该周暂无已发布计划');
 
-  const schoolName = queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_name'`)?.config_value || '';
-  const schoolSubName = queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_sub_name'`)?.config_value || '';
+  const schoolName = await queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_name'`)?.config_value || '';
+  const schoolSubName = await queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_sub_name'`)?.config_value || '';
 
   try {
     const doc = await buildWeeklySummary(plans, weekNumber, schoolName, schoolSubName);

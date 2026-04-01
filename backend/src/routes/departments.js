@@ -22,7 +22,7 @@ router.post('/', authMiddleware, requireRole('ADMIN'), async (req, res) => {
 
   const n = now();
   const result = await execute(
-    `INSERT INTO sys_department (name, code, sort_order, description, status, create_time, update_time) VALUES ($1, $2, $3, $4, 1, $5, $6)`,
+    `INSERT INTO sys_department (name, code, sort_order, description, status, create_time, update_time) VALUES (?, ?, ?, ?, 1, ?, ?)`,
     [name, code, sort_order, description || '', n, n]
   );
   return success(res, { id: result.lastInsertRowid }, '部门创建成功');
@@ -36,7 +36,7 @@ router.put('/:id', authMiddleware, requireRole('ADMIN'), async (req, res) => {
   if (!dept) return fail(res, '部门不存在', 404);
 
   await execute(
-    `UPDATE sys_department SET name=$1, code=$2, sort_order=$3, description=$4, status=$5, update_time=$6 WHERE id=$7`,
+    `UPDATE sys_department SET name=?, code=?, sort_order=?, description=?, status=?, update_time=? WHERE id=?`,
     [name, code, sort_order ?? 0, description || '', status ?? 1, now(), id]
   );
   return success(res, null, '更新成功');
@@ -45,7 +45,7 @@ router.put('/:id', authMiddleware, requireRole('ADMIN'), async (req, res) => {
 // DELETE /:id 删除部门
 router.delete('/:id', authMiddleware, requireRole('ADMIN'), async (req, res) => {
   const { id } = req.params;
-  await execute(`UPDATE sys_department SET is_deleted=1, update_time=$1 WHERE id=$2`, [now(), id]);
+  await execute(`UPDATE sys_department SET is_deleted=1, update_time=? WHERE id=?`, [now(), id]);
   return success(res, null, '删除成功');
 });
 

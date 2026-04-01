@@ -11,7 +11,7 @@ router.get('/', authMiddleware, async (req, res) => {
   const { plan_id } = req.query;
   let where = `WHERE 1=1`;
   const params = [];
-  if (plan_id) { where += ` AND f.plan_id = $1`; params.push(plan_id); }
+  if (plan_id) { where += ` AND f.plan_id = ?`; params.push(plan_id); }
 
   const records = await query(
     `SELECT f.*, pi.content as item_content, pi.plan_date, pi.weekday, u.real_name as user_name
@@ -33,16 +33,16 @@ router.post('/', authMiddleware, async (req, res) => {
   const userId = req.user.userId;
 
   const existing = await queryOne(
-    `SELECT id FROM biz_feedback WHERE plan_item_id = $1 AND feedback_user_id = $2`,
+    `SELECT id FROM biz_feedback WHERE plan_item_id = ? AND feedback_user_id = $2`,
     [plan_item_id, userId]
   );
 
   if (existing) {
-    await run(`UPDATE biz_feedback SET status=$1, content=$2, update_time=$3 WHERE id=$4`,
+    await run(`UPDATE biz_feedback SET status=?, content=$2, update_time=$3 WHERE id=$4`,
       [status, content || '', n, existing.id]);
   } else {
     await run(
-      `INSERT INTO biz_feedback (plan_item_id, plan_id, feedback_user_id, status, content, create_time, update_time) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      `INSERT INTO biz_feedback (plan_item_id, plan_id, feedback_user_id, status, content, create_time, update_time) VALUES (?, $2, $3, $4, $5, $6, $7)`,
       [plan_item_id, plan_id, userId, status, content || '', n, n]
     );
   }
@@ -57,7 +57,7 @@ router.get('/plan/:planId', authMiddleware, async (req, res) => {
      FROM biz_feedback f
      LEFT JOIN biz_plan_item pi ON f.plan_item_id = pi.id
      LEFT JOIN sys_user u ON f.feedback_user_id = u.id
-     WHERE f.plan_id = $1 ORDER BY pi.plan_date, pi.sort_order`,
+     WHERE f.plan_id = ? ORDER BY pi.plan_date, pi.sort_order`,
     [planId]
   );
   return success(res, records);
