@@ -590,7 +590,7 @@ async function buildWeeklySummary(plans, weekNumber, schoolName, schoolSubName) 
 router.get('/plan/:planId', authMiddleware, async (req, res) => {
   const { planId } = req.params;
   const plan = await queryOne(
-    `SELECT p.*, d.name as dept_name FROM biz_week_plan p LEFT JOIN sys_department d ON p.department_id=d.id WHERE p.id=? AND p.is_deleted=0`,
+    `SELECT p.*, d.name as dept_name FROM biz_week_plan p LEFT JOIN sys_department d ON p.department_id=d.id WHERE p.id=? AND p.is_deleted=false`,
     [planId]
   );
   if (!plan) return fail(res, '计划不存在', 404);
@@ -621,7 +621,7 @@ router.get('/weekly-summary/:weekNumber', authMiddleware, async (req, res) => {
   const { weekNumber } = req.params;
   const { semester } = req.query;
 
-  let where = `WHERE p.status='PUBLISHED' AND p.is_deleted=0 AND p.week_number=?`;
+  let where = `WHERE p.status='PUBLISHED' AND p.is_deleted=false AND p.week_number=?`;
   const params = [weekNumber];
   if (semester) { where += ` AND p.semester=?`; params.push(semester); }
 
@@ -716,7 +716,7 @@ async function convertWordToPdf(wordBuffer, outputPdfPath) {
 router.get('/plan/:planId/pdf', authMiddleware, async (req, res) => {
   const { planId } = req.params;
   const plan = await queryOne(
-    `SELECT p.*, d.name as dept_name FROM biz_week_plan p LEFT JOIN sys_department d ON p.department_id=d.id WHERE p.id=? AND p.is_deleted=0`,
+    `SELECT p.*, d.name as dept_name FROM biz_week_plan p LEFT JOIN sys_department d ON p.department_id=d.id WHERE p.id=? AND p.is_deleted=false`,
     [planId]
   );
   if (!plan) return fail(res, '计划不存在', 404);
@@ -756,7 +756,7 @@ router.get('/weekly-summary/:weekNumber/pdf', authMiddleware, async (req, res) =
   const { weekNumber } = req.params;
   const { semester } = req.query;
 
-  let where = `WHERE p.status='PUBLISHED' AND p.is_deleted=0 AND p.week_number=?`;
+  let where = `WHERE p.status='PUBLISHED' AND p.is_deleted=false AND p.week_number=?`;
   const params = [weekNumber];
   if (semester) { where += ` AND p.semester=?`; params.push(semester); }
 

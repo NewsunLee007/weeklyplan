@@ -9,7 +9,7 @@ const { success, successPage, fail, now, getWeekday, calcWeekRange } = require('
 // GET / 计划列表
 router.get('/', authMiddleware, async (req, res) => {
   const { page = 1, pageSize = 10, department_id, week_number, status, semester } = req.query;
-  let where = `WHERE p.is_deleted = 0`;
+  let where = `WHERE p.is_deleted = false`;
   const params = [];
 
   // 非管理员只能看自己部门的计划（已发布计划可见全部）
@@ -46,13 +46,13 @@ router.get('/:id', authMiddleware, async (req, res) => {
      FROM biz_week_plan p
      LEFT JOIN sys_department d ON p.department_id = d.id
      LEFT JOIN sys_user u ON p.creator_id = u.id
-     WHERE p.id = ? AND p.is_deleted = 0`,
+     WHERE p.id = ? AND p.is_deleted = false`,
     [id]
   );
   if (!plan) return fail(res, '计划不存在', 404);
 
   plan.items = await query(
-    `SELECT * FROM biz_plan_item WHERE plan_id = ? AND is_deleted = 0 ORDER BY plan_date, sort_order`,
+    `SELECT * FROM biz_plan_item WHERE plan_id = ? AND is_deleted = false ORDER BY plan_date, sort_order`,
     [id]
   );
   plan.reviews = await query(
@@ -95,7 +95,7 @@ router.post('/', authMiddleware, async (req, res) => {
 // PUT /:id 修改计划
 router.put('/:id', authMiddleware, async (req, res) => {
   const { id } = req.params;
-  const plan = await queryOne(`SELECT * FROM biz_week_plan WHERE id = ? AND is_deleted = 0`, [id]);
+  const plan = await queryOne(`SELECT * FROM biz_week_plan WHERE id = ? AND is_deleted = false`, [id]);
   if (!plan) return fail(res, '计划不存在', 404);
   if (!['DRAFT', 'REJECTED'].includes(plan.status)) return fail(res, '当前状态不允许修改');
   if (plan.creator_id !== req.user.userId && req.user.role !== 'ADMIN') {
@@ -107,7 +107,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
   await execute(`UPDATE biz_week_plan SET title=?, remark=?, update_time=? WHERE id=?`, [title, remark || '', n, id]);
 
   // 删除旧条目，重新插入
-  await execute(`UPDATE biz_plan_item SET is_deleted=1 WHERE plan_id=?`, [id]);
+  await execute(`UPDATE biz_plan_item SET is_deleted=true WHERE plan_id=?`, [id]);
   for (let [idx, item] of items.entries()) {
     const weekday = item.weekday || getWeekday(item.plan_date);
     await execute(
@@ -123,20 +123,20 @@ router.put('/:id', authMiddleware, async (req, res) => {
 // DELETE /:id 删除计划（仅 DRAFT）
 router.delete('/:id', authMiddleware, async (req, res) => {
   const { id } = req.params;
-  const plan = await queryOne(`SELECT * FROM biz_week_plan WHERE id = ? AND is_deleted = 0`, [id]);
+  const plan = await queryOne(`SELECT * FROM biz_week_plan WHERE id = ? AND is_deleted = false`, [id]);
   if (!plan) return fail(res, '计划不存在', 404);
   if (plan.status !== 'DRAFT') return fail(res, '仅草稿状态的计划可以删除');
   if (plan.creator_id !== req.user.userId && req.user.role !== 'ADMIN') {
     return fail(res, '无权删除', 403);
   }
-  await execute(`UPDATE biz_week_plan SET is_deleted=1, update_time=? WHERE id=?`, [now(), id]);
+  await execute(`UPDATE biz_week_plan SET is_deleted=true, update_time=? WHERE id=?`, [now(), id]);
   return success(res, null, '删除成功');
 });
 
 // POST /:id/submit 提交审核
 router.post('/:id/submit', authMiddleware, async (req, res) => {
   const { id } = req.params;
-  const plan = await queryOne(`SELECT * FROM biz_week_plan WHERE id = ? AND is_deleted = 0`, [id]);
+  const plan = await queryOne(`SELECT * FROM biz_week_plan WHERE id = ? AND is_deleted = false`, [id]);
   if (!plan) return fail(res, '计划不存在', 404);
   if (!['DRAFT', 'REJECTED'].includes(plan.status)) return fail(res, '当前状态不允许提交');
   if (plan.creator_id !== req.user.userId && req.user.role !== 'ADMIN') {

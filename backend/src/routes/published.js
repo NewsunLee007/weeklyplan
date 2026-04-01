@@ -9,7 +9,7 @@ const { success, fail } = require('../utils/helper');
 // GET / 已发布计划列表
 router.get('/', authMiddleware, async (req, res) => {
   const { semester, week_number } = req.query;
-  let where = `WHERE p.status = 'PUBLISHED' AND p.is_deleted = 0`;
+  let where = `WHERE p.status = 'PUBLISHED' AND p.is_deleted = false`;
   const params = [];
   if (semester) { where += ` AND p.semester = ?`; params.push(semester); }
   if (week_number) { where += ` AND p.week_number = ?`; params.push(week_number); }
@@ -27,7 +27,7 @@ router.get('/', authMiddleware, async (req, res) => {
 router.get('/:weekNumber', authMiddleware, async (req, res) => {
   const { weekNumber } = req.params;
   const { semester } = req.query;
-  let where = `WHERE p.status = 'PUBLISHED' AND p.is_deleted = 0 AND p.week_number = ?`;
+  let where = `WHERE p.status = 'PUBLISHED' AND p.is_deleted = false AND p.week_number = ?`;
   const params = [weekNumber];
   if (semester) { where += ` AND p.semester = ?`; params.push(semester); }
 
@@ -41,7 +41,7 @@ router.get('/:weekNumber', authMiddleware, async (req, res) => {
   // 附带条目
   for (const plan of plans) {
     plan.items = await query(
-      `SELECT * FROM biz_plan_item WHERE plan_id = ? AND is_deleted = 0 ORDER BY plan_date, sort_order`,
+      `SELECT * FROM biz_plan_item WHERE plan_id = ? AND is_deleted = false ORDER BY plan_date, sort_order`,
       [plan.id]
     );
   }

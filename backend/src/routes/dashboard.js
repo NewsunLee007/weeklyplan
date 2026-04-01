@@ -11,33 +11,33 @@ router.get('/stats', authMiddleware, async (req, res) => {
 
   // 我的计划总数
   const myPlansTotal = (await queryOne(
-    `SELECT COUNT(*) as cnt FROM biz_week_plan WHERE creator_id=? AND is_deleted=0`,
+    `SELECT COUNT(*) as cnt FROM biz_week_plan WHERE creator_id=? AND is_deleted=false`,
     [userId]
   ))?.cnt || 0;
 
   // 已发布计划数
   const publishedTotal = (await queryOne(
-    `SELECT COUNT(*) as cnt FROM biz_week_plan WHERE status='PUBLISHED' AND is_deleted=0`
+    `SELECT COUNT(*) as cnt FROM biz_week_plan WHERE status='PUBLISHED' AND is_deleted=false`
   ))?.cnt || 0;
 
   // 待审核数量
   let pendingReview = 0;
   if (role === 'DEPT_HEAD') {
     pendingReview = (await queryOne(
-      `SELECT COUNT(*) as cnt FROM biz_week_plan WHERE status='SUBMITTED' AND department_id=? AND is_deleted=0`,
+      `SELECT COUNT(*) as cnt FROM biz_week_plan WHERE status='SUBMITTED' AND department_id=? AND is_deleted=false`,
       [departmentId]
     ))?.cnt || 0;
   } else if (role === 'OFFICE_HEAD') {
     pendingReview = (await queryOne(
-      `SELECT COUNT(*) as cnt FROM biz_week_plan WHERE status='DEPT_APPROVED' AND is_deleted=0`
+      `SELECT COUNT(*) as cnt FROM biz_week_plan WHERE status='DEPT_APPROVED' AND is_deleted=false`
     ))?.cnt || 0;
   } else if (role === 'PRINCIPAL') {
     pendingReview = (await queryOne(
-      `SELECT COUNT(*) as cnt FROM biz_week_plan WHERE status='OFFICE_APPROVED' AND is_deleted=0`
+      `SELECT COUNT(*) as cnt FROM biz_week_plan WHERE status='OFFICE_APPROVED' AND is_deleted=false`
     ))?.cnt || 0;
   } else if (role === 'ADMIN') {
     pendingReview = (await queryOne(
-      `SELECT COUNT(*) as cnt FROM biz_week_plan WHERE status IN ('SUBMITTED','DEPT_APPROVED','OFFICE_APPROVED') AND is_deleted=0`
+      `SELECT COUNT(*) as cnt FROM biz_week_plan WHERE status IN ('SUBMITTED','DEPT_APPROVED','OFFICE_APPROVED') AND is_deleted=false`
     ))?.cnt || 0;
   }
 
@@ -45,7 +45,7 @@ router.get('/stats', authMiddleware, async (req, res) => {
   const pendingFeedback = (await queryOne(
     `SELECT COUNT(*) as cnt FROM biz_plan_item pi
      JOIN biz_week_plan p ON pi.plan_id = p.id
-     WHERE p.status='PUBLISHED' AND p.department_id=? AND pi.is_deleted=0
+     WHERE p.status='PUBLISHED' AND p.department_id=? AND pi.is_deleted=false
      AND pi.id NOT IN (SELECT plan_item_id FROM biz_feedback WHERE feedback_user_id=?)`,
     [departmentId, userId]
   ))?.cnt || 0;

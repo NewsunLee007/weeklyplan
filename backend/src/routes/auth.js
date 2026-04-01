@@ -15,7 +15,7 @@ router.post('/login', async (req, res) => {
   const user = await queryOne(
     `SELECT u.*, d.name as dept_name FROM sys_user u
      LEFT JOIN sys_department d ON u.department_id = d.id
-     WHERE u.username = ? AND u.is_deleted = 0`,
+     WHERE u.username = ? AND u.is_deleted = false`,
     [username]
   );
 
@@ -52,7 +52,7 @@ router.get('/info', require('../middleware/auth').authMiddleware, async (req, re
   const user = await queryOne(
     `SELECT u.id, u.username, u.real_name, u.role, u.department_id, u.phone, u.avatar, d.name as dept_name
      FROM sys_user u LEFT JOIN sys_department d ON u.department_id = d.id
-     WHERE u.id = ? AND u.is_deleted = 0`,
+     WHERE u.id = ? AND u.is_deleted = false`,
     [req.user.userId]
   );
   if (!user) return fail(res, '用户不存在', 404);

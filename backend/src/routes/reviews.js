@@ -27,7 +27,7 @@ const ROLE_STEP = {
 // GET /pending 待审核列表
 router.get('/pending', authMiddleware, requireRole(...REVIEW_ROLES), async (req, res) => {
   const { role, departmentId } = req.user;
-  let where = `WHERE p.is_deleted = 0`;
+  let where = `WHERE p.is_deleted = false`;
 
   if (role === 'DEPT_HEAD') {
     where += ` AND p.status = 'SUBMITTED' AND p.department_id = ${departmentId}`;
@@ -55,7 +55,7 @@ router.post('/:planId/approve', authMiddleware, requireRole(...REVIEW_ROLES), as
   const { comment = '', updatedItems } = req.body; // updatedItems: 编辑后的计划条目 [{id, content, responsible, plan_date, weekday}]
   const { role, userId, departmentId } = req.user;
 
-  const plan = await queryOne(`SELECT * FROM biz_week_plan WHERE id = ? AND is_deleted = 0`, [planId]);
+  const plan = await queryOne(`SELECT * FROM biz_week_plan WHERE id = ? AND is_deleted = false`, [planId]);
   if (!plan) return fail(res, '计划不存在', 404);
 
   const step = plan.current_step;
@@ -128,7 +128,7 @@ router.post('/:planId/reject', authMiddleware, requireRole(...REVIEW_ROLES), asy
   if (!comment || !comment.trim()) return fail(res, '退回意见不能为空');
 
   const { role, userId, departmentId } = req.user;
-  const plan = await queryOne(`SELECT * FROM biz_week_plan WHERE id = ? AND is_deleted = 0`, [planId]);
+  const plan = await queryOne(`SELECT * FROM biz_week_plan WHERE id = ? AND is_deleted = false`, [planId]);
   if (!plan) return fail(res, '计划不存在', 404);
 
   const step = plan.current_step;
@@ -151,7 +151,7 @@ router.get('/consolidated/:weekNumber/:semester', authMiddleware, requireRole(..
   const { weekNumber, semester } = req.params;
   const { role, departmentId, userId } = req.user;
 
-  let where = `WHERE p.is_deleted = 0 AND p.week_number = ${weekNumber} AND p.semester = '${semester}'`;
+  let where = `WHERE p.is_deleted = false AND p.week_number = ${weekNumber} AND p.semester = '${semester}'`;
 
   // 根据角色筛选待审核的计划
   if (role === 'DEPT_HEAD') {
@@ -178,7 +178,7 @@ router.get('/consolidated/:weekNumber/:semester', authMiddleware, requireRole(..
      LEFT JOIN biz_week_plan p ON i.plan_id = p.id
      LEFT JOIN sys_department d ON p.department_id = d.id
      LEFT JOIN sys_user u ON p.creator_id = u.id
-     WHERE i.is_deleted = 0 AND i.plan_id IN (${planIds})
+     WHERE i.is_deleted = false AND i.plan_id IN (${planIds})
      ORDER BY i.plan_date, i.sort_order`
   );
 
@@ -196,7 +196,7 @@ router.post('/consolidated/:weekNumber/:semester/approve', authMiddleware, requi
   const { comment = '', updatedItems } = req.body; // updatedItems: 编辑后的所有条目 [{id, content, responsible, plan_date, weekday}]
   const { role, userId, departmentId } = req.user;
 
-  let where = `WHERE is_deleted = 0 AND week_number = ${weekNumber} AND semester = '${semester}'`;
+  let where = `WHERE is_deleted = false AND week_number = ${weekNumber} AND semester = '${semester}'`;
 
   // 筛选待审核的计划
   if (role === 'DEPT_HEAD') {
