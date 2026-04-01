@@ -51,7 +51,7 @@
             <h3 class="section-title">
               <el-icon class="section-icon"><List /></el-icon> 计划条目
             </h3>
-            <el-button type="primary" text :icon="Plus" @click="addItem" class="add-item-btn">
+            <el-button type="primary" :icon="Plus" @click="addItem" class="add-item-btn">
               添加一行
             </el-button>
           </div>

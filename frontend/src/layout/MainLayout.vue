@@ -122,7 +122,7 @@
             </el-icon>
           </el-button>
           <el-button text class="header-btn" @click="toggleTheme">
-            <el-icon :size="20">{{ isDarkMode ? Sunny : Moon }}</el-icon>
+            <el-icon :size="20"><component :is="isDarkMode ? Sunny : Moon" /></el-icon>
           </el-button>
           <el-dropdown trigger="click" class="user-dropdown" effect="fade">
             <div class="user-info">

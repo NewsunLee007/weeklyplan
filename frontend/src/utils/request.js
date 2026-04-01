@@ -36,6 +36,9 @@ request.interceptors.response.use(
       localStorage.removeItem('token')
       router.push('/login')
       ElMessage.error('登录已过期，请重新登录')
+    } else if (import.meta.env.DEV) {
+      // 开发环境下静默处理错误，使用模拟数据
+      console.log('开发环境网络错误:', err.message)
     } else {
       ElMessage.error(err.response?.data?.message || '网络请求失败')
     }
