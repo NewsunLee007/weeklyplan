@@ -149,26 +149,14 @@ async function initDatabase() {
 
 // 插入默认数据
 async function insertDefaultData() {
-  const adapter = getDatabaseType();
-  
-  if (adapter === 'postgres') {
-    try {
-      // 检查是否已有数据
-      const result = await pool.query('SELECT COUNT(*) as count FROM sys_department');
-      const hasData = result.rows[0].count > 0;
-      if (hasData) return;
-    } catch (error) {
-      console.error('检查数据库数据失败:', error);
-      // 继续尝试插入数据
-    }
-  } else {
-    try {
-      const result = db.exec('SELECT COUNT(*) as count FROM sys_department');
-      const hasData = result[0] && result[0].values && result[0].values[0] && result[0].values[0][0] > 0;
-      if (hasData) return;
-    } catch (error) {
-      console.error('检查SQLite数据失败:', error);
-    }
+  try {
+    // 检查是否已有数据
+    const result = await pool.query('SELECT COUNT(*) as count FROM sys_department');
+    const hasData = result.rows[0].count > 0;
+    if (hasData) return;
+  } catch (error) {
+    console.error('检查数据库数据失败:', error);
+    // 继续尝试插入数据
   }
 
   // 插入默认部门
@@ -183,18 +171,11 @@ async function insertDefaultData() {
     { name: '九年级', sort_order: 7 }
   ];
 
-  if (adapter === 'postgres') {
-    for (const dept of departments) {
-      await pool.query(
-        'INSERT INTO sys_department (name, sort_order) VALUES ($1, $2)',
-        [dept.name, dept.sort_order]
-      );
-    }
-  } else {
-    const stmt = db.prepare('INSERT INTO sys_department (name, sort_order) VALUES (?, ?)');
-    for (const dept of departments) {
-      stmt.run(dept.name, dept.sort_order);
-    }
+  for (const dept of departments) {
+    await pool.query(
+      'INSERT INTO sys_department (name, sort_order) VALUES ($1, $2)',
+      [dept.name, dept.sort_order]
+    );
   }
 
   // 插入默认配置
@@ -207,46 +188,30 @@ async function insertDefaultData() {
     { key: 'wechat_webhook_url', value: '' }
   ];
 
-  if (adapter === 'postgres') {
-    for (const config of configs) {
-      await pool.query(
-        'INSERT INTO sys_config (config_key, config_value) VALUES ($1, $2) ON CONFLICT (config_key) DO NOTHING',
-        [config.key, config.value]
-      );
-    }
-  } else {
-    const stmt = db.prepare('INSERT OR IGNORE INTO sys_config (config_key, config_value) VALUES (?, ?)');
-    for (const config of configs) {
-      stmt.run(config.key, config.value);
-    }
+  for (const config of configs) {
+    await pool.query(
+      'INSERT INTO sys_config (config_key, config_value) VALUES ($1, $2) ON CONFLICT (config_key) DO NOTHING',
+      [config.key, config.value]
+    );
   }
 
   // 插入默认管理员用户
   const bcrypt = require('bcryptjs');
   const hashedPassword = bcrypt.hashSync('admin123', 10);
   
-  if (adapter === 'postgres') {
-    try {
-      await pool.query(
-        'INSERT INTO sys_user (username, password, real_name, role, department_id, created_at, is_deleted) VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, FALSE) ON CONFLICT (username) DO NOTHING',
-        ['admin', hashedPassword, '超级管理员', 'ADMIN', 1]
-      );
-    } catch (error) {
-      console.error('插入默认管理员失败:', error);
-    }
-  } else {
-    try {
-      const stmt = db.prepare('INSERT OR IGNORE INTO sys_user (username, password, real_name, role, department_id, created_at, is_deleted) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, 0)');
-      stmt.run('admin', hashedPassword, '超级管理员', 'ADMIN', 1);
-    } catch (error) {
-      console.error('插入默认管理员失败:', error);
-    }
+  try {
+    await pool.query(
+      'INSERT INTO sys_user (username, password, real_name, role, department_id, created_at, is_deleted) VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, FALSE) ON CONFLICT (username) DO NOTHING',
+      ['admin', hashedPassword, '超级管理员', 'ADMIN', 1]
+    );
+  } catch (error) {
+    console.error('插入默认管理员失败:', error);
   }
 }
 
 // 获取数据库类型
 function getDatabaseType() {
-  return DATABASE_URL && DATABASE_URL.startsWith('postgresql://') ? 'postgres' : 'sqlite';
+  return 'postgres'; // 只支持PostgreSQL
 }
 
 // 将 SQLite 的 ? 占位符转换为 PostgreSQL 的 $1, $2, ...
