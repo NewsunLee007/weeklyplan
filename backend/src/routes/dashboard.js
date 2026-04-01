@@ -177,13 +177,13 @@ function generateAIAnalysis(data) {
   // 完成率分析
   if (completionRate >= 80) {
     insights.push({
-      icon: 'Lightbulb',
+      icon: 'Target',
       text: `本周工作计划完成率为${completionRate}%，高于预期，继续保持！${trendAnalysis.improving ? '较上周有所提升，趋势向好。' : ''}`,
       priority: 'normal'
     });
   } else if (completionRate >= 60) {
     insights.push({
-      icon: 'Lightbulb',
+      icon: 'Target',
       text: `本周工作计划完成率为${completionRate}%，基本达到预期，建议加强时间管理。${trendAnalysis.declining ? '注意：完成率较上周有所下降，需要关注。' : ''}`,
       priority: 'normal'
     });
@@ -198,7 +198,7 @@ function generateAIAnalysis(data) {
   // 趋势分析洞察
   if (trendAnalysis.consistentlyHigh) {
     insights.push({
-      icon: 'CircleCheck',
+      icon: 'Check',
       text: '连续多周保持高完成率，工作表现优秀！',
       priority: 'normal'
     });
@@ -450,7 +450,7 @@ function generateMockAIAnalysis() {
   return {
     insights: [
       {
-        icon: 'Lightbulb',
+        icon: 'Target',
         text: '本周工作计划完成率为85%，高于上周的78%，继续保持！',
         priority: 'normal'
       },

@@ -8,7 +8,7 @@
             <h1 class="greeting-title">欢迎回来，{{ userInfo?.real_name || userInfo?.realName }}！</h1>
             <p class="date-info">{{ todayStr }}</p>
             <p class="weather-info" v-if="weatherData">
-              <el-icon class="weather-icon"><Sunny /></el-icon>
+              <el-icon class="weather-icon"><Calendar /></el-icon>
               {{ weatherData.temperature }}°C | {{ weatherData.description }}
             </p>
           </div>
@@ -167,7 +167,7 @@
             <!-- 工作洞察 -->
             <div class="ai-insights-section">
               <h4 class="ai-section-title">
-                <el-icon><Lightbulb /></el-icon> 工作洞察
+                <el-icon><Target /></el-icon> 工作洞察
               </h4>
               <div class="ai-insights">
                 <div class="insight-item" v-for="(insight, index) in aiInsights" :key="index">
@@ -325,8 +325,7 @@ import * as echarts from 'echarts'
 import { 
   Plus, Document, DocumentChecked, EditPen, ChatDotRound, 
   Clock, Setting, View, List, ArrowUp, ArrowDown, Refresh, 
-  Lightbulb, Calendar, Target, Warning, Download, Sunny,
-  Check, CircleCheck, InfoFilled, Top, DataLine
+  Calendar, Target, Warning, Download, Check, Top, DataLine
 } from '@element-plus/icons-vue'
 
 const router = useRouter()
@@ -761,7 +760,7 @@ async function refreshAIInsights() {
     const mockData = {
       insights: [
         {
-          icon: 'Lightbulb',
+          icon: 'Target',
           text: '本周工作计划完成率为85%，高于上周的78%，继续保持！',
           priority: 'normal'
         },
