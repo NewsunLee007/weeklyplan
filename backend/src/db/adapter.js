@@ -281,11 +281,12 @@ function getDatabaseType() {
 }
 
 // 执行查询（用于 SELECT）
-function query(sql, params = []) {
+async function query(sql, params = []) {
   const adapter = getDatabaseType();
 
   if (adapter === 'postgres') {
-    return pool.query(sql, params).then(result => result.rows);
+    const result = await pool.query(sql, params);
+    return result.rows;
   } else {
     const stmt = db.prepare(sql);
     return stmt.all(...params);
@@ -293,11 +294,12 @@ function query(sql, params = []) {
 }
 
 // 执行查询（用于 SELECT 单行）
-function queryOne(sql, params = []) {
+async function queryOne(sql, params = []) {
   const adapter = getDatabaseType();
 
   if (adapter === 'postgres') {
-    return pool.query(sql, params).then(result => result.rows[0] || null);
+    const result = await pool.query(sql, params);
+    return result.rows[0] || null;
   } else {
     const stmt = db.prepare(sql);
     return stmt.get(...params);
@@ -305,11 +307,11 @@ function queryOne(sql, params = []) {
 }
 
 // 执行查询（用于 INSERT/UPDATE/DELETE）
-function execute(sql, params = []) {
+async function execute(sql, params = []) {
   const adapter = getDatabaseType();
 
   if (adapter === 'postgres') {
-    return pool.query(sql, params);
+    return await pool.query(sql, params);
   } else {
     const stmt = db.prepare(sql);
     return stmt.run(...params);
@@ -317,11 +319,12 @@ function execute(sql, params = []) {
 }
 
 // 获取最后插入的 ID
-function getLastInsertId() {
+async function getLastInsertId() {
   const adapter = getDatabaseType();
 
   if (adapter === 'postgres') {
-    return pool.query('SELECT lastval() as id').then(result => result.rows[0].id);
+    const result = await pool.query('SELECT lastval() as id');
+    return result.rows[0].id;
   } else {
     const result = db.exec('SELECT last_insert_rowid() as id')[0];
     return result ? result.id : null;
@@ -331,10 +334,14 @@ function getLastInsertId() {
 // 初始化数据库
 initDatabase();
 
+// run 是 execute 的别名
+const run = execute;
+
 module.exports = {
   query,
   queryOne,
   execute,
+  run,
   getLastInsertId,
   getDatabaseType,
   initDatabase,

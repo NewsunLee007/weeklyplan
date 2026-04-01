@@ -8,11 +8,11 @@ const { generateToken } = require('../middleware/auth');
 const { success, fail } = require('../utils/helper');
 
 // POST /api/auth/login
-router.post('/login', (req, res) => {
+router.post('/login', async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) return fail(res, '用户名和密码不能为空');
 
-  const user = queryOne(
+  const user = await queryOne(
     `SELECT u.*, d.name as dept_name FROM sys_user u
      LEFT JOIN sys_department d ON u.department_id = d.id
      WHERE u.username = ? AND u.is_deleted = 0`,
@@ -48,8 +48,8 @@ router.post('/login', (req, res) => {
 });
 
 // GET /api/auth/info
-router.get('/info', require('../middleware/auth').authMiddleware, (req, res) => {
-  const user = queryOne(
+router.get('/info', require('../middleware/auth').authMiddleware, async (req, res) => {
+  const user = await queryOne(
     `SELECT u.id, u.username, u.real_name, u.role, u.department_id, u.phone, u.avatar, d.name as dept_name
      FROM sys_user u LEFT JOIN sys_department d ON u.department_id = d.id
      WHERE u.id = ? AND u.is_deleted = 0`,
