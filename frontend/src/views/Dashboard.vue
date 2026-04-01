@@ -167,7 +167,7 @@
             <!-- 工作洞察 -->
             <div class="ai-insights-section">
               <h4 class="ai-section-title">
-                <el-icon><Target /></el-icon> 工作洞察
+                <el-icon><Document /></el-icon> 工作洞察
               </h4>
               <div class="ai-insights">
                 <div class="insight-item" v-for="(insight, index) in aiInsights" :key="index">
@@ -191,7 +191,7 @@
             <!-- 下一阶段的工作安排 -->
             <div class="ai-next-stage-section">
               <h4 class="ai-section-title">
-                <el-icon><Target /></el-icon> 下一阶段工作安排
+                <el-icon><Document /></el-icon> 下一阶段工作安排
               </h4>
               <div class="ai-next-stage">{{ aiAnalysis?.nextStagePlan || '下一阶段工作建议：1. 继续保持良好的工作状态；2. 加强部门间的沟通协作；3. 关注学校整体发展目标；4. 优化工作计划和流程，提高工作效率。' }}</div>
             </div>
@@ -325,7 +325,7 @@ import * as echarts from 'echarts'
 import { 
   Plus, Document, DocumentChecked, EditPen, ChatDotRound, 
   Clock, Setting, View, List, ArrowUp, ArrowDown, Refresh, 
-  Calendar, Target, Warning, Download, Check, Top, DataLine
+  Calendar, Warning, Download, Check, Top, DataLine
 } from '@element-plus/icons-vue'
 
 const router = useRouter()
@@ -760,7 +760,7 @@ async function refreshAIInsights() {
     const mockData = {
       insights: [
         {
-          icon: 'Target',
+          icon: 'Document',
           text: '本周工作计划完成率为85%，高于上周的78%，继续保持！',
           priority: 'normal'
         },
@@ -770,7 +770,7 @@ async function refreshAIInsights() {
           priority: 'warning'
         },
         {
-          icon: 'Target',
+          icon: 'Document',
           text: '教务处的计划完成质量较高，值得其他部门学习。',
           priority: 'normal'
         },

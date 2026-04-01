@@ -177,13 +177,13 @@ function generateAIAnalysis(data) {
   // 完成率分析
   if (completionRate >= 80) {
     insights.push({
-      icon: 'Target',
+      icon: 'Document',
       text: `本周工作计划完成率为${completionRate}%，高于预期，继续保持！${trendAnalysis.improving ? '较上周有所提升，趋势向好。' : ''}`,
       priority: 'normal'
     });
   } else if (completionRate >= 60) {
     insights.push({
-      icon: 'Target',
+      icon: 'Document',
       text: `本周工作计划完成率为${completionRate}%，基本达到预期，建议加强时间管理。${trendAnalysis.declining ? '注意：完成率较上周有所下降，需要关注。' : ''}`,
       priority: 'normal'
     });
@@ -228,7 +228,7 @@ function generateAIAnalysis(data) {
   // 学期计划分析
   if (semesterPlans > 0) {
     insights.push({
-      icon: 'Target',
+      icon: 'Document',
       text: `本学期已有${semesterPlans}个学期计划，各项工作有序推进。`,
       priority: 'normal'
     });
@@ -450,7 +450,7 @@ function generateMockAIAnalysis() {
   return {
     insights: [
       {
-        icon: 'Target',
+        icon: 'Document',
         text: '本周工作计划完成率为85%，高于上周的78%，继续保持！',
         priority: 'normal'
       },
@@ -460,7 +460,7 @@ function generateMockAIAnalysis() {
         priority: 'warning'
       },
       {
-        icon: 'Target',
+        icon: 'Document',
         text: '教务处的计划完成质量较高，值得其他部门学习。',
         priority: 'normal'
       },
