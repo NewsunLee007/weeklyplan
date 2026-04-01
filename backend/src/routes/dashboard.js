@@ -189,7 +189,7 @@ function generateAIAnalysis(data) {
     });
   } else {
     insights.push({
-      icon: 'AlertCircle',
+      icon: 'Warning',
       text: `本周工作计划完成率仅为${completionRate}%，低于预期，建议分析原因并调整工作计划。${trendAnalysis.declining ? '连续多周下降，需要重点关注！' : ''}`,
       priority: 'high'
     });
@@ -204,7 +204,7 @@ function generateAIAnalysis(data) {
     });
   } else if (trendAnalysis.volatile) {
     insights.push({
-      icon: 'AlertCircle',
+      icon: 'Warning',
       text: '完成率波动较大，建议稳定工作节奏。',
       priority: 'warning'
     });
@@ -234,7 +234,7 @@ function generateAIAnalysis(data) {
     });
   } else {
     insights.push({
-      icon: 'AlertCircle',
+      icon: 'Warning',
       text: '本学期尚未制定学期计划，建议尽快制定学期工作目标和计划。',
       priority: 'high'
     });
@@ -270,7 +270,7 @@ function generateAIAnalysis(data) {
   // 智能任务分配建议
   if (role === 'DEPT_HEAD' || role === 'OFFICE_HEAD' || role === 'PRINCIPAL') {
     insights.push({
-      icon: 'UserFilled',
+      icon: 'User',
       text: '建议根据团队成员能力和工作量合理分配任务，确保工作高效完成。',
       priority: 'normal'
     });
@@ -465,12 +465,12 @@ function generateMockAIAnalysis() {
         priority: 'normal'
       },
       {
-        icon: 'AlertCircle',
+        icon: 'Warning',
         text: '九年级有2个计划尚未提交，建议及时跟进。',
         priority: 'high'
       },
       {
-        icon: 'UserFilled',
+        icon: 'User',
         text: '建议根据团队成员能力和工作量合理分配任务，确保工作高效完成。',
         priority: 'normal'
       },

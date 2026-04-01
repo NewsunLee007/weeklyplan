@@ -325,9 +325,9 @@ import * as echarts from 'echarts'
 import { 
   Plus, Document, DocumentChecked, EditPen, ChatDotRound, User, 
   Clock, Setting, View, List, ArrowUp, ArrowDown, Refresh, 
-  Lightbulb, Calendar, Target, AlertCircle, Download, Sunny,
+  Lightbulb, Calendar, Target, Warning, Download, Sunny,
   Check, CircleCheck, Clock as ClockIcon, InfoFilled, 
-  DataLine, TrendCharts, Top, UserFilled
+  DataLine, TrendCharts, Top, User
 } from '@element-plus/icons-vue'
 
 const router = useRouter()
@@ -777,10 +777,10 @@ async function refreshAIInsights() {
           priority: 'normal'
         },
         {
-          icon: 'AlertCircle',
+          icon: 'Warning',
           text: '九年级有2个计划尚未提交，建议及时跟进。',
           priority: 'high'
-        }
+        },
       ],
       stageSummary: '本阶段工作进展良好，计划完成率达到85%，各项工作有序推进。学期计划制定完善，行事历安排合理，整体工作符合预期。',
       weeklyPlanTips: '下周建议：1. 完成未完成的计划项；2. 准备下周的重要会议材料；3. 跟进九年级的计划提交情况；4. 总结本阶段工作经验。',
