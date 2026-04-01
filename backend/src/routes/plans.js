@@ -72,7 +72,7 @@ router.post('/', authMiddleware, async (req, res) => {
   }
 
   const n = now();
-  const result = await run(
+  const result = await execute(
     `INSERT INTO biz_week_plan (department_id, creator_id, week_number, semester, start_date, end_date, title, status, current_step, remark, create_time, update_time)
      VALUES ($1)`,
     [req.user.departmentId, req.user.userId, week_number, semester, start_date, end_date, title, remark || '', n, n]
@@ -82,7 +82,7 @@ router.post('/', authMiddleware, async (req, res) => {
   // 插入条目
   items.forEach((item, idx) => {
     const weekday = item.weekday || getWeekday(item.plan_date);
-    await run(
+    await execute(
       `INSERT INTO biz_plan_item (plan_id, plan_date, weekday, content, responsible, sort_order, create_time, update_time)
        VALUES ($1)`,
       [planId, item.plan_date, weekday, item.content, item.responsible || '', idx, n, n]
@@ -104,13 +104,13 @@ router.put('/:id', authMiddleware, async (req, res) => {
 
   const { title, remark, items = [] } = req.body;
   const n = now();
-  await run(`UPDATE biz_week_plan SET title=?, remark=?, update_time=? WHERE id=$1`, [title, remark || '', n, id]);
+  await execute(`UPDATE biz_week_plan SET title=?, remark=?, update_time=? WHERE id=$1`, [title, remark || '', n, id]);
 
   // 删除旧条目，重新插入
-  await run(`UPDATE biz_plan_item SET is_deleted=1 WHERE plan_id=?`, [id]);
+  await execute(`UPDATE biz_plan_item SET is_deleted=1 WHERE plan_id=?`, [id]);
   items.forEach((item, idx) => {
     const weekday = item.weekday || getWeekday(item.plan_date);
-    await run(
+    await execute(
       `INSERT INTO biz_plan_item (plan_id, plan_date, weekday, content, responsible, sort_order, create_time, update_time)
        VALUES ($1)`,
       [id, item.plan_date, weekday, item.content, item.responsible || '', idx, n, n]
@@ -129,7 +129,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
   if (plan.creator_id !== req.user.userId && req.user.role !== 'ADMIN') {
     return fail(res, '无权删除', 403);
   }
-  await run(`UPDATE biz_week_plan SET is_deleted=1, update_time=? WHERE id=$1`, [now(), id]);
+  await execute(`UPDATE biz_week_plan SET is_deleted=1, update_time=? WHERE id=$1`, [now(), id]);
   return success(res, null, '删除成功');
 });
 
@@ -142,7 +142,7 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
   if (plan.creator_id !== req.user.userId && req.user.role !== 'ADMIN') {
     return fail(res, '无权操作', 403);
   }
-  await run(`UPDATE biz_week_plan SET status='SUBMITTED', update_time=? WHERE id=$1`, [now(), id]);
+  await execute(`UPDATE biz_week_plan SET status='SUBMITTED', update_time=? WHERE id=$1`, [now(), id]);
   return success(res, null, '已提交审核');
 });
 

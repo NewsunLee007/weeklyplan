@@ -17,7 +17,7 @@ router.put('/', authMiddleware, requireRole('ADMIN'), async (req, res) => {
   const { configs } = req.body; // [{ config_key, config_value }]
   const n = now();
   for (const cfg of configs) {
-    await run(`UPDATE sys_config SET config_value=?, update_time=? WHERE config_key=?`,
+    await execute(`UPDATE sys_config SET config_value=?, update_time=? WHERE config_key=?`,
       [cfg.config_value, n, cfg.config_key]);
   }
   return success(res, null, '配置已保存');

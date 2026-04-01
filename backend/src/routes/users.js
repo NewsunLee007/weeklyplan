@@ -8,7 +8,7 @@ const { authMiddleware, requireRole } = require('../middleware/auth');
 const { success, successPage, fail, now } = require('../utils/helper');
 
 // GET / 用户列表（分页）
-router.get('/', authMiddleware, requireRole('ADMIN'), (req, res) => {
+router.get('/', authMiddleware, requireRole('ADMIN'), async (req, res) => {
   const { page = 1, pageSize = 10, department_id, role, keyword } = req.query;
   let where = `WHERE u.is_deleted = 0`;
   const params = [];
@@ -34,7 +34,7 @@ router.get('/', authMiddleware, requireRole('ADMIN'), (req, res) => {
 });
 
 // POST / 新增用户
-router.post('/', authMiddleware, requireRole('ADMIN'), (req, res) => {
+router.post('/', authMiddleware, requireRole('ADMIN'), async (req, res) => {
   const { username, password, real_name, department_id, role, phone } = req.body;
   if (!username || !real_name || !department_id || !role) return fail(res, '必填字段不能为空');
 
@@ -43,7 +43,7 @@ router.post('/', authMiddleware, requireRole('ADMIN'), (req, res) => {
 
   const hashedPwd = bcrypt.hashSync(password || '123456', 10);
   const n = now();
-  const result = await run(
+  const result = await execute(
     `INSERT INTO sys_user (username, password, real_name, department_id, role, phone, status, create_time, update_time) VALUES ($1)`,
     [username, hashedPwd, real_name, department_id, role, phone || '', n, n]
   );
@@ -51,13 +51,13 @@ router.post('/', authMiddleware, requireRole('ADMIN'), (req, res) => {
 });
 
 // PUT /:id 修改用户
-router.put('/:id', authMiddleware, requireRole('ADMIN'), (req, res) => {
+router.put('/:id', authMiddleware, requireRole('ADMIN'), async (req, res) => {
   const { id } = req.params;
   const { real_name, department_id, role, phone, status } = req.body;
   const user = await queryOne(`SELECT id FROM sys_user WHERE id = $1 AND is_deleted = 0`, [id]);
   if (!user) return fail(res, '用户不存在', 404);
 
-  await run(
+  await execute(
     `UPDATE sys_user SET real_name=?, department_id=?, role=?, phone=?, status=?, update_time=? WHERE id=$1`,
     [real_name, department_id, role, phone || '', status ?? 1, now(), id]
   );
@@ -65,18 +65,18 @@ router.put('/:id', authMiddleware, requireRole('ADMIN'), (req, res) => {
 });
 
 // DELETE /:id 删除用户
-router.delete('/:id', authMiddleware, requireRole('ADMIN'), (req, res) => {
+router.delete('/:id', authMiddleware, requireRole('ADMIN'), async (req, res) => {
   const { id } = req.params;
   if (Number(id) === 1) return fail(res, '不能删除超级管理员');
-  await run(`UPDATE sys_user SET is_deleted=1, update_time=? WHERE id=$1`, [now(), id]);
+  await execute(`UPDATE sys_user SET is_deleted=1, update_time=? WHERE id=$1`, [now(), id]);
   return success(res, null, '删除成功');
 });
 
 // PUT /:id/reset-password 重置密码
-router.put('/:id/reset-password', authMiddleware, requireRole('ADMIN'), (req, res) => {
+router.put('/:id/reset-password', authMiddleware, requireRole('ADMIN'), async (req, res) => {
   const { id } = req.params;
   const hashedPwd = bcrypt.hashSync('123456', 10);
-  await run(`UPDATE sys_user SET password=?, update_time=? WHERE id=$1`, [hashedPwd, now(), id]);
+  await execute(`UPDATE sys_user SET password=?, update_time=? WHERE id=$1`, [hashedPwd, now(), id]);
   return success(res, null, '密码已重置为 123456');
 });
 
