@@ -16,13 +16,13 @@ router.get('/', authMiddleware, requireRole('ADMIN'), (req, res) => {
   if (role) { where += ` AND u.role = ?`; params.push(role); }
   if (keyword) { where += ` AND (u.username LIKE ? OR u.real_name LIKE ?)`; params.push(`%${keyword}%`, `%${keyword}%`); }
 
-  const total = queryOne(
+  const total = await queryOne(
     `SELECT COUNT(*) as cnt FROM sys_user u LEFT JOIN sys_department d ON u.department_id = d.id ${where}`,
     params
   )?.cnt || 0;
 
   const offset = (Number(page) - 1) * Number(pageSize);
-  const records = query(
+  const records = await query(
     `SELECT u.id, u.username, u.real_name, u.role, u.department_id, u.phone, u.status, u.create_time,
             d.name as dept_name
      FROM sys_user u LEFT JOIN sys_department d ON u.department_id = d.id
@@ -38,12 +38,12 @@ router.post('/', authMiddleware, requireRole('ADMIN'), (req, res) => {
   const { username, password, real_name, department_id, role, phone } = req.body;
   if (!username || !real_name || !department_id || !role) return fail(res, '必填字段不能为空');
 
-  const exists = queryOne(`SELECT id FROM sys_user WHERE username = ? AND is_deleted = 0`, [username]);
+  const exists = await queryOne(`SELECT id FROM sys_user WHERE username = ? AND is_deleted = 0`, [username]);
   if (exists) return fail(res, '用户名已存在');
 
   const hashedPwd = bcrypt.hashSync(password || '123456', 10);
   const n = now();
-  const result = run(
+  const result = await run(
     `INSERT INTO sys_user (username, password, real_name, department_id, role, phone, status, create_time, update_time) VALUES ($1)`,
     [username, hashedPwd, real_name, department_id, role, phone || '', n, n]
   );
@@ -54,10 +54,10 @@ router.post('/', authMiddleware, requireRole('ADMIN'), (req, res) => {
 router.put('/:id', authMiddleware, requireRole('ADMIN'), (req, res) => {
   const { id } = req.params;
   const { real_name, department_id, role, phone, status } = req.body;
-  const user = queryOne(`SELECT id FROM sys_user WHERE id = $1 AND is_deleted = 0`, [id]);
+  const user = await queryOne(`SELECT id FROM sys_user WHERE id = $1 AND is_deleted = 0`, [id]);
   if (!user) return fail(res, '用户不存在', 404);
 
-  run(
+  await run(
     `UPDATE sys_user SET real_name=?, department_id=?, role=?, phone=?, status=?, update_time=? WHERE id=$1`,
     [real_name, department_id, role, phone || '', status ?? 1, now(), id]
   );
@@ -68,7 +68,7 @@ router.put('/:id', authMiddleware, requireRole('ADMIN'), (req, res) => {
 router.delete('/:id', authMiddleware, requireRole('ADMIN'), (req, res) => {
   const { id } = req.params;
   if (Number(id) === 1) return fail(res, '不能删除超级管理员');
-  run(`UPDATE sys_user SET is_deleted=1, update_time=? WHERE id=$1`, [now(), id]);
+  await run(`UPDATE sys_user SET is_deleted=1, update_time=? WHERE id=$1`, [now(), id]);
   return success(res, null, '删除成功');
 });
 
@@ -76,7 +76,7 @@ router.delete('/:id', authMiddleware, requireRole('ADMIN'), (req, res) => {
 router.put('/:id/reset-password', authMiddleware, requireRole('ADMIN'), (req, res) => {
   const { id } = req.params;
   const hashedPwd = bcrypt.hashSync('123456', 10);
-  run(`UPDATE sys_user SET password=?, update_time=? WHERE id=$1`, [hashedPwd, now(), id]);
+  await run(`UPDATE sys_user SET password=?, update_time=? WHERE id=$1`, [hashedPwd, now(), id]);
   return success(res, null, '密码已重置为 123456');
 });
 

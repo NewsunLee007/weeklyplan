@@ -216,13 +216,26 @@ async function initDatabase() {
 // 插入默认数据
 async function insertDefaultData() {
   const adapter = getDatabaseType();
-
-  // 检查是否已有数据
-  const hasData = adapter === 'postgres'
-    ? (await pool.query('SELECT COUNT(*) as count FROM sys_department')).rows[0].count > 0
-    : db.exec('SELECT COUNT(*) as count FROM sys_department')[0].count > 0;
-
-  if (hasData) return;
+  
+  if (adapter === 'postgres') {
+    try {
+      // 检查是否已有数据
+      const result = await pool.query('SELECT COUNT(*) as count FROM sys_department');
+      const hasData = result.rows[0].count > 0;
+      if (hasData) return;
+    } catch (error) {
+      console.error('检查数据库数据失败:', error);
+      // 继续尝试插入数据
+    }
+  } else {
+    try {
+      const result = db.exec('SELECT COUNT(*) as count FROM sys_department');
+      const hasData = result[0].count > 0;
+      if (hasData) return;
+    } catch (error) {
+      console.error('检查SQLite数据失败:', error);
+    }
+  }
 
   // 插入默认部门
   const departments = [
@@ -343,10 +356,8 @@ async function getLastInsertId() {
   }
 }
 
-// 初始化数据库（不等待，在后台运行）
-initDatabase().catch(err => {
-  console.error('数据库初始化失败:', err);
-});
+// 注意：数据库初始化由 app.js 中的 bootstrap() 函数控制
+// 这样避免了重复初始化和竞态条件问题
 
 // run 是 execute 的别名
 const run = execute;

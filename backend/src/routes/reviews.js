@@ -39,7 +39,7 @@ router.get('/pending', authMiddleware, requireRole(...REVIEW_ROLES), (req, res) 
     where += ` AND p.status IN ('SUBMITTED','DEPT_APPROVED','OFFICE_APPROVED')`;
   }
 
-  const records = query(
+  const records = await query(
     `SELECT p.*, d.name as dept_name, u.real_name as creator_name
      FROM biz_week_plan p
      LEFT JOIN sys_department d ON p.department_id = d.id
@@ -55,7 +55,7 @@ router.post('/:planId/approve', authMiddleware, requireRole(...REVIEW_ROLES), (r
   const { comment = '', updatedItems } = req.body; // updatedItems: 编辑后的计划条目 [{id, content, responsible, plan_date, weekday}]
   const { role, userId, departmentId } = req.user;
 
-  const plan = queryOne(`SELECT * FROM biz_week_plan WHERE id = $1 AND is_deleted = 0`, [planId]);
+  const plan = await queryOne(`SELECT * FROM biz_week_plan WHERE id = $1 AND is_deleted = 0`, [planId]);
   if (!plan) return fail(res, '计划不存在', 404);
 
   const step = plan.current_step;
@@ -80,13 +80,13 @@ router.post('/:planId/approve', authMiddleware, requireRole(...REVIEW_ROLES), (r
     for (const item of updatedItems) {
       if (item.id) {
         // 更新已有条目
-        run(
+        await run(
           `UPDATE biz_plan_item SET content=?, responsible=?, plan_date=?, weekday=?, update_time=? WHERE id=$1`,
           [item.content || '', item.responsible || '', item.plan_date || '', item.weekday || '', n, item.id]
         );
       } else if (item._isNew) {
         // 新增条目（虽然审核时很少新增，但支持）
-        run(
+        await run(
           `INSERT INTO biz_plan_item (plan_id, plan_date, weekday, content, responsible, create_time, update_time) VALUES ($1)`,
           [planId, item.plan_date || '', item.weekday || '', item.content || '', item.responsible || '', n, n]
         );
@@ -95,7 +95,7 @@ router.post('/:planId/approve', authMiddleware, requireRole(...REVIEW_ROLES), (r
   }
 
   // 记录审核日志
-  run(
+  await run(
     `INSERT INTO biz_review_record (plan_id, reviewer_id, step, result, comment, create_time) VALUES ($1)`,
     [planId, userId, step, comment, n]
   );
@@ -110,11 +110,11 @@ router.post('/:planId/approve', authMiddleware, requireRole(...REVIEW_ROLES), (r
   }
   sql += ` WHERE id=$1`;
   updates.push(planId);
-  run(sql, updates);
+  await run(sql, updates);
 
   // 发布后推送企微
   if (flow.to === 'PUBLISHED') {
-    const updatedPlan = queryOne(`SELECT * FROM biz_week_plan WHERE id=$1`, [planId]);
+    const updatedPlan = await queryOne(`SELECT * FROM biz_week_plan WHERE id=$1`, [planId]);
     wechatService.notifyPublished(updatedPlan).catch(e => console.error('企微推送失败', e));
   }
 
@@ -128,7 +128,7 @@ router.post('/:planId/reject', authMiddleware, requireRole(...REVIEW_ROLES), (re
   if (!comment || !comment.trim()) return fail(res, '退回意见不能为空');
 
   const { role, userId, departmentId } = req.user;
-  const plan = queryOne(`SELECT * FROM biz_week_plan WHERE id = $1 AND is_deleted = 0`, [planId]);
+  const plan = await queryOne(`SELECT * FROM biz_week_plan WHERE id = $1 AND is_deleted = 0`, [planId]);
   if (!plan) return fail(res, '计划不存在', 404);
 
   const step = plan.current_step;
@@ -137,11 +137,11 @@ router.post('/:planId/reject', authMiddleware, requireRole(...REVIEW_ROLES), (re
   }
 
   const n = now();
-  run(
+  await run(
     `INSERT INTO biz_review_record (plan_id, reviewer_id, step, result, comment, create_time) VALUES ($1)`,
     [planId, userId, step, comment, n]
   );
-  run(`UPDATE biz_week_plan SET status='REJECTED', update_time=? WHERE id=$1`, [n, planId]);
+  await run(`UPDATE biz_week_plan SET status='REJECTED', update_time=? WHERE id=$1`, [n, planId]);
 
   return success(res, null, '已退回');
 });
@@ -165,14 +165,14 @@ router.get('/consolidated/:weekNumber/:semester', authMiddleware, requireRole(..
   }
 
   // 获取符合条件的计划ID
-  const plans = query(`SELECT p.id, p.title, p.week_number, p.semester, p.department_id, d.name as dept_name, u.real_name as creator_name FROM biz_week_plan p LEFT JOIN sys_department d ON p.department_id = d.id LEFT JOIN sys_user u ON p.creator_id = u.id ${where}`);
+  const plans = await query(`SELECT p.id, p.title, p.week_number, p.semester, p.department_id, d.name as dept_name, u.real_name as creator_name FROM biz_week_plan p LEFT JOIN sys_department d ON p.department_id = d.id LEFT JOIN sys_user u ON p.creator_id = u.id ${where}`);
 
   if (!plans || !plans.length) return success(res, { weekNumber, semester, plans: [], items: [] });
 
   const planIds = plans.map(p => p.id).join(',');
 
   // 获取所有条目，按日期排序
-  const items = query(
+  const items = await query(
     `SELECT i.*, p.department_id, d.name as dept_name, p.title as plan_title, p.id as plan_id, p.week_number, p.semester, u.real_name as creator_name
      FROM biz_plan_item i
      LEFT JOIN biz_week_plan p ON i.plan_id = p.id
@@ -209,7 +209,7 @@ router.post('/consolidated/:weekNumber/:semester/approve', authMiddleware, requi
     where += ` AND status IN ('SUBMITTED','DEPT_APPROVED','OFFICE_APPROVED')`;
   }
 
-  const plans = query(`SELECT * FROM biz_week_plan ${where}`);
+  const plans = await query(`SELECT * FROM biz_week_plan ${where}`);
   if (!plans.length) return fail(res, '没有待审核的计划');
 
   const n = now();
@@ -218,7 +218,7 @@ router.post('/consolidated/:weekNumber/:semester/approve', authMiddleware, requi
   if (updatedItems && Array.isArray(updatedItems)) {
     for (const item of updatedItems) {
       if (item.id) {
-        run(
+        await run(
           `UPDATE biz_plan_item SET content=?, responsible=?, plan_date=?, weekday=?, update_time=? WHERE id=$1`,
           [item.content || '', item.responsible || '', item.plan_date || '', item.weekday || '', n, item.id]
         );
@@ -234,7 +234,7 @@ router.post('/consolidated/:weekNumber/:semester/approve', authMiddleware, requi
     if (plan.status !== flow.from) continue;
 
     // 记录审核日志
-    run(
+    await run(
       `INSERT INTO biz_review_record (plan_id, reviewer_id, step, result, comment, create_time) VALUES ($1)`,
       [plan.id, userId, step, comment, n]
     );
@@ -249,7 +249,7 @@ router.post('/consolidated/:weekNumber/:semester/approve', authMiddleware, requi
     }
     sql += ` WHERE id=$1`;
     updates.push(plan.id);
-    run(sql, updates);
+    await run(sql, updates);
 
     // 发布后推送企微
     if (flow.to === 'PUBLISHED') {
@@ -261,9 +261,9 @@ router.post('/consolidated/:weekNumber/:semester/approve', authMiddleware, requi
 });
 
 // GET /records/:planId 查看审核记录
-router.get('/records/:planId', authMiddleware, (req, res) => {
+router.get('/records/:planId', authMiddleware, async (req, res) => {
   const { planId } = req.params;
-  const records = query(
+  const records = await query(
     `SELECT r.*, u.real_name as reviewer_name
      FROM biz_review_record r LEFT JOIN sys_user u ON r.reviewer_id = u.id
      WHERE r.plan_id = ? ORDER BY r.id`,
