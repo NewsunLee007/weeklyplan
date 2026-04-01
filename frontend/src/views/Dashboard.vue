@@ -209,6 +209,48 @@
               </div>
             </div>
 
+            <!-- 趋势分析 -->
+            <div class="ai-trend-section" v-if="aiAnalysis?.trendAnalysis">
+              <h4 class="ai-section-title">
+                <el-icon><TrendCharts /></el-icon> 趋势分析
+              </h4>
+              <div class="ai-trend">
+                <div class="trend-summary">
+                  <el-tag :type="getTrendTagType(aiAnalysis.trendAnalysis.trend)" size="large" class="trend-tag">
+                    {{ getTrendLabel(aiAnalysis.trendAnalysis.trend) }}
+                  </el-tag>
+                  <span class="trend-description">平均完成率: {{ aiAnalysis.trendAnalysis.averageRate }}%</span>
+                </div>
+                
+                <!-- 历史完成率图表 -->
+                <div class="trend-chart-container" v-if="aiAnalysis?.historicalData && aiAnalysis.historicalData.length > 0">
+                  <div id="trendChart" class="trend-chart"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 历史数据 -->
+            <div class="ai-history-section" v-if="aiAnalysis?.historicalData && aiAnalysis.historicalData.length > 0">
+              <h4 class="ai-section-title">
+                <el-icon><Clock /></el-icon> 历史数据
+              </h4>
+              <div class="ai-history">
+                <div class="history-item" v-for="(item, index) in aiAnalysis.historicalData" :key="index">
+                  <div class="history-week">{{ item.week }}</div>
+                  <div class="history-completion">
+                    <el-progress 
+                      :percentage="item.completionRate" 
+                      :color="getProgressColor(item.completionRate)"
+                      :stroke-width="8"
+                    />
+                  </div>
+                  <div class="history-counts">
+                    <span class="completed">{{ item.completed }}/{{ item.total }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- 角色特定建议 -->
             <div class="ai-role-suggestions-section" v-if="aiAnalysis?.roleSpecificSuggestions && aiAnalysis.roleSpecificSuggestions.length > 0">
               <h4 class="ai-section-title">
@@ -284,7 +326,8 @@ import {
   Plus, Document, DocumentChecked, EditPen, ChatDotRound, User, 
   Clock, Setting, View, List, ArrowUp, ArrowDown, Refresh, 
   Lightbulb, Calendar, Target, AlertCircle, Download, Sunny,
-  Check, CircleCheck, Clock as ClockIcon, InfoFilled
+  Check, CircleCheck, Clock as ClockIcon, InfoFilled, 
+  DataLine, TrendCharts, Top, UserFilled
 } from '@element-plus/icons-vue'
 
 const router = useRouter()
@@ -710,6 +753,9 @@ async function refreshAIInsights() {
     
     // 更新AI分析详情
     aiAnalysis.value = data
+    
+    // 初始化趋势图表
+    setTimeout(() => initTrendChart(), 100)
   } catch (error) {
     console.error('获取AI分析失败:', error)
     // 模拟AI分析结果
@@ -744,11 +790,32 @@ async function refreshAIInsights() {
         semesterPlans: 5,
         weekPlans: 24,
         calendarEvents: 12,
-        nextWeekPlans: 3
-      }
+        nextWeekPlans: 3,
+        averagePlansPerWeek: 6
+      },
+      trendAnalysis: {
+        trend: 'improving',
+        averageRate: 82
+      },
+      historicalData: [
+        { week: '第1周', completionRate: 75, completed: 9, total: 12 },
+        { week: '第2周', completionRate: 80, completed: 10, total: 13 },
+        { week: '第3周', completionRate: 78, completed: 9, total: 12 },
+        { week: '第4周', completionRate: 85, completed: 11, total: 13 },
+        { week: '第5周', completionRate: 88, completed: 12, total: 14 },
+        { week: '第6周', completionRate: 85, completed: 11, total: 13 }
+      ],
+      roleSpecificSuggestions: [
+        '作为教务主任，建议重点关注教学质量提升计划的落实情况',
+        '加强与各年级组的沟通，确保教学进度同步',
+        '定期组织教学研讨活动，促进教师专业发展'
+      ]
     }
     aiInsights.value = mockData.insights
     aiAnalysis.value = mockData
+    
+    // 初始化趋势图表
+    setTimeout(() => initTrendChart(), 100)
   } finally {
     loading.value = false
   }
@@ -771,6 +838,122 @@ function getMetricLabel(key) {
 function getMetricUnit(key) {
   if (key === 'completionRate') return '%'
   return ''
+}
+
+// 获取趋势标签类型
+function getTrendTagType(trend) {
+  const types = {
+    'improving': 'success',
+    'declining': 'danger',
+    'stable': 'info'
+  }
+  return types[trend] || 'info'
+}
+
+// 获取趋势标签文本
+function getTrendLabel(trend) {
+  const labels = {
+    'improving': '上升趋势',
+    'declining': '下降趋势',
+    'stable': '稳定趋势'
+  }
+  return labels[trend] || '稳定趋势'
+}
+
+// 获取进度条颜色
+function getProgressColor(percentage) {
+  if (percentage >= 80) return '#22C55E'
+  if (percentage >= 60) return '#F59E0B'
+  return '#EF4444'
+}
+
+// 初始化趋势图表
+let trendChart = null
+
+function initTrendChart() {
+  const chartDom = document.getElementById('trendChart')
+  if (chartDom && aiAnalysis.value?.historicalData) {
+    trendChart = echarts.init(chartDom)
+    const option = {
+      tooltip: {
+        trigger: 'axis',
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        borderColor: '#e2e8f0',
+        borderWidth: 1,
+        textStyle: { color: '#334155' },
+        formatter: (params) => {
+          const data = params[0]
+          return `${data.name}<br/>完成率: ${data.value}%`
+        }
+      },
+      grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '3%',
+        containLabel: true
+      },
+      xAxis: {
+        type: 'category',
+        boundaryGap: false,
+        data: aiAnalysis.value.historicalData.map(d => d.week),
+        axisLabel: {
+          color: '#64748b'
+        },
+        axisLine: {
+          lineStyle: { color: '#e2e8f0' }
+        }
+      },
+      yAxis: {
+        type: 'value',
+        min: 0,
+        max: 100,
+        axisLabel: {
+          color: '#64748b',
+          formatter: '{value}%'
+        },
+        axisLine: {
+          lineStyle: { color: '#e2e8f0' }
+        },
+        splitLine: {
+          lineStyle: { color: '#f1f5f9' }
+        }
+      },
+      series: [
+        {
+          name: '完成率',
+          type: 'line',
+          stack: 'Total',
+          data: aiAnalysis.value.historicalData.map(d => d.completionRate),
+          smooth: true,
+          lineStyle: { 
+            color: '#3B82F6',
+            width: 3
+          },
+          itemStyle: { 
+            color: '#3B82F6',
+            borderWidth: 2,
+            borderColor: '#fff'
+          },
+          areaStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: 'rgba(59, 130, 246, 0.3)' },
+              { offset: 1, color: 'rgba(59, 130, 246, 0.1)' }
+            ])
+          },
+          symbol: 'circle',
+          symbolSize: 10,
+          emphasis: {
+            itemStyle: {
+              shadowBlur: 10,
+              shadowOffsetX: 0,
+              shadowColor: 'rgba(59, 130, 246, 0.5)'
+            }
+          }
+        }
+      ]
+    }
+    trendChart.setOption(option)
+  }
 }
 
 // 查看详细分析
@@ -848,6 +1031,7 @@ function handleResize() {
   departmentPlanChart?.resize()
   planTrendChart?.resize()
   departmentEfficiencyChart?.resize()
+  trendChart?.resize()
 }
 
 onMounted(async () => {
@@ -860,6 +1044,7 @@ onMounted(async () => {
     initPlanStatusChart()
     initDepartmentPlanChart()
     initPlanTrendChart()
+    initDepartmentEfficiencyChart()
     window.addEventListener('resize', handleResize)
     window.addEventListener('scroll', handleScroll)
   }, 100)
@@ -881,6 +1066,7 @@ onUnmounted(() => {
   departmentPlanChart?.dispose()
   planTrendChart?.dispose()
   departmentEfficiencyChart?.dispose()
+  trendChart?.dispose()
 })
 </script>
 
@@ -890,11 +1076,25 @@ onUnmounted(() => {
   max-width: 1400px;
   margin: 0 auto;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* 欢迎头部区域 */
 .welcome-header {
   margin-bottom: 40px;
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .welcome-content {
@@ -908,6 +1108,7 @@ onUnmounted(() => {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
+  backdrop-filter: blur(10px);
 }
 
 .welcome-content::before {
@@ -918,6 +1119,38 @@ onUnmounted(() => {
   width: 100%;
   height: 4px;
   background: linear-gradient(90deg, #0891B2, #06B6D4, #3B82F6);
+  animation: gradientShift 3s ease-in-out infinite alternate;
+}
+
+@keyframes gradientShift {
+  0% {
+    background: linear-gradient(90deg, #0891B2, #06B6D4, #3B82F6);
+  }
+  100% {
+    background: linear-gradient(90deg, #3B82F6, #0891B2, #06B6D4);
+  }
+}
+
+.welcome-content::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(96, 165, 250, 0.05) 0%, transparent 70%);
+  animation: welcomePulse 4s ease-in-out infinite;
+}
+
+@keyframes welcomePulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
 }
 
 .welcome-content-scrolled {
@@ -925,13 +1158,36 @@ onUnmounted(() => {
   box-shadow: 0 4px 16px rgba(8, 145, 178, 0.12);
 }
 
-.welcome-greeting h1 {
+.welcome-greeting {
+  position: relative;
+  z-index: 1;
+}
+
+.greeting-title {
   font-size: 28px;
   font-weight: 700;
   color: #164E63;
   margin: 0 0 8px 0;
   letter-spacing: -0.5px;
   transition: all 0.3s var(--transition-base);
+  position: relative;
+  display: inline-block;
+}
+
+.greeting-title::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #0891B2, #06B6D4);
+  transition: width 0.4s ease;
+  border-radius: 2px;
+}
+
+.welcome-content:hover .greeting-title::after {
+  width: 100%;
 }
 
 .welcome-greeting p {
@@ -940,6 +1196,8 @@ onUnmounted(() => {
   margin: 0;
   font-weight: 400;
   transition: all 0.3s var(--transition-base);
+  position: relative;
+  z-index: 1;
 }
 
 .weather-info {
@@ -949,6 +1207,21 @@ onUnmounted(() => {
   margin-top: 8px !important;
   font-size: 14px !important;
   color: #0E7490;
+  position: relative;
+  z-index: 1;
+}
+
+.weather-icon {
+  animation: weatherIconSpin 3s ease-in-out infinite;
+}
+
+@keyframes weatherIconSpin {
+  0%, 100% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(10deg) scale(1.1);
+  }
 }
 
 /* 主要操作按钮 */
@@ -1482,6 +1755,113 @@ onUnmounted(() => {
   color: #334155;
   line-height: 1.5;
   transition: all var(--transition-base);
+}
+
+/* 趋势分析样式 */
+.ai-trend-section {
+  margin-bottom: 24px;
+  padding: 20px;
+  background: #FFFFFF;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  border: 1px solid #E0F2FE;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.ai-trend-section:hover {
+  box-shadow: 0 4px 12px rgba(8, 145, 178, 0.08);
+  border-color: #BAE6FD;
+  transform: translateY(-2px);
+}
+
+.trend-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.trend-tag {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.trend-description {
+  font-size: 14px;
+  color: #64748B;
+}
+
+.trend-chart-container {
+  margin-top: 16px;
+}
+
+.trend-chart {
+  height: 250px;
+  width: 100%;
+}
+
+/* 历史数据样式 */
+.ai-history-section {
+  margin-bottom: 24px;
+  padding: 20px;
+  background: #FFFFFF;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  border: 1px solid #E0F2FE;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.ai-history-section:hover {
+  box-shadow: 0 4px 12px rgba(8, 145, 178, 0.08);
+  border-color: #BAE6FD;
+  transform: translateY(-2px);
+}
+
+.ai-history {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px;
+  background: rgba(59, 130, 246, 0.03);
+  border-radius: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.history-item:hover {
+  background: rgba(59, 130, 246, 0.08);
+  transform: translateX(4px);
+}
+
+.history-week {
+  min-width: 80px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #164E63;
+}
+
+.history-completion {
+  flex: 1;
+}
+
+.history-counts {
+  min-width: 60px;
+  text-align: right;
+}
+
+.completed {
+  font-size: 14px;
+  font-weight: 600;
+  color: #22C55E;
 }
 
 .ai-footer {
