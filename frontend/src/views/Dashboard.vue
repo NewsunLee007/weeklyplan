@@ -212,7 +212,7 @@
             <!-- 趋势分析 -->
             <div class="ai-trend-section" v-if="aiAnalysis?.trendAnalysis">
               <h4 class="ai-section-title">
-                <el-icon><TrendCharts /></el-icon> 趋势分析
+                <el-icon><DataLine /></el-icon> 趋势分析
               </h4>
               <div class="ai-trend">
                 <div class="trend-summary">
@@ -323,11 +323,10 @@ import request from '../utils/request'
 import dayjs from 'dayjs'
 import * as echarts from 'echarts'
 import { 
-  Plus, Document, DocumentChecked, EditPen, ChatDotRound, User, 
+  Plus, Document, DocumentChecked, EditPen, ChatDotRound, 
   Clock, Setting, View, List, ArrowUp, ArrowDown, Refresh, 
   Lightbulb, Calendar, Target, Warning, Download, Sunny,
-  Check, CircleCheck, Clock as ClockIcon, InfoFilled, 
-  DataLine, TrendCharts, Top, User
+  Check, CircleCheck, InfoFilled, Top, DataLine
 } from '@element-plus/icons-vue'
 
 const router = useRouter()

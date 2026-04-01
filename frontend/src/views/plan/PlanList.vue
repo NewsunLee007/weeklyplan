@@ -71,7 +71,7 @@
       </div>
       <div class="stat-card">
         <div class="stat-icon" style="background: rgba(239, 68, 68, 0.15); color: #EF4444;">
-          <el-icon><AlertCircle /></el-icon>
+          <el-icon><Warning /></el-icon>
         </div>
         <div class="stat-info">
           <div class="stat-value">{{ list.filter(p => p.status === 'REJECTED').length }}</div>
@@ -211,7 +211,7 @@ import { useUserStore } from '../../stores/user'
 import request from '../../utils/request'
 import { STATUS_MAP } from '../../utils/helper'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Search, Refresh, View, Edit, Check, Delete, Document, Clock, AlertCircle } from '@element-plus/icons-vue'
+import { Plus, Search, Refresh, View, Edit, Check, Delete, Document, Clock, Warning } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const userStore = useUserStore()
