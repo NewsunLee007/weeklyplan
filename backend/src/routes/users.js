@@ -44,8 +44,8 @@ router.post('/', authMiddleware, requireRole('ADMIN'), async (req, res) => {
   const hashedPwd = bcrypt.hashSync(password || '123456', 10);
   const n = now();
   const result = await execute(
-    `INSERT INTO sys_user (username, password, real_name, department_id, role, phone, status, create_time, update_time) VALUES ($1)`,
-    [username, hashedPwd, real_name, department_id, role, phone || '', n, n]
+    `INSERT INTO sys_user (username, password, real_name, department_id, role, phone, status, create_time, update_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [username, hashedPwd, real_name, department_id, role, phone || '', n, n, n]
   );
   return success(res, { id: result.lastInsertRowid }, '用户创建成功');
 });
@@ -54,11 +54,11 @@ router.post('/', authMiddleware, requireRole('ADMIN'), async (req, res) => {
 router.put('/:id', authMiddleware, requireRole('ADMIN'), async (req, res) => {
   const { id } = req.params;
   const { real_name, department_id, role, phone, status } = req.body;
-  const user = await queryOne(`SELECT id FROM sys_user WHERE id = $1 AND is_deleted = 0`, [id]);
+  const user = await queryOne(`SELECT id FROM sys_user WHERE id = ? AND is_deleted = 0`, [id]);
   if (!user) return fail(res, '用户不存在', 404);
 
   await execute(
-    `UPDATE sys_user SET real_name=?, department_id=?, role=?, phone=?, status=?, update_time=? WHERE id=$1`,
+    `UPDATE sys_user SET real_name=?, department_id=?, role=?, phone=?, status=?, update_time=? WHERE id=?`,
     [real_name, department_id, role, phone || '', status ?? 1, now(), id]
   );
   return success(res, null, '更新成功');
@@ -68,7 +68,7 @@ router.put('/:id', authMiddleware, requireRole('ADMIN'), async (req, res) => {
 router.delete('/:id', authMiddleware, requireRole('ADMIN'), async (req, res) => {
   const { id } = req.params;
   if (Number(id) === 1) return fail(res, '不能删除超级管理员');
-  await execute(`UPDATE sys_user SET is_deleted=1, update_time=? WHERE id=$1`, [now(), id]);
+  await execute(`UPDATE sys_user SET is_deleted=1, update_time=? WHERE id=?`, [now(), id]);
   return success(res, null, '删除成功');
 });
 
@@ -76,7 +76,7 @@ router.delete('/:id', authMiddleware, requireRole('ADMIN'), async (req, res) => 
 router.put('/:id/reset-password', authMiddleware, requireRole('ADMIN'), async (req, res) => {
   const { id } = req.params;
   const hashedPwd = bcrypt.hashSync('123456', 10);
-  await execute(`UPDATE sys_user SET password=?, update_time=? WHERE id=$1`, [hashedPwd, now(), id]);
+  await execute(`UPDATE sys_user SET password=?, update_time=? WHERE id=?`, [hashedPwd, now(), id]);
   return success(res, null, '密码已重置为 123456');
 });
 

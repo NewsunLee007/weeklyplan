@@ -2,7 +2,6 @@
  * 数据库适配器 - 支持 SQLite 和 PostgreSQL
  */
 const { Pool } = require('pg');
-const { default: sqljs } = require('sql.js');
 
 // 环境变量
 const DATABASE_URL = process.env.DATABASE_URL || process.env.NEON_DATABASE_URL;
@@ -101,115 +100,50 @@ async function initDatabase() {
 
     return 'postgres';
   } else {
-    // 使用 SQLite (本地开发)
-    console.log('📦 使用 SQLite 数据库');
-    const fs = require('fs');
-    const path = require('path');
+    // 使用 PostgreSQL 作为默认数据库（简化部署）
+    console.log('📦 使用 PostgreSQL 数据库');
+    // 这里我们假设在Vercel环境中会提供DATABASE_URL
+    // 如果没有提供，我们会使用一个默认的连接（实际部署时会失败，但本地开发可以测试）
+    pool = new Pool({
+      connectionString: 'postgresql://admin:admin123@localhost:5432/school_plan',
+      ssl: false
+    });
 
-    const dbPath = path.join(__dirname, '../data/school_plan.db');
-    const dbDir = path.dirname(dbPath);
+    // 创建数据库表（如果不存在）
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS sys_user (
+        id SERIAL PRIMARY KEY,
+        username VARCHAR(50) UNIQUE NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        real_name VARCHAR(50),
+        role VARCHAR(20) NOT NULL,
+        department_id INTEGER,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        is_deleted BOOLEAN DEFAULT FALSE
+      )
+    `);
 
-    if (!fs.existsSync(dbDir)) {
-      fs.mkdirSync(dbDir, { recursive: true });
-    }
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS sys_department (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(50) UNIQUE NOT NULL,
+        sort_order INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
 
-    const SQL = sqljs();
-    const buffer = fs.existsSync(dbPath) ? fs.readFileSync(dbPath) : null;
-    db = new SQL.Database(buffer || '');
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS sys_config (
+        id SERIAL PRIMARY KEY,
+        config_key VARCHAR(50) UNIQUE NOT NULL,
+        config_value TEXT
+      )
+    `);
 
-    if (!buffer) {
-      // 创建表结构
-      db.run(`
-        CREATE TABLE IF NOT EXISTS sys_user (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          username TEXT UNIQUE NOT NULL,
-          password TEXT NOT NULL,
-          real_name TEXT,
-          role TEXT NOT NULL,
-          department_id INTEGER,
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          is_deleted INTEGER DEFAULT 0
-        )
-      `);
+    // 插入默认数据
+    await insertDefaultData();
 
-      db.run(`
-        CREATE TABLE IF NOT EXISTS sys_department (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT UNIQUE NOT NULL,
-          sort_order INTEGER DEFAULT 0,
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-      `);
-
-      db.run(`
-        CREATE TABLE IF NOT EXISTS sys_config (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          config_key TEXT UNIQUE NOT NULL,
-          config_value TEXT
-        )
-      `);
-
-      db.run(`
-        CREATE TABLE IF NOT EXISTS biz_week_plan (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          title TEXT NOT NULL,
-          department_id INTEGER,
-          week_number INTEGER NOT NULL,
-          start_date TEXT NOT NULL,
-          end_date TEXT NOT NULL,
-          semester TEXT,
-          status TEXT DEFAULT 'DRAFT',
-          submitter_id INTEGER,
-          reviewer_id INTEGER,
-          reviewed_at DATETIME,
-          remark TEXT,
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          is_deleted INTEGER DEFAULT 0,
-          FOREIGN KEY (department_id) REFERENCES sys_department(id),
-          FOREIGN KEY (submitter_id) REFERENCES sys_user(id),
-          FOREIGN KEY (reviewer_id) REFERENCES sys_user(id)
-        )
-      `);
-
-      db.run(`
-        CREATE TABLE IF NOT EXISTS biz_plan_item (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          plan_id INTEGER NOT NULL,
-          plan_date TEXT NOT NULL,
-          weekday TEXT,
-          content TEXT NOT NULL,
-          responsible TEXT,
-          sort_order INTEGER DEFAULT 0,
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          is_deleted INTEGER DEFAULT 0,
-          FOREIGN KEY (plan_id) REFERENCES biz_week_plan(id) ON DELETE CASCADE
-        )
-      `);
-
-      db.run(`
-        CREATE TABLE IF NOT EXISTS biz_feedback (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          plan_item_id INTEGER,
-          status TEXT NOT NULL,
-          feedback TEXT,
-          creator_id INTEGER,
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          is_deleted INTEGER DEFAULT 0,
-          FOREIGN KEY (plan_item_id) REFERENCES biz_plan_item(id),
-          FOREIGN KEY (creator_id) REFERENCES sys_user(id)
-        )
-      `);
-
-      // 插入默认数据
-      insertDefaultData();
-
-      // 保存数据库
-      const data = db.export();
-      const nodeBuffer = Buffer.from(data);
-      fs.writeFileSync(dbPath, nodeBuffer);
-    }
-
-    return 'sqlite';
+    return 'postgres';
   }
 }
 
@@ -230,7 +164,7 @@ async function insertDefaultData() {
   } else {
     try {
       const result = db.exec('SELECT COUNT(*) as count FROM sys_department');
-      const hasData = result[0].count > 0;
+      const hasData = result[0] && result[0].values && result[0].values[0] && result[0].values[0][0] > 0;
       if (hasData) return;
     } catch (error) {
       console.error('检查SQLite数据失败:', error);
@@ -286,6 +220,28 @@ async function insertDefaultData() {
       stmt.run(config.key, config.value);
     }
   }
+
+  // 插入默认管理员用户
+  const bcrypt = require('bcryptjs');
+  const hashedPassword = bcrypt.hashSync('admin123', 10);
+  
+  if (adapter === 'postgres') {
+    try {
+      await pool.query(
+        'INSERT INTO sys_user (username, password, real_name, role, department_id, created_at, is_deleted) VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, FALSE) ON CONFLICT (username) DO NOTHING',
+        ['admin', hashedPassword, '超级管理员', 'ADMIN', 1]
+      );
+    } catch (error) {
+      console.error('插入默认管理员失败:', error);
+    }
+  } else {
+    try {
+      const stmt = db.prepare('INSERT OR IGNORE INTO sys_user (username, password, real_name, role, department_id, created_at, is_deleted) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, 0)');
+      stmt.run('admin', hashedPassword, '超级管理员', 'ADMIN', 1);
+    } catch (error) {
+      console.error('插入默认管理员失败:', error);
+    }
+  }
 }
 
 // 获取数据库类型
@@ -301,59 +257,31 @@ function convertPlaceholders(sql) {
 
 // 执行查询（用于 SELECT）
 async function query(sql, params = []) {
-  const adapter = getDatabaseType();
-
-  if (adapter === 'postgres') {
-    // 将 ? 占位符转换为 $1, $2, ...
-    const pgSql = convertPlaceholders(sql);
-    const result = await pool.query(pgSql, params);
-    return result.rows;
-  } else {
-    const stmt = db.prepare(sql);
-    return stmt.all(...params);
-  }
+  // 将 ? 占位符转换为 $1, $2, ...
+  const pgSql = convertPlaceholders(sql);
+  const result = await pool.query(pgSql, params);
+  return result.rows;
 }
 
 // 执行查询（用于 SELECT 单行）
 async function queryOne(sql, params = []) {
-  const adapter = getDatabaseType();
-
-  if (adapter === 'postgres') {
-    // 将 ? 占位符转换为 $1, $2, ...
-    const pgSql = convertPlaceholders(sql);
-    const result = await pool.query(pgSql, params);
-    return result.rows[0] || null;
-  } else {
-    const stmt = db.prepare(sql);
-    return stmt.get(...params);
-  }
+  // 将 ? 占位符转换为 $1, $2, ...
+  const pgSql = convertPlaceholders(sql);
+  const result = await pool.query(pgSql, params);
+  return result.rows[0] || null;
 }
 
 // 执行查询（用于 INSERT/UPDATE/DELETE）
 async function execute(sql, params = []) {
-  const adapter = getDatabaseType();
-
-  if (adapter === 'postgres') {
-    // 将 ? 占位符转换为 $1, $2, ...
-    const pgSql = convertPlaceholders(sql);
-    return await pool.query(pgSql, params);
-  } else {
-    const stmt = db.prepare(sql);
-    return stmt.run(...params);
-  }
+  // 将 ? 占位符转换为 $1, $2, ...
+  const pgSql = convertPlaceholders(sql);
+  return await pool.query(pgSql, params);
 }
 
 // 获取最后插入的 ID
 async function getLastInsertId() {
-  const adapter = getDatabaseType();
-
-  if (adapter === 'postgres') {
-    const result = await pool.query('SELECT lastval() as id');
-    return result.rows[0].id;
-  } else {
-    const result = db.exec('SELECT last_insert_rowid() as id')[0];
-    return result ? result.id : null;
-  }
+  const result = await pool.query('SELECT lastval() as id');
+  return result.rows[0].id;
 }
 
 // 注意：数据库初始化由 app.js 中的 bootstrap() 函数控制

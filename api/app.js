@@ -12,8 +12,13 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// 路由注册标志
+let routesInitialized = false;
+
 // 路由注册
 async function setupRoutes() {
+  if (routesInitialized) return;
+  
   await initDatabase();
 
   app.use('/api/auth', require('../backend/src/routes/auth'));
@@ -32,14 +37,20 @@ async function setupRoutes() {
     console.error(err);
     res.status(500).json({ code: 500, message: err.message || '服务器内部错误', data: null });
   });
+  
+  routesInitialized = true;
 }
 
 // 导出 Vercel Serverless Function
 module.exports = async (req, res) => {
-  // 确保路由已注册
-  if (!app._router.stack.find(layer => layer.name === 'bound dispatch')) {
+  try {
+    // 确保路由已注册
     await setupRoutes();
+    
+    // 处理请求
+    app(req, res);
+  } catch (error) {
+    console.error('Serverless function error:', error);
+    res.status(500).json({ code: 500, message: error.message || '服务器内部错误', data: null });
   }
-
-  return app(req, res);
 };
