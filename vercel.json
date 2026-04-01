@@ -20,12 +20,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "/frontend/index.html"
+      "dest": "/frontend/dist/$1"
     }
-  ],
-  "env": {
-    "DATABASE_URL": "@neon-database-url",
-    "JWT_SECRET": "@jwt-secret",
-    "NEON_DATABASE_URL": "@neon-database-url"
-  }
+  ]
 }
