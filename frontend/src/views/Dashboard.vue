@@ -809,7 +809,7 @@ async function refreshAIInsights() {
         '定期组织教学研讨活动，促进教师专业发展'
       ]
     }
-    aiInsights.value = mockData.insights
+    aiInsights.value = mockData.insights || []
     aiAnalysis.value = mockData
     
     // 初始化趋势图表

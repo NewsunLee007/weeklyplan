@@ -130,8 +130,7 @@
                 {{ getUserInitials() }}
               </el-avatar>
               <div class="user-details" :class="{ 'user-details-collapsed': isMobile }">
-                <el-tag type="primary" size="small" class="role-tag">{{ ROLES[role] }}</el-tag>
-                <span class="username">{{ userInfo?.real_name || userInfo?.realName }}</span>
+                <span class="username">{{ userInfo?.real_name || userInfo?.realName || '管理员' }}</span>
               </div>
               <el-icon class="user-arrow"><ArrowDown /></el-icon>
             </div>
