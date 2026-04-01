@@ -32,9 +32,4 @@ const router = createRouter({
   routes
 })
 
-// 路由守卫（临时禁用以便测试）
-router.beforeEach((to, from, next) => {
-  next()
-})
-
 export default router

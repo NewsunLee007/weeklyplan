@@ -159,7 +159,7 @@
             <!-- 阶段工作的总结 -->
             <div class="ai-summary-section">
               <h4 class="ai-section-title">
-                <el-icon><FileText /></el-icon> 阶段工作的总结
+                <el-icon><Document /></el-icon> 阶段工作的总结
               </h4>
               <div class="ai-summary">{{ aiAnalysis?.stageSummary || '本阶段工作进展良好，计划完成率达到85%，各项工作有序推进。' }}</div>
             </div>
@@ -325,7 +325,7 @@ import * as echarts from 'echarts'
 import { 
   Plus, Document, DocumentChecked, EditPen, ChatDotRound, 
   Clock, Setting, View, List, ArrowUp, ArrowDown, Refresh, 
-  Calendar, Warning, Download, Check, Top, DataLine
+  Calendar, Warning, Download, Check, Top, DataLine, User
 } from '@element-plus/icons-vue'
 
 const router = useRouter()
