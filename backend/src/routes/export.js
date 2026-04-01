@@ -3,7 +3,7 @@
  */
 const router = require('express').Router();
 const { Document, Packer, Table, TableRow, TableCell, Paragraph, TextRun, WidthType, AlignmentType, HeadingLevel, BorderStyle, ImageRun, ShadingType, Header, Footer, Media } = require('docx');
-const { query, queryOne } = require('../db/database');
+const { query, queryOne } = require('../db/adapter');
 const { authMiddleware } = require('../middleware/auth');
 const { fail } = require('../utils/helper');
 const fs = require('fs');

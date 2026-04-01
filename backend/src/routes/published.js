@@ -2,7 +2,7 @@
  * 已发布计划 /api/published
  */
 const router = require('express').Router();
-const { query, queryOne } = require('../db/database');
+const { query, queryOne } = require('../db/adapter');
 const { authMiddleware } = require('../middleware/auth');
 const { success, fail } = require('../utils/helper');
 

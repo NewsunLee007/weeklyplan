@@ -5,8 +5,10 @@ import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import router from '../router'
 
+// 根据环境设置API基础URL
+const isProduction = import.meta.env.PROD
 const request = axios.create({
-  baseURL: '/api',
+  baseURL: isProduction ? '/api' : 'http://localhost:3001/api',
   timeout: 15000
 })
 

@@ -2,7 +2,7 @@
  * 仪表盘统计 /api/dashboard
  */
 const router = require('express').Router();
-const { queryOne } = require('../db/database');
+const { queryOne } = require('../db/adapter');
 const { authMiddleware } = require('../middleware/auth');
 const { success } = require('../utils/helper');
 

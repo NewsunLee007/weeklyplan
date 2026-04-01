@@ -2,7 +2,7 @@
  * 部门管理 /api/departments
  */
 const router = require('express').Router();
-const { query, queryOne, run } = require('../db/database');
+const { query, queryOne, execute } = require('../db/adapter');
 const { authMiddleware, requireRole } = require('../middleware/auth');
 const { success, fail, now } = require('../utils/helper');
 

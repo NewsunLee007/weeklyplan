@@ -2,7 +2,7 @@
  * 审核接口 /api/reviews
  */
 const router = require('express').Router();
-const { query, queryOne, run } = require('../db/database');
+const { query, queryOne, execute } = require('../db/adapter');
 const { authMiddleware, requireRole } = require('../middleware/auth');
 const { success, fail, now } = require('../utils/helper');
 const wechatService = require('../services/wechat');

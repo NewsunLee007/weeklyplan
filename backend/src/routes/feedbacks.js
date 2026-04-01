@@ -2,7 +2,7 @@
  * 反馈接口 /api/feedbacks
  */
 const router = require('express').Router();
-const { query, queryOne, run } = require('../db/database');
+const { query, queryOne, execute } = require('../db/adapter');
 const { authMiddleware } = require('../middleware/auth');
 const { success, fail, now } = require('../utils/helper');
 

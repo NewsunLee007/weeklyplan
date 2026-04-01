@@ -3,7 +3,7 @@
  */
 const router = require('express').Router();
 const bcrypt = require('bcryptjs');
-const { query, queryOne, run } = require('../db/database');
+const { query, queryOne, execute } = require('../db/adapter');
 const { authMiddleware, requireRole } = require('../middleware/auth');
 const { success, successPage, fail, now } = require('../utils/helper');
 

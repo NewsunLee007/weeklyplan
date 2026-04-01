@@ -2,7 +2,7 @@
  * 系统配置 /api/configs
  */
 const router = require('express').Router();
-const { query, run } = require('../db/database');
+const { query, run } = require('../db/adapter');
 const { authMiddleware, requireRole } = require('../middleware/auth');
 const { success, now } = require('../utils/helper');
 

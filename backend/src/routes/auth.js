@@ -3,7 +3,7 @@
  */
 const router = require('express').Router();
 const bcrypt = require('bcryptjs');
-const { query, queryOne } = require('../db/database');
+const { query, queryOne } = require('../db/adapter');
 const { generateToken } = require('../middleware/auth');
 const { success, fail } = require('../utils/helper');
 
