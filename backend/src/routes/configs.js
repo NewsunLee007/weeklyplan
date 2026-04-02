@@ -18,8 +18,13 @@ router.put('/', authMiddleware, requireRole('ADMIN'), async (req, res) => {
   const { configs } = req.body; // [{ config_key, config_value }]
   const n = now();
   for (const cfg of configs) {
-    await execute(`UPDATE sys_config SET config_value=$1, update_time=$2 WHERE config_key=$3`,
-      [cfg.config_value, n, cfg.config_key]);
+    // 使用 UPSERT：如果配置项存在则更新，不存在则插入
+    await execute(`
+      INSERT INTO sys_config (config_key, config_value, update_time) 
+      VALUES ($1, $2, $3)
+      ON CONFLICT (config_key) 
+      DO UPDATE SET config_value = $2, update_time = $3
+    `, [cfg.config_key, cfg.config_value, n]);
   }
   return success(res, null, '配置已保存');
 });
