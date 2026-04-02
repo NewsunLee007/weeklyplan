@@ -2,13 +2,24 @@
  * 部门管理 /api/departments
  */
 const router = require('express').Router();
-const { query, queryOne, execute, run } = require('../db/adapter');
+const { query, queryOne, execute, run, getDatabaseType } = require('../db/adapter');
 const { authMiddleware, requireRole } = require('../middleware/auth');
 const { success, fail, now } = require('../utils/helper');
 
+function getBooleanValue(value) {
+  const dbType = getDatabaseType();
+  if (dbType === 'postgres') {
+    return value ? true : false;
+  }
+  return value ? 1 : 0;
+}
+
+const IS_DELETED_FALSE = getBooleanValue(false);
+const IS_DELETED_TRUE = getBooleanValue(true);
+
 // GET / 获取所有部门
 router.get('/', authMiddleware, async (req, res) => {
-  const depts = await query(`SELECT * FROM sys_department WHERE is_deleted = false ORDER BY sort_order`);
+  const depts = await query(`SELECT * FROM sys_department WHERE is_deleted = ? ORDER BY sort_order`, [IS_DELETED_FALSE]);
   return success(res, depts);
 });
 
@@ -17,7 +28,7 @@ router.post('/', authMiddleware, requireRole('ADMIN'), async (req, res) => {
   const { name, code, sort_order = 0, description } = req.body;
   if (!name || !code) return fail(res, '部门名称和编码不能为空');
 
-  const exists = await queryOne(`SELECT id FROM sys_department WHERE code = ? AND is_deleted = false`, [code]);
+  const exists = await queryOne(`SELECT id FROM sys_department WHERE code = ? AND is_deleted = ?`, [code, IS_DELETED_FALSE]);
   if (exists) return fail(res, '部门编码已存在');
 
   const n = now();
@@ -32,7 +43,7 @@ router.post('/', authMiddleware, requireRole('ADMIN'), async (req, res) => {
 router.put('/:id', authMiddleware, requireRole('ADMIN'), async (req, res) => {
   const { id } = req.params;
   const { name, code, sort_order, description, status } = req.body;
-  const dept = await queryOne(`SELECT id FROM sys_department WHERE id = ? AND is_deleted = false`, [id]);
+  const dept = await queryOne(`SELECT id FROM sys_department WHERE id = ? AND is_deleted = ?`, [id, IS_DELETED_FALSE]);
   if (!dept) return fail(res, '部门不存在', 404);
 
   await execute(
@@ -45,7 +56,7 @@ router.put('/:id', authMiddleware, requireRole('ADMIN'), async (req, res) => {
 // DELETE /:id 删除部门
 router.delete('/:id', authMiddleware, requireRole('ADMIN'), async (req, res) => {
   const { id } = req.params;
-  await execute(`UPDATE sys_department SET is_deleted=true, update_time=? WHERE id=?`, [now(), id]);
+  await execute(`UPDATE sys_department SET is_deleted=?, update_time=? WHERE id=?`, [IS_DELETED_TRUE, now(), id]);
   return success(res, null, '删除成功');
 });
 
@@ -55,7 +66,8 @@ router.get('/export', authMiddleware, requireRole('ADMIN'), async (req, res) => 
     const XLSX = require('xlsx');
     const departments = await query(
       `SELECT name, code, sort_order, description, status
-       FROM sys_department WHERE is_deleted = false ORDER BY sort_order`
+       FROM sys_department WHERE is_deleted = ? ORDER BY sort_order`,
+      [IS_DELETED_FALSE]
     );
 
     const data = departments.map(dept => ({
@@ -112,7 +124,7 @@ router.post('/import', authMiddleware, requireRole('ADMIN'), async (req, res) =>
           }
 
           // 检查部门是否存在
-          const existing = await queryOne(`SELECT id FROM sys_department WHERE code = ? AND is_deleted = false`, [code]);
+          const existing = await queryOne(`SELECT id FROM sys_department WHERE code = ? AND is_deleted = ?`, [code, IS_DELETED_FALSE]);
           if (existing) {
             // 更新部门
             await execute(
