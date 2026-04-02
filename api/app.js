@@ -3,7 +3,7 @@
  */
 const express = require('express');
 const cors = require('cors');
-const { initDatabase } = require('./db/adapter');
+const { initDatabase } = require('./lib/db/adapter');
 
 const app = express();
 
@@ -29,18 +29,18 @@ app.use(express.urlencoded({ extended: true }));
 async function bootstrap() {
   await initDatabase();
 
-  app.use('/api/auth', require('./routes/auth'));
-  app.use('/api/users', require('./routes/users'));
-  app.use('/api/departments', require('./routes/departments'));
-  app.use('/api/plans', require('./routes/plans'));
-  app.use('/api/reviews', require('./routes/reviews'));
-  app.use('/api/published', require('./routes/published'));
-  app.use('/api/feedbacks', require('./routes/feedbacks'));
-  app.use('/api/configs', require('./routes/configs'));
-  app.use('/api/export', require('./routes/export'));
-  app.use('/api/dashboard', require('./routes/dashboard'));
-  app.use('/api/ai', require('./routes/ai'));
-  app.use('/api/knowledge', require('./routes/knowledge'));
+  app.use('/api/auth', require('./lib/routes/auth'));
+  app.use('/api/users', require('./lib/routes/users'));
+  app.use('/api/departments', require('./lib/routes/departments'));
+  app.use('/api/plans', require('./lib/routes/plans'));
+  app.use('/api/reviews', require('./lib/routes/reviews'));
+  app.use('/api/published', require('./lib/routes/published'));
+  app.use('/api/feedbacks', require('./lib/routes/feedbacks'));
+  app.use('/api/configs', require('./lib/routes/configs'));
+  app.use('/api/export', require('./lib/routes/export'));
+  app.use('/api/dashboard', require('./lib/routes/dashboard'));
+  app.use('/api/ai', require('./lib/routes/ai'));
+  app.use('/api/knowledge', require('./lib/routes/knowledge'));
 
   // 全局错误处理
   app.use((err, req, res, next) => {
@@ -50,7 +50,7 @@ async function bootstrap() {
 
   const PORT = process.env.PORT || 3001;
   app.listen(PORT, () => {
-    console.log(`🚀 后端服务已启动: http://localhost:${PORT}`);
+    console.log(`🚀 后端服务已启动：http://localhost:${PORT}`);
   });
 }
 
