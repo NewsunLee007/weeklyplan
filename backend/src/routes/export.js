@@ -257,16 +257,32 @@ async function buildWeeklySummary(plans, weekNumber, schoolName, schoolSubName) 
 
   // 标题：学校名称合并为一行
   const headerChildren = [];
+  
+  // 构建学校名称标题
+  let schoolTitle = '';
+  if (schoolName && schoolSubName) {
+    schoolTitle = schoolName + ' ' + schoolSubName;
+  } else if (schoolName) {
+    schoolTitle = schoolName;
+  } else if (schoolSubName) {
+    schoolTitle = schoolSubName;
+  }
+  
+  if (schoolTitle) {
+    headerChildren.push(
+      new Paragraph({
+        children: [new TextRun({ text: schoolTitle, bold: true, size: 32, color: '000000', font: FONT_TITLE })],
+        alignment: AlignmentType.CENTER,
+        spacing: { before: 100, after: 100 }
+      })
+    );
+  }
+  
   headerChildren.push(
-    new Paragraph({
-      children: [new TextRun({ text: schoolName + ' ' + (schoolSubName || ''), bold: true, size: 32, color: '000000', font: FONT_TITLE })],
-      alignment: AlignmentType.CENTER,
-      spacing: { before: 100, after: 100 }
-    }),
     new Paragraph({
       children: [new TextRun({ text: '周工作行事历', bold: true, size: 36, color: '0891B2', font: FONT_TITLE })],
       alignment: AlignmentType.CENTER,
-      spacing: { before: 200, after: 200 }
+      spacing: { before: schoolTitle ? 200 : 100, after: 200 }
     }),
     new Paragraph({
       children: [new TextRun({ text: `第${weekNumber}周（${dateRange}）`, size: 24, color: '333333', font: FONT_TITLE })],
