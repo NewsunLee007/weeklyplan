@@ -4,7 +4,7 @@
 const router = require('express').Router();
 const { query, queryOne, execute } = require('../db/adapter');
 const { authMiddleware } = require('../middleware/auth');
-const { success, successPage, fail, now, getWeekday, calcWeekRange } = require('../utils/helper');
+const { success, successPage, fail, now, getWeekday, calcWeekRange, calcWeekNumber } = require('../utils/helper');
 
 // GET / 计划列表
 router.get('/', authMiddleware, async (req, res) => {
@@ -66,9 +66,39 @@ router.get('/:id', authMiddleware, async (req, res) => {
 
 // POST / 新建计划
 router.post('/', authMiddleware, async (req, res) => {
-  const { week_number, semester, start_date, end_date, title, remark, items = [] } = req.body;
-  if (!week_number || !semester || !start_date || !end_date || !title) {
+  let { week_number, semester, start_date, end_date, title, remark, items = [] } = req.body;
+  if (!start_date || !end_date || !title) {
     return fail(res, '必填字段不能为空');
+  }
+
+  // 获取系统配置中的学期起始日期
+  let weekStartDate = '2026-02-25';
+  try {
+    const config = await queryOne("SELECT config_value FROM sys_config WHERE config_key = 'current_week_start'");
+    if (config?.config_value) {
+      weekStartDate = config.config_value;
+    }
+  } catch (error) {
+    console.log('获取学期起始日期失败，使用默认值');
+  }
+
+  // 如果没有提供周次，自动根据start_date计算
+  if (!week_number) {
+    week_number = calcWeekNumber(weekStartDate, start_date);
+  }
+
+  // 如果没有提供学期，使用默认值
+  if (!semester) {
+    try {
+      const config = await queryOne("SELECT config_value FROM sys_config WHERE config_key = 'current_semester'");
+      if (config?.config_value) {
+        semester = config.config_value;
+      } else {
+        semester = '2025-2';
+      }
+    } catch (error) {
+      semester = '2025-2';
+    }
   }
 
   const n = now();

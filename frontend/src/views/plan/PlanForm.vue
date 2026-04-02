@@ -274,11 +274,12 @@ onMounted(async () => {
   if (isEdit.value) {
     await loadPlan()
   } else {
-    // 新建时：计算当前周次并自动选中
+    // 新建时：计算当前周次并自动选中下一周
     const { calcWeekNumber } = await import('../../utils/helper')
     const currentWeek = calcWeekNumber(weekStartDate, weekFirstDay)
-    form.week_number = currentWeek
-    onWeekChange(currentWeek)
+    const nextWeek = currentWeek + 1
+    form.week_number = nextWeek
+    onWeekChange(nextWeek)
   }
 })
 </script>
@@ -420,25 +421,22 @@ onMounted(async () => {
 .date-picker {
   width: 100%;
   border-radius: 8px;
-  border: 1px solid #E0F2FE;
   transition: all 0.3s var(--transition-base);
-  height: 32px;
-  display: flex;
-  align-items: center;
 }
 
-.date-picker .el-input__wrapper {
+.date-picker :deep(.el-input__wrapper) {
   border-radius: 8px;
   border: 1px solid #E0F2FE !important;
-  height: 100%;
+  padding: 4px 11px;
+  box-shadow: none !important;
 }
 
-.date-picker .el-input__inner {
-  height: 100%;
-  line-height: 32px;
+.date-picker :deep(.el-input__inner) {
+  height: auto;
+  line-height: 1.5;
 }
 
-.date-picker:focus-within .el-input__wrapper {
+.date-picker:focus-within :deep(.el-input__wrapper) {
   border-color: #3B82F6 !important;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
 }

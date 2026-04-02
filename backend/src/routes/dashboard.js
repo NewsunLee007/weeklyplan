@@ -4,19 +4,24 @@
 const router = require('express').Router();
 const { queryOne, query } = require('../db/adapter');
 const { authMiddleware } = require('../middleware/auth');
-const { success } = require('../utils/helper');
+const { success, calcWeekNumber } = require('../utils/helper');
 
 router.get('/stats', authMiddleware, async (req, res) => {
   const { role, userId, departmentId } = req.user;
 
-  // 获取当前周数
-  let currentWeekNum = 1;
+  // 获取系统配置
+  let weekStartDate = '2026-02-25';
   try {
-    const currentWeek = await queryOne("SELECT EXTRACT(WEEK FROM NOW()) as week");
-    currentWeekNum = currentWeek?.week || 1;
+    const config = await queryOne("SELECT config_value FROM sys_config WHERE config_key = 'current_week_start'");
+    if (config?.config_value) {
+      weekStartDate = config.config_value;
+    }
   } catch (error) {
-    console.log('获取当前周数失败，使用默认值');
+    console.log('获取学期起始日期失败，使用默认值');
   }
+
+  // 获取当前周数（根据学期起始日期计算）
+  const currentWeekNum = calcWeekNumber(weekStartDate);
 
   // 我的计划总数（本周）
   const myPlansTotal = (await queryOne(
@@ -28,27 +33,28 @@ router.get('/stats', authMiddleware, async (req, res) => {
   const myPlansTotalLastWeek = (await queryOne(
     `SELECT COUNT(*) as cnt FROM biz_week_plan 
      WHERE creator_id=? AND is_deleted=false 
-     AND EXTRACT(WEEK FROM create_time) = ?`,
+     AND week_number = ?`,
     [userId, currentWeekNum - 1]
   ))?.cnt || 0;
 
-  // 我的计划已完成数量
+  // 我的计划已完成数量（本周）
   const myPlansCompleted = (await queryOne(
     `SELECT COUNT(*) as cnt FROM biz_week_plan 
-     WHERE creator_id=? AND status='COMPLETED' AND is_deleted=false`,
-    [userId]
+     WHERE creator_id=? AND status='COMPLETED' AND is_deleted=false AND week_number = ?`,
+    [userId, currentWeekNum]
   ))?.cnt || 0;
 
   // 已发布计划数（本周）
   const publishedTotal = (await queryOne(
-    `SELECT COUNT(*) as cnt FROM biz_week_plan WHERE status='PUBLISHED' AND is_deleted=false`
+    `SELECT COUNT(*) as cnt FROM biz_week_plan WHERE status='PUBLISHED' AND is_deleted=false AND week_number = ?`,
+    [currentWeekNum]
   ))?.cnt || 0;
 
   // 已发布计划数（上周）
   const publishedTotalLastWeek = (await queryOne(
     `SELECT COUNT(*) as cnt FROM biz_week_plan 
      WHERE status='PUBLISHED' AND is_deleted=false 
-     AND EXTRACT(WEEK FROM update_time) = ?`,
+     AND week_number = ?`,
     [currentWeekNum - 1]
   ))?.cnt || 0;
 
@@ -89,14 +95,14 @@ router.get('/stats', authMiddleware, async (req, res) => {
     pendingReviewLastWeek = (await queryOne(
       `SELECT COUNT(*) as cnt FROM biz_week_plan 
        WHERE status='SUBMITTED' AND department_id=? AND is_deleted=false 
-       AND EXTRACT(WEEK FROM update_time) = ?`,
+       AND week_number = ?`,
       [departmentId, currentWeekNum - 1]
     ))?.cnt || 0;
   } else if (['OFFICE_HEAD', 'PRINCIPAL', 'ADMIN'].includes(role)) {
     pendingReviewLastWeek = (await queryOne(
       `SELECT COUNT(*) as cnt FROM biz_week_plan 
        WHERE status IN ('SUBMITTED','DEPT_APPROVED','OFFICE_APPROVED') AND is_deleted=false 
-       AND EXTRACT(WEEK FROM update_time) = ?`,
+       AND week_number = ?`,
       [currentWeekNum - 1]
     ))?.cnt || 0;
   }
@@ -110,13 +116,21 @@ router.get('/stats', authMiddleware, async (req, res) => {
     [departmentId, userId]
   ))?.cnt || 0;
 
+  // 总反馈项数（用于计算进度）
+  const totalFeedbackItems = (await queryOne(
+    `SELECT COUNT(*) as cnt FROM biz_plan_item pi
+     JOIN biz_week_plan p ON pi.plan_id = p.id
+     WHERE p.status='PUBLISHED' AND p.department_id=? AND pi.is_deleted=false`,
+    [departmentId]
+  ))?.cnt || 0;
+
   // 待反馈数（上周）
   const pendingFeedbackLastWeek = (await queryOne(
     `SELECT COUNT(*) as cnt FROM biz_plan_item pi
      JOIN biz_week_plan p ON pi.plan_id = p.id
-     WHERE p.status='PUBLISHED' AND p.department_id=? AND pi.is_deleted=false
-     AND pi.id NOT IN (SELECT plan_item_id FROM biz_feedback bf WHERE bf.feedback_user_id=? AND EXTRACT(WEEK FROM bf.created_at) = ?)`,
-    [departmentId, userId, currentWeekNum - 1]
+     WHERE p.status='PUBLISHED' AND p.department_id=? AND pi.is_deleted=false AND p.week_number = ?
+     AND pi.id NOT IN (SELECT plan_item_id FROM biz_feedback bf WHERE bf.feedback_user_id=?)`,
+    [departmentId, currentWeekNum - 1, userId]
   ))?.cnt || 0;
 
   // 计算趋势
@@ -131,10 +145,16 @@ router.get('/stats', authMiddleware, async (req, res) => {
     return Math.round((current / total) * 100);
   }
 
+  // 我的计划总数（本周）
+  const myPlansTotalThisWeek = (await queryOne(
+    `SELECT COUNT(*) as cnt FROM biz_week_plan WHERE creator_id=? AND is_deleted=false AND week_number = ?`,
+    [userId, currentWeekNum]
+  ))?.cnt || 0;
+
   return success(res, {
     myPlansTotal,
-    myPlansTrend: calculateTrend(myPlansTotal, myPlansTotalLastWeek),
-    myPlansProgress: calculateProgress(myPlansCompleted, myPlansTotal),
+    myPlansTrend: calculateTrend(myPlansTotalThisWeek, myPlansTotalLastWeek),
+    myPlansProgress: calculateProgress(myPlansCompleted, myPlansTotalThisWeek),
     publishedTotal,
     publishedTrend: calculateTrend(publishedTotal, publishedTotalLastWeek),
     publishedProgress: calculateProgress(totalCompleted, totalPlans),
@@ -143,7 +163,7 @@ router.get('/stats', authMiddleware, async (req, res) => {
     pendingReviewProgress: 100 - calculateProgress(pendingReview, totalPlans),
     pendingFeedback,
     pendingFeedbackTrend: calculateTrend(pendingFeedback, pendingFeedbackLastWeek),
-    pendingFeedbackProgress: 100 - calculateProgress(pendingFeedback, pendingFeedback + 10)
+    pendingFeedbackProgress: totalFeedbackItems > 0 ? 100 - calculateProgress(pendingFeedback, totalFeedbackItems) : 0
   });
 });
 
@@ -152,14 +172,19 @@ router.get('/ai-analysis', authMiddleware, async (req, res) => {
   const { role, userId, departmentId } = req.user;
 
   try {
-    // 获取当前周数
-    let currentWeekNum = 1;
+    // 获取系统配置
+    let weekStartDate = '2026-02-25';
     try {
-      const currentWeek = await queryOne("SELECT EXTRACT(WEEK FROM NOW()) as week");
-      currentWeekNum = currentWeek?.week || 1;
+      const config = await queryOne("SELECT config_value FROM sys_config WHERE config_key = 'current_week_start'");
+      if (config?.config_value) {
+        weekStartDate = config.config_value;
+      }
     } catch (error) {
-      console.log('获取当前周数失败，使用默认值');
+      console.log('获取学期起始日期失败，使用默认值');
     }
+
+    // 获取当前周数（根据学期起始日期计算）
+    const currentWeekNum = calcWeekNumber(weekStartDate);
 
     // 一次性获取所有统计数据
     let stats = {
@@ -191,29 +216,27 @@ router.get('/ai-analysis', authMiddleware, async (req, res) => {
       console.log('获取统计数据失败，使用默认值:', error.message);
     }
 
-    // 获取历史数据 - 过去4周的完成情况
+    // 获取历史数据 - 从第1周到当前周的完成情况
     const historicalData = [];
     try {
       const historicalWeeks = await query(
         `SELECT 
-          EXTRACT(WEEK FROM start_date) as week, 
+          week_number as week, 
           COUNT(*) as total, 
           SUM(CASE WHEN status='COMPLETED' THEN 1 ELSE 0 END) as completed 
          FROM biz_week_plan 
          WHERE is_deleted=false 
-         AND EXTRACT(WEEK FROM start_date) BETWEEN ? AND ? 
-         GROUP BY EXTRACT(WEEK FROM start_date) 
-         ORDER BY EXTRACT(WEEK FROM start_date) DESC 
-         LIMIT 4`,
-        [currentWeekNum - 4, currentWeekNum - 1]
+         AND week_number BETWEEN 1 AND ? 
+         GROUP BY week_number 
+         ORDER BY week_number`,
+        [currentWeekNum]
       );
 
-      // 填充历史数据
-      for (let i = 1; i <= 4; i++) {
-        const weekNum = currentWeekNum - i;
-        const weekData = historicalWeeks.find(w => w.week === weekNum);
+      // 填充历史数据（从第1周到当前周）
+      for (let i = 1; i <= currentWeekNum; i++) {
+        const weekData = historicalWeeks.find(w => w.week === i);
         historicalData.push({
-          week: `第${weekNum}周`,
+          week: `第${i}周`,
           total: weekData?.total || 0,
           completed: weekData?.completed || 0,
           completionRate: weekData?.total > 0 ? Math.round((weekData.completed / weekData.total) * 100) : 0
@@ -624,6 +647,20 @@ function generateMockAIAnalysis() {
 // 图表数据API
 router.get('/chart-data', authMiddleware, async (req, res) => {
   try {
+    // 获取系统配置
+    let weekStartDate = '2026-02-25';
+    try {
+      const config = await queryOne("SELECT config_value FROM sys_config WHERE config_key = 'current_week_start'");
+      if (config?.config_value) {
+        weekStartDate = config.config_value;
+      }
+    } catch (error) {
+      console.log('获取学期起始日期失败，使用默认值');
+    }
+
+    // 获取当前周数（根据学期起始日期计算）
+    const currentWeekNum = calcWeekNumber(weekStartDate);
+
     // 1. 计划状态分布
     const planStatusData = await query(`
       SELECT 
@@ -675,32 +712,28 @@ router.get('/chart-data', authMiddleware, async (req, res) => {
     const departmentNames = departmentPlanData.map(d => d.departmentName);
     const departmentCounts = departmentPlanData.map(d => d.planCount);
 
-    // 3. 计划完成趋势（过去6周）
-    const currentWeek = await queryOne("SELECT EXTRACT(WEEK FROM NOW()) as week");
-    const currentWeekNum = currentWeek?.week || 1;
-    
+    // 3. 计划完成趋势（从第1周到当前周）
     const trendData = await query(`
       SELECT 
-        EXTRACT(WEEK FROM start_date) as week,
+        week_number as week,
         COUNT(*) as total,
         SUM(CASE WHEN status='COMPLETED' THEN 1 ELSE 0 END) as completed,
         SUM(CASE WHEN status IN ('DRAFT','SUBMITTED','DEPT_APPROVED','OFFICE_APPROVED','PUBLISHED') THEN 1 ELSE 0 END) as inProgress
       FROM biz_week_plan 
       WHERE is_deleted=false 
-        AND EXTRACT(WEEK FROM start_date) BETWEEN $1 AND $2
-      GROUP BY EXTRACT(WEEK FROM start_date)
-      ORDER BY EXTRACT(WEEK FROM start_date)
-    `, [currentWeekNum - 5, currentWeekNum]);
+        AND week_number BETWEEN 1 AND ?
+      GROUP BY week_number
+      ORDER BY week_number
+    `, [currentWeekNum]);
     
     const weeks = [];
     const totalPlans = [];
     const completedPlans = [];
     const inProgressPlans = [];
     
-    for (let i = 5; i >= 0; i--) {
-      const weekNum = currentWeekNum - i;
-      const weekData = trendData.find(w => w.week === weekNum);
-      weeks.push(`第${weekNum}周`);
+    for (let i = 1; i <= currentWeekNum; i++) {
+      const weekData = trendData.find(w => w.week === i);
+      weeks.push(`第${i}周`);
       totalPlans.push(weekData?.total || 0);
       completedPlans.push(weekData?.completed || 0);
       inProgressPlans.push(weekData?.inProgress || 0);

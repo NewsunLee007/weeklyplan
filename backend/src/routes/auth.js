@@ -12,12 +12,25 @@ router.post('/login', async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) return fail(res, '用户名和密码不能为空');
 
-  const user = await queryOne(
-    `SELECT u.*, d.name as dept_name FROM sys_user u
-     LEFT JOIN sys_department d ON u.department_id = d.id
-     WHERE u.username = ? AND u.is_deleted = false`,
-    [username]
-  );
+  let user = null;
+  
+  // 特殊处理：admin账号只能用用户名登录
+  if (username === 'admin') {
+    user = await queryOne(
+      `SELECT u.*, d.name as dept_name FROM sys_user u
+       LEFT JOIN sys_department d ON u.department_id = d.id
+       WHERE u.username = $1 AND u.is_deleted = false`,
+      [username]
+    );
+  } else {
+    // 其他用户可以用用户名、真实姓名或电话号码登录
+    user = await queryOne(
+      `SELECT u.*, d.name as dept_name FROM sys_user u
+       LEFT JOIN sys_department d ON u.department_id = d.id
+       WHERE (u.username = $1 OR u.real_name = $1 OR u.phone = $1) AND u.is_deleted = false`,
+      [username]
+    );
+  }
 
   if (!user) return fail(res, '用户名或密码错误');
   if (user.status === 0) return fail(res, '账号已被禁用');

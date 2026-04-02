@@ -81,206 +81,6 @@
       </el-row>
     </div>
 
-    <!-- 数据可视化区域 -->
-    <div class="chart-section">
-      <div class="section-header">
-        <h2 class="section-title">数据趋势</h2>
-        <el-select v-model="chartTimeRange" size="small" class="chart-time-select">
-          <el-option label="近7天" value="7d" />
-          <el-option label="近30天" value="30d" />
-          <el-option label="本季度" value="quarter" />
-          <el-option label="本年度" value="year" />
-        </el-select>
-      </div>
-      <el-row :gutter="20">
-        <el-col :xs="24" :md="12">
-          <div class="chart-card">
-            <div class="chart-header">
-              <h3 class="chart-title">计划状态分布</h3>
-              <el-button size="small" @click="refreshCharts" class="chart-action-btn">
-                <el-icon><Refresh /></el-icon>
-              </el-button>
-            </div>
-            <div id="planStatusChart" class="chart-container"></div>
-          </div>
-        </el-col>
-        <el-col :xs="24" :md="12">
-          <div class="chart-card">
-            <div class="chart-header">
-              <h3 class="chart-title">部门计划数量</h3>
-              <el-button size="small" @click="refreshCharts" class="chart-action-btn">
-                <el-icon><Refresh /></el-icon>
-              </el-button>
-            </div>
-            <div id="departmentPlanChart" class="chart-container"></div>
-          </div>
-        </el-col>
-        <el-col :xs="24" :md="12">
-          <div class="chart-card">
-            <div class="chart-header">
-              <h3 class="chart-title">计划完成趋势</h3>
-              <el-button size="small" @click="refreshCharts" class="chart-action-btn">
-                <el-icon><Refresh /></el-icon>
-              </el-button>
-            </div>
-            <div id="planTrendChart" class="chart-container"></div>
-          </div>
-        </el-col>
-        <el-col :xs="24" :md="12">
-          <div class="chart-card">
-            <div class="chart-header">
-              <h3 class="chart-title">部门工作效率</h3>
-              <el-button size="small" @click="refreshCharts" class="chart-action-btn">
-                <el-icon><Refresh /></el-icon>
-              </el-button>
-            </div>
-            <div id="departmentEfficiencyChart" class="chart-container"></div>
-          </div>
-        </el-col>
-      </el-row>
-    </div>
-
-    <!-- AI 分析区域 -->
-    <div class="ai-section">
-      <h2 class="section-title">AI 智能分析</h2>
-      <div class="ai-card">
-        <div class="ai-header">
-          <el-icon :size="24" class="ai-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><path d="M11 18H8a2 2 0 0 1-2-2V9"/></svg>
-          </el-icon>
-          <h3 class="ai-title">本周工作洞察</h3>
-          <el-tag size="small" type="info" class="ai-tag">实时分析</el-tag>
-        </div>
-        <div class="ai-content">
-          <div v-if="loading" class="ai-loading">
-            <el-skeleton :rows="6" animated />
-          </div>
-          <div v-else>
-            <!-- 阶段工作的总结 -->
-            <div class="ai-summary-section">
-              <h4 class="ai-section-title">
-                <el-icon><Document /></el-icon> 阶段工作的总结
-              </h4>
-              <div class="ai-summary">{{ aiAnalysis?.stageSummary || '本阶段工作进展良好，计划完成率达到85%，各项工作有序推进。' }}</div>
-            </div>
-
-            <!-- 工作洞察 -->
-            <div class="ai-insights-section">
-              <h4 class="ai-section-title">
-                <el-icon><Document /></el-icon> 工作洞察
-              </h4>
-              <div class="ai-insights">
-                <div class="insight-item" v-for="(insight, index) in aiInsights" :key="index">
-                  <el-icon class="insight-icon">
-                    <component :is="getInsightIcon(insight.icon)" />
-                  </el-icon>
-                  <div class="insight-text">{{ insight.text }}</div>
-                  <el-tag v-if="insight.priority" :type="insight.priority === 'high' ? 'danger' : 'warning'" size="small" class="insight-priority">
-                    {{ insight.priority === 'high' ? '重要' : '提醒' }}
-                  </el-tag>
-                </div>
-              </div>
-            </div>
-
-            <!-- 新的一周的计划安排提示 -->
-            <div class="ai-weekly-tips-section">
-              <h4 class="ai-section-title">
-                <el-icon><Calendar /></el-icon> 新周计划提示
-              </h4>
-              <div class="ai-weekly-tips">{{ aiAnalysis?.weeklyPlanTips || '下周建议：1. 完成未完成的计划项；2. 准备下周的重要会议材料；3. 跟进九年级的计划提交情况；4. 总结本阶段工作经验。' }}</div>
-            </div>
-
-            <!-- 下一阶段的工作安排 -->
-            <div class="ai-next-stage-section">
-              <h4 class="ai-section-title">
-                <el-icon><Document /></el-icon> 下一阶段工作安排
-              </h4>
-              <div class="ai-next-stage">{{ aiAnalysis?.nextStagePlan || '下一阶段工作建议：1. 继续保持良好的工作状态；2. 加强部门间的沟通协作；3. 关注学校整体发展目标；4. 优化工作计划和流程，提高工作效率。' }}</div>
-            </div>
-
-            <!-- 关键指标 -->
-            <div class="ai-metrics-section">
-              <h4 class="ai-section-title">
-                <el-icon><DataAnalysis /></el-icon> 关键指标
-              </h4>
-              <div class="ai-metrics">
-                <div class="metric-item" v-for="(value, key) in aiAnalysis?.metrics" :key="key">
-                  <div class="metric-label">{{ getMetricLabel(key) }}</div>
-                  <div class="metric-value">{{ value }}{{ getMetricUnit(key) }}</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- 趋势分析 -->
-            <div class="ai-trend-section" v-if="aiAnalysis?.trendAnalysis">
-              <h4 class="ai-section-title">
-                <el-icon><DataLine /></el-icon> 趋势分析
-              </h4>
-              <div class="ai-trend">
-                <div class="trend-summary">
-                  <el-tag :type="getTrendTagType(aiAnalysis.trendAnalysis.trend)" size="large" class="trend-tag">
-                    {{ getTrendLabel(aiAnalysis.trendAnalysis.trend) }}
-                  </el-tag>
-                  <span class="trend-description">平均完成率: {{ aiAnalysis.trendAnalysis.averageRate }}%</span>
-                </div>
-                
-                <!-- 历史完成率图表 -->
-                <div class="trend-chart-container" v-if="aiAnalysis?.historicalData && aiAnalysis.historicalData.length > 0">
-                  <div id="trendChart" class="trend-chart"></div>
-                </div>
-              </div>
-            </div>
-
-            <!-- 历史数据 -->
-            <div class="ai-history-section" v-if="aiAnalysis?.historicalData && aiAnalysis.historicalData.length > 0">
-              <h4 class="ai-section-title">
-                <el-icon><Clock /></el-icon> 历史数据
-              </h4>
-              <div class="ai-history">
-                <div class="history-item" v-for="(item, index) in aiAnalysis.historicalData" :key="index">
-                  <div class="history-week">{{ item.week }}</div>
-                  <div class="history-completion">
-                    <el-progress 
-                      :percentage="item.completionRate" 
-                      :color="getProgressColor(item.completionRate)"
-                      :stroke-width="8"
-                    />
-                  </div>
-                  <div class="history-counts">
-                    <span class="completed">{{ item.completed }}/{{ item.total }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- 角色特定建议 -->
-            <div class="ai-role-suggestions-section" v-if="aiAnalysis?.roleSpecificSuggestions && aiAnalysis.roleSpecificSuggestions.length > 0">
-              <h4 class="ai-section-title">
-                <el-icon><User /></el-icon> 角色建议
-              </h4>
-              <div class="ai-role-suggestions">
-                <div class="role-suggestion-item" v-for="(suggestion, index) in aiAnalysis.roleSpecificSuggestions" :key="index">
-                  <el-icon class="suggestion-icon"><Check /></el-icon>
-                  <div class="suggestion-text">{{ suggestion }}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="ai-footer">
-          <el-button size="small" @click="refreshAIInsights" :loading="loading" class="refresh-btn">
-            <el-icon><Refresh /></el-icon> 刷新分析
-          </el-button>
-          <el-button size="small" @click="exportAnalysis" class="export-btn">
-            <el-icon><Download /></el-icon> 导出报告
-          </el-button>
-          <el-button size="small" @click="viewDetailedAnalysis" class="detail-btn">
-            <el-icon><View /></el-icon> 详细分析
-          </el-button>
-        </div>
-      </div>
-    </div>
-
     <!-- 快速操作区域 -->
     <div class="quick-actions-section">
       <h2 class="section-title">快速操作</h2>
@@ -297,20 +97,238 @@
       </el-row>
     </div>
 
-    <!-- 最近活动区域 -->
-    <div class="recent-activities-section">
-      <h2 class="section-title">最近活动</h2>
-      <div class="activity-card">
-        <div class="activity-item" v-for="(activity, index) in recentActivities" :key="index">
-          <div class="activity-icon" :style="{ background: activity.color + '15', color: activity.color }">
-            <el-icon><component :is="activity.icon" /></el-icon>
+    <!-- 标签页区域 -->
+    <div class="tabs-section">
+      <div class="tabs-container">
+        <div class="tabs-header">
+          <div 
+            v-for="tab in tabs" 
+            :key="tab.id"
+            class="tab-item"
+            :class="{ active: activeTab === tab.id }"
+            @click="activeTab = tab.id"
+          >
+            <el-icon class="tab-icon"><component :is="tab.icon" /></el-icon>
+            <span class="tab-label">{{ tab.label }}</span>
           </div>
-          <div class="activity-content">
-            <div class="activity-title">{{ activity.title }}</div>
-            <div class="activity-description">{{ activity.description }}</div>
-            <div class="activity-time">{{ activity.time }}</div>
+        </div>
+        
+        <div class="tabs-content">
+          <!-- 数据趋势 -->
+          <div v-show="activeTab === 'chart'" class="tab-panel">
+            <div class="section-header">
+              <h2 class="section-title">数据趋势</h2>
+              <el-select v-model="chartTimeRange" size="small" class="chart-time-select">
+                <el-option label="近7天" value="7d" />
+                <el-option label="近30天" value="30d" />
+                <el-option label="本季度" value="quarter" />
+                <el-option label="本年度" value="year" />
+              </el-select>
+            </div>
+            <el-row :gutter="20">
+              <el-col :xs="24" :md="12">
+                <div class="chart-card">
+                  <div class="chart-header">
+                    <h3 class="chart-title">计划状态分布</h3>
+                    <el-button size="small" @click="refreshCharts" class="chart-action-btn">
+                      <el-icon><Refresh /></el-icon>
+                    </el-button>
+                  </div>
+                  <div id="planStatusChart" class="chart-container"></div>
+                </div>
+              </el-col>
+              <el-col :xs="24" :md="12">
+                <div class="chart-card">
+                  <div class="chart-header">
+                    <h3 class="chart-title">部门计划数量</h3>
+                    <el-button size="small" @click="refreshCharts" class="chart-action-btn">
+                      <el-icon><Refresh /></el-icon>
+                    </el-button>
+                  </div>
+                  <div id="departmentPlanChart" class="chart-container"></div>
+                </div>
+              </el-col>
+              <el-col :xs="24" :md="12">
+                <div class="chart-card">
+                  <div class="chart-header">
+                    <h3 class="chart-title">计划完成趋势</h3>
+                    <el-button size="small" @click="refreshCharts" class="chart-action-btn">
+                      <el-icon><Refresh /></el-icon>
+                    </el-button>
+                  </div>
+                  <div id="planTrendChart" class="chart-container"></div>
+                </div>
+              </el-col>
+              <el-col :xs="24" :md="12">
+                <div class="chart-card">
+                  <div class="chart-header">
+                    <h3 class="chart-title">部门工作效率</h3>
+                    <el-button size="small" @click="refreshCharts" class="chart-action-btn">
+                      <el-icon><Refresh /></el-icon>
+                    </el-button>
+                  </div>
+                  <div id="departmentEfficiencyChart" class="chart-container"></div>
+                </div>
+              </el-col>
+            </el-row>
           </div>
-          <div class="activity-status" :class="activity.status">{{ activity.statusText }}</div>
+
+          <!-- AI 智能分析 -->
+          <div v-show="activeTab === 'ai'" class="tab-panel">
+            <div class="ai-card">
+              <div class="ai-header">
+                <el-icon :size="24" class="ai-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><path d="M11 18H8a2 2 0 0 1-2-2V9"/></svg>
+                </el-icon>
+                <h3 class="ai-title">本周工作洞察</h3>
+                <el-tag size="small" type="info" class="ai-tag">实时分析</el-tag>
+              </div>
+              <div class="ai-content">
+                <div v-if="loading" class="ai-loading">
+                  <el-skeleton :rows="6" animated />
+                </div>
+                <div v-else>
+                  <!-- 阶段工作的总结 -->
+                  <div class="ai-summary-section">
+                    <h4 class="ai-section-title">
+                      <el-icon><Document /></el-icon> 阶段工作的总结
+                    </h4>
+                    <div class="ai-summary">{{ aiAnalysis?.stageSummary || '本阶段工作进展良好，计划完成率达到85%，各项工作有序推进。' }}</div>
+                  </div>
+
+                  <!-- 工作洞察 -->
+                  <div class="ai-insights-section">
+                    <h4 class="ai-section-title">
+                      <el-icon><Document /></el-icon> 工作洞察
+                    </h4>
+                    <div class="ai-insights">
+                      <div class="insight-item" v-for="(insight, index) in aiInsights" :key="index">
+                        <el-icon class="insight-icon">
+                          <component :is="getInsightIcon(insight.icon)" />
+                        </el-icon>
+                        <div class="insight-text">{{ insight.text }}</div>
+                        <el-tag v-if="insight.priority" :type="insight.priority === 'high' ? 'danger' : 'warning'" size="small" class="insight-priority">
+                          {{ insight.priority === 'high' ? '重要' : '提醒' }}
+                        </el-tag>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 新的一周的计划安排提示 -->
+                  <div class="ai-weekly-tips-section">
+                    <h4 class="ai-section-title">
+                      <el-icon><Calendar /></el-icon> 新周计划提示
+                    </h4>
+                    <div class="ai-weekly-tips">{{ aiAnalysis?.weeklyPlanTips || '下周建议：1. 完成未完成的计划项；2. 准备下周的重要会议材料；3. 跟进九年级的计划提交情况；4. 总结本阶段工作经验。' }}</div>
+                  </div>
+
+                  <!-- 下一阶段的工作安排 -->
+                  <div class="ai-next-stage-section">
+                    <h4 class="ai-section-title">
+                      <el-icon><Document /></el-icon> 下一阶段工作安排
+                    </h4>
+                    <div class="ai-next-stage">{{ aiAnalysis?.nextStagePlan || '下一阶段工作建议：1. 继续保持良好的工作状态；2. 加强部门间的沟通协作；3. 关注学校整体发展目标；4. 优化工作计划和流程，提高工作效率。' }}</div>
+                  </div>
+
+                  <!-- 关键指标 -->
+                  <div class="ai-metrics-section">
+                    <h4 class="ai-section-title">
+                      <el-icon><DataAnalysis /></el-icon> 关键指标
+                    </h4>
+                    <div class="ai-metrics">
+                      <div class="metric-item" v-for="(value, key) in aiAnalysis?.metrics" :key="key">
+                        <div class="metric-label">{{ getMetricLabel(key) }}</div>
+                        <div class="metric-value">{{ value }}{{ getMetricUnit(key) }}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 趋势分析 -->
+                  <div class="ai-trend-section" v-if="aiAnalysis?.trendAnalysis">
+                    <h4 class="ai-section-title">
+                      <el-icon><DataLine /></el-icon> 趋势分析
+                    </h4>
+                    <div class="ai-trend">
+                      <div class="trend-summary">
+                        <el-tag :type="getTrendTagType(aiAnalysis.trendAnalysis.trend)" size="large" class="trend-tag">
+                          {{ getTrendLabel(aiAnalysis.trendAnalysis.trend) }}
+                        </el-tag>
+                        <span class="trend-description">平均完成率: {{ aiAnalysis.trendAnalysis.averageRate }}%</span>
+                      </div>
+                      
+                      <!-- 历史完成率图表 -->
+                      <div class="trend-chart-container" v-if="aiAnalysis?.historicalData && aiAnalysis.historicalData.length > 0">
+                        <div id="trendChart" class="trend-chart"></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 历史数据 -->
+                  <div class="ai-history-section" v-if="aiAnalysis?.historicalData && aiAnalysis.historicalData.length > 0">
+                    <h4 class="ai-section-title">
+                      <el-icon><Clock /></el-icon> 历史数据
+                    </h4>
+                    <div class="ai-history">
+                      <div class="history-item" v-for="(item, index) in aiAnalysis.historicalData" :key="index">
+                        <div class="history-week">{{ item.week }}</div>
+                        <div class="history-completion">
+                          <el-progress 
+                            :percentage="item.completionRate" 
+                            :color="getProgressColor(item.completionRate)"
+                            :stroke-width="8"
+                          />
+                        </div>
+                        <div class="history-counts">
+                          <span class="completed">{{ item.completed }}/{{ item.total }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 角色特定建议 -->
+                  <div class="ai-role-suggestions-section" v-if="aiAnalysis?.roleSpecificSuggestions && aiAnalysis.roleSpecificSuggestions.length > 0">
+                    <h4 class="ai-section-title">
+                      <el-icon><User /></el-icon> 角色建议
+                    </h4>
+                    <div class="ai-role-suggestions">
+                      <div class="role-suggestion-item" v-for="(suggestion, index) in aiAnalysis.roleSpecificSuggestions" :key="index">
+                        <el-icon class="suggestion-icon"><Check /></el-icon>
+                        <div class="suggestion-text">{{ suggestion }}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="ai-footer">
+                <el-button size="small" @click="refreshAIInsights" :loading="loading" class="refresh-btn">
+                  <el-icon><Refresh /></el-icon> 刷新分析
+                </el-button>
+                <el-button size="small" @click="exportAnalysis" class="export-btn">
+                  <el-icon><Download /></el-icon> 导出报告
+                </el-button>
+                <el-button size="small" @click="viewDetailedAnalysis" class="detail-btn">
+                  <el-icon><View /></el-icon> 详细分析
+                </el-button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 最近活动 -->
+          <div v-show="activeTab === 'activity'" class="tab-panel">
+            <div class="activity-card">
+              <div class="activity-item" v-for="(activity, index) in recentActivities" :key="index">
+                <div class="activity-icon" :style="{ background: activity.color + '15', color: activity.color }">
+                  <el-icon><component :is="activity.icon" /></el-icon>
+                </div>
+                <div class="activity-content">
+                  <div class="activity-title">{{ activity.title }}</div>
+                  <div class="activity-description">{{ activity.description }}</div>
+                  <div class="activity-time">{{ activity.time }}</div>
+                </div>
+                <div class="activity-status" :class="activity.status">{{ activity.statusText }}</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -318,7 +336,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../stores/user'
 import request from '../utils/request'
@@ -327,7 +345,7 @@ import * as echarts from 'echarts'
 import { 
   Plus, Document, DocumentChecked, EditPen, ChatDotRound, 
   Clock, Setting, View, List, ArrowUp, ArrowDown, Refresh, 
-  Calendar, Warning, Download, Check, Top, DataLine, User, InfoFilled
+  Calendar, Warning, Download, Check, Top, DataLine, User, InfoFilled, DataAnalysis
 } from '@element-plus/icons-vue'
 
 const router = useRouter()
@@ -344,10 +362,19 @@ const isScrolled = ref(false)
 const weatherData = ref(null)
 const recentActivities = ref([])
 const chartData = ref(null)
+const activeTab = ref('chart')
+
 let planStatusChart = null
 let departmentPlanChart = null
 let planTrendChart = null
 let departmentEfficiencyChart = null
+let trendChart = null
+
+const tabs = [
+  { id: 'chart', label: '数据趋势', icon: DataLine },
+  { id: 'ai', label: 'AI智能分析', icon: DataAnalysis },
+  { id: 'activity', label: '最近活动', icon: Clock }
+]
 
 const todayStr = dayjs().format('YYYY年MM月DD日 dddd')
 
@@ -426,12 +453,10 @@ async function fetchQuickActionsStats() {
   }
 }
 
-// 滚动检测
 function handleScroll() {
   isScrolled.value = window.scrollY > 50
 }
 
-// 获取图表数据
 async function fetchChartData() {
   try {
     const response = await request.get('/dashboard/chart-data')
@@ -443,7 +468,6 @@ async function fetchChartData() {
   }
 }
 
-// 初始化计划状态分布图表
 function initPlanStatusChart(data) {
   const chartDom = document.getElementById('planStatusChart')
   if (chartDom) {
@@ -509,7 +533,6 @@ function initPlanStatusChart(data) {
   }
 }
 
-// 初始化部门计划数量图表
 function initDepartmentPlanChart(data) {
   const chartDom = document.getElementById('departmentPlanChart')
   if (chartDom) {
@@ -585,7 +608,6 @@ function initDepartmentPlanChart(data) {
   }
 }
 
-// 初始化计划完成趋势图表
 function initPlanTrendChart(data) {
   const chartDom = document.getElementById('planTrendChart')
   if (chartDom) {
@@ -681,7 +703,6 @@ function initPlanTrendChart(data) {
   }
 }
 
-// 初始化部门工作效率图表
 function initDepartmentEfficiencyChart(data) {
   const chartDom = document.getElementById('departmentEfficiencyChart')
   if (chartDom) {
@@ -793,33 +814,27 @@ function initDepartmentEfficiencyChart(data) {
   }
 }
 
-// 刷新图表
 async function refreshCharts() {
   const data = await fetchChartData()
-  initPlanStatusChart(data)
-  initDepartmentPlanChart(data)
-  initPlanTrendChart(data)
-  initDepartmentEfficiencyChart(data)
+  if (activeTab.value === 'chart') {
+    initPlanStatusChart(data)
+    initDepartmentPlanChart(data)
+    initPlanTrendChart(data)
+    initDepartmentEfficiencyChart(data)
+  }
 }
 
-// 刷新AI分析
 async function refreshAIInsights() {
   loading.value = true
   try {
-    // 调用后端API获取AI分析数据
     const data = await request.get('/dashboard/ai-analysis')
-    
-    // 更新AI洞察
     aiInsights.value = data.insights || []
-    
-    // 更新AI分析详情
     aiAnalysis.value = data
-    
-    // 初始化趋势图表
-    setTimeout(() => initTrendChart(), 100)
+    if (activeTab.value === 'ai') {
+      setTimeout(() => initTrendChart(), 100)
+    }
   } catch (error) {
     console.error('获取AI分析失败:', error)
-    // 模拟AI分析结果
     const mockData = {
       insights: [
         {
@@ -874,15 +889,14 @@ async function refreshAIInsights() {
     }
     aiInsights.value = mockData.insights || []
     aiAnalysis.value = mockData
-    
-    // 初始化趋势图表
-    setTimeout(() => initTrendChart(), 100)
+    if (activeTab.value === 'ai') {
+      setTimeout(() => initTrendChart(), 100)
+    }
   } finally {
     loading.value = false
   }
 }
 
-// 获取洞察图标
 function getInsightIcon(iconName) {
   const icons = {
     'Document': Document,
@@ -896,7 +910,6 @@ function getInsightIcon(iconName) {
   return icons[iconName] || Document
 }
 
-// 获取指标标签
 function getMetricLabel(key) {
   const labels = {
     completionRate: '完成率',
@@ -909,13 +922,11 @@ function getMetricLabel(key) {
   return labels[key] || key
 }
 
-// 获取指标单位
 function getMetricUnit(key) {
   if (key === 'completionRate') return '%'
   return ''
 }
 
-// 获取趋势标签类型
 function getTrendTagType(trend) {
   const types = {
     'improving': 'success',
@@ -925,7 +936,6 @@ function getTrendTagType(trend) {
   return types[trend] || 'info'
 }
 
-// 获取趋势标签文本
 function getTrendLabel(trend) {
   const labels = {
     'improving': '上升趋势',
@@ -935,15 +945,11 @@ function getTrendLabel(trend) {
   return labels[trend] || '稳定趋势'
 }
 
-// 获取进度条颜色
 function getProgressColor(percentage) {
   if (percentage >= 80) return '#22C55E'
   if (percentage >= 60) return '#F59E0B'
   return '#EF4444'
 }
-
-// 初始化趋势图表
-let trendChart = null
 
 function initTrendChart() {
   const chartDom = document.getElementById('trendChart')
@@ -1031,21 +1037,15 @@ function initTrendChart() {
   }
 }
 
-// 查看详细分析
 function viewDetailedAnalysis() {
-  // 这里可以跳转到详细分析页面
   console.log('查看详细分析')
 }
 
-// 导出分析报告
 function exportAnalysis() {
-  // 模拟导出功能
   console.log('导出分析报告')
 }
 
-// 模拟天气数据
 function fetchWeatherData() {
-  // 模拟天气API调用
   weatherData.value = {
     temperature: 22,
     description: '晴天'
@@ -1113,13 +1113,26 @@ async function fetchRecentActivities() {
   }
 }
 
-// 监听统计周期变化
 watch(statsPeriod, (newPeriod) => {
   console.log('统计周期变化:', newPeriod)
-  // 这里可以根据周期重新获取数据
 })
 
-// 响应式处理
+watch(activeTab, async (newTab) => {
+  await nextTick()
+  if (newTab === 'chart') {
+    if (chartData.value) {
+      initPlanStatusChart(chartData.value)
+      initDepartmentPlanChart(chartData.value)
+      initPlanTrendChart(chartData.value)
+      initDepartmentEfficiencyChart(chartData.value)
+    }
+  } else if (newTab === 'ai') {
+    if (aiAnalysis.value) {
+      setTimeout(() => initTrendChart(), 100)
+    }
+  }
+})
+
 function handleResize() {
   planStatusChart?.resize()
   departmentPlanChart?.resize()
@@ -1133,10 +1146,8 @@ onMounted(async () => {
     stats.value = await request.get('/dashboard/stats')
   } catch {}
   
-  // 获取快捷操作统计数据
   await fetchQuickActionsStats()
   
-  // 获取图表数据并初始化图表
   const chartData = await fetchChartData()
   setTimeout(() => {
     initPlanStatusChart(chartData)
@@ -1147,13 +1158,10 @@ onMounted(async () => {
     window.addEventListener('scroll', handleScroll)
   }, 100)
   
-  // 加载AI分析
   await refreshAIInsights()
   
-  // 加载天气数据
   fetchWeatherData()
   
-  // 加载最近活动
   await fetchRecentActivities()
 })
 
@@ -1500,11 +1508,171 @@ onUnmounted(() => {
   transition: all var(--transition-base);
 }
 
-/* 数据可视化区域 */
-.chart-section {
+/* 快速操作区域 */
+.quick-actions-section {
   margin-bottom: 40px;
 }
 
+.action-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid #E0F2FE;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  position: relative;
+  overflow: hidden;
+}
+
+.action-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, #0891B2 0%, #06B6D4 100%);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s var(--transition-base);
+}
+
+.action-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(8, 145, 178, 0.1);
+  border-color: #BAE6FD;
+}
+
+.action-card:hover::before {
+  transform: scaleX(1);
+}
+
+.action-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px auto;
+  flex-shrink: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.action-card:hover .action-icon {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(8, 145, 178, 0.2);
+}
+
+.action-label {
+  font-size: 14px;
+  color: #164E63;
+  font-weight: 500;
+  transition: all var(--transition-base);
+  margin-bottom: 8px;
+}
+
+.action-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: #EF4444;
+  color: white;
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  min-width: 24px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+  animation: pulse 2s infinite;
+}
+
+/* 标签页区域 */
+.tabs-section {
+  margin-bottom: 40px;
+}
+
+.tabs-container {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  border: 1px solid #E0F2FE;
+  overflow: hidden;
+}
+
+.tabs-header {
+  display: flex;
+  background: #F8FAFC;
+  border-bottom: 1px solid #E2E8F0;
+}
+
+.tab-item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 20px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-bottom: 3px solid transparent;
+  position: relative;
+}
+
+.tab-item:hover {
+  background: rgba(8, 145, 178, 0.05);
+}
+
+.tab-item.active {
+  background: #ffffff;
+  border-bottom-color: #0891B2;
+}
+
+.tab-icon {
+  font-size: 18px;
+  color: #64748B;
+  transition: all var(--transition-base);
+}
+
+.tab-item.active .tab-icon {
+  color: #0891B2;
+}
+
+.tab-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748B;
+  transition: all var(--transition-base);
+}
+
+.tab-item.active .tab-label {
+  color: #164E63;
+}
+
+.tabs-content {
+  padding: 24px;
+}
+
+.tab-panel {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 数据可视化区域 */
 .chart-card {
   background: #ffffff;
   border-radius: 16px;
@@ -1571,10 +1739,6 @@ onUnmounted(() => {
 }
 
 /* AI 分析区域 */
-.ai-section {
-  margin-bottom: 40px;
-}
-
 .ai-card {
   background: linear-gradient(135deg, #F8FAFC 0%, #FFFFFF 100%);
   border-radius: 16px;
@@ -1642,7 +1806,6 @@ onUnmounted(() => {
   transition: all var(--transition-base);
 }
 
-/* AI 分析各部分样式 */
 .ai-summary-section,
 .ai-insights-section,
 .ai-weekly-tips-section,
@@ -1762,7 +1925,6 @@ onUnmounted(() => {
   margin-left: 8px;
 }
 
-/* 指标部分样式 */
 .ai-metrics {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
@@ -1799,7 +1961,6 @@ onUnmounted(() => {
   transition: all var(--transition-base);
 }
 
-/* 角色特定建议样式 */
 .ai-role-suggestions-section {
   margin-bottom: 24px;
   padding: 20px;
@@ -1857,7 +2018,6 @@ onUnmounted(() => {
   transition: all var(--transition-base);
 }
 
-/* 趋势分析样式 */
 .ai-trend-section {
   margin-bottom: 24px;
   padding: 20px;
@@ -1902,7 +2062,6 @@ onUnmounted(() => {
   width: 100%;
 }
 
-/* 历史数据样式 */
 .ai-history-section {
   margin-bottom: 24px;
   padding: 20px;
@@ -1983,94 +2142,7 @@ onUnmounted(() => {
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
 }
 
-/* 快速操作区域 */
-.quick-actions-section {
-  margin-bottom: 40px;
-}
-
-.action-card {
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 20px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid #E0F2FE;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  position: relative;
-  overflow: hidden;
-}
-
-.action-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 3px;
-  background: linear-gradient(90deg, #0891B2 0%, #06B6D4 100%);
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.3s var(--transition-base);
-}
-
-.action-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(8, 145, 178, 0.1);
-  border-color: #BAE6FD;
-}
-
-.action-card:hover::before {
-  transform: scaleX(1);
-}
-
-.action-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 12px auto;
-  flex-shrink: 0;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-.action-card:hover .action-icon {
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(8, 145, 178, 0.2);
-}
-
-.action-label {
-  font-size: 14px;
-  color: #164E63;
-  font-weight: 500;
-  transition: all var(--transition-base);
-  margin-bottom: 8px;
-}
-
-.action-badge {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  background: #EF4444;
-  color: white;
-  border-radius: 12px;
-  padding: 2px 8px;
-  font-size: 12px;
-  font-weight: 600;
-  min-width: 24px;
-  text-align: center;
-  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
-  animation: pulse 2s infinite;
-}
-
 /* 最近活动区域 */
-.recent-activities-section {
-  margin-bottom: 40px;
-}
-
 .activity-card {
   background: #ffffff;
   border-radius: 16px;
@@ -2164,7 +2236,6 @@ onUnmounted(() => {
   color: #3B82F6;
 }
 
-/* 呼吸动画 */
 @keyframes pulse {
   0% {
     transform: scale(1);
@@ -2180,7 +2251,6 @@ onUnmounted(() => {
   }
 }
 
-/* 响应式设计 */
 @media (max-width: 768px) {
   .dashboard {
     padding: 16px;
@@ -2271,6 +2341,14 @@ onUnmounted(() => {
   .metric-label {
     font-size: 11px;
   }
+
+  .tabs-header {
+    flex-direction: column;
+  }
+
+  .tab-item {
+    width: 100%;
+  }
 }
 
 @media (max-width: 480px) {
@@ -2325,56 +2403,6 @@ onUnmounted(() => {
   .ai-summary, .ai-weekly-tips, .ai-next-stage {
     font-size: 13px;
     padding: 12px;
-  }
-
-  .insight-item {
-    padding: 10px;
-  }
-
-  .insight-text {
-    font-size: 12px;
-  }
-
-  .ai-metrics {
-    grid-template-columns: 1fr;
-  }
-
-  .role-suggestion-item {
-    padding: 10px;
-  }
-
-  .suggestion-text {
-    font-size: 12px;
-  }
-
-  .activity-item {
-    padding: 12px 0;
-  }
-
-  .activity-title {
-    font-size: 13px;
-  }
-
-  .activity-description {
-    font-size: 12px;
-  }
-
-  .activity-time {
-    font-size: 11px;
-  }
-}
-
-@media (min-width: 769px) and (max-width: 1024px) {
-  .dashboard {
-    padding: 24px;
-  }
-
-  .welcome-content {
-    padding: 28px 32px;
-  }
-
-  .chart-container {
-    height: 280px;
   }
 }
 </style>
