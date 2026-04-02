@@ -419,6 +419,11 @@ function convertPlaceholders(sql) {
 
 // 执行查询（用于 SELECT）
 async function query(sql, params = []) {
+  // 确保数据库已初始化
+  if (!dbType) {
+    await initDatabase();
+  }
+  
   if (dbType === 'postgres') {
     // 将 ? 占位符转换为 $1, $2, ...
     const pgSql = convertPlaceholders(sql);
@@ -432,6 +437,11 @@ async function query(sql, params = []) {
 
 // 执行查询（用于 SELECT 单行）
 async function queryOne(sql, params = []) {
+  // 确保数据库已初始化
+  if (!dbType) {
+    await initDatabase();
+  }
+  
   if (dbType === 'postgres') {
     // 将 ? 占位符转换为 $1, $2, ...
     const pgSql = convertPlaceholders(sql);
@@ -445,6 +455,11 @@ async function queryOne(sql, params = []) {
 
 // 执行查询（用于 INSERT/UPDATE/DELETE）
 async function execute(sql, params = []) {
+  // 确保数据库已初始化
+  if (!dbType) {
+    await initDatabase();
+  }
+  
   if (dbType === 'postgres') {
     // 将 ? 占位符转换为 $1, $2, ...
     const pgSql = convertPlaceholders(sql);
