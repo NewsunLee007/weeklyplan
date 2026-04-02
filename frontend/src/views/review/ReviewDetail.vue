@@ -15,7 +15,7 @@
             <el-descriptions-item label="提交人">{{ plan.creator_name }}</el-descriptions-item>
             <el-descriptions-item label="学期">{{ plan.semester }}</el-descriptions-item>
             <el-descriptions-item label="周次">第{{ plan.week_number }}周</el-descriptions-item>
-            <el-descriptions-item label="日期">{{ plan.start_date }} ~ {{ plan.end_date }}</el-descriptions-item>
+            <el-descriptions-item label="日期">{{ formatDate(plan.start_date) }} ~ {{ formatDate(plan.end_date) }}</el-descriptions-item>
             <el-descriptions-item label="状态">
               <el-tag :type="STATUS_MAP[plan.status]?.type">{{ STATUS_MAP[plan.status]?.label }}</el-tag>
             </el-descriptions-item>
@@ -35,7 +35,7 @@
             <el-table-column label="日期" width="150">
               <template #default="{row}">
                 <el-input v-if="canReview" v-model="row.plan_date" placeholder="YYYY-MM-DD" size="small" />
-                <span v-else>{{ row.plan_date }}</span>
+                <span v-else>{{ formatDate(row.plan_date) }}</span>
               </template>
             </el-table-column>
             <el-table-column label="星期" width="70" align="center">
@@ -73,7 +73,7 @@
               v-for="r in plan.reviews"
               :key="r.id"
               :type="r.result === 'APPROVED' ? 'success' : 'danger'"
-              :timestamp="r.create_time"
+              :timestamp="formatDate(r.create_time)"
             >
               <el-tag :type="r.result === 'APPROVED' ? 'success' : 'danger'" size="small">
                 {{ r.result === 'APPROVED' ? '通过' : '退回' }}
@@ -120,6 +120,15 @@ const acting = ref(false)
 const comment = ref('')
 
 const role = computed(() => userStore.userInfo?.role)
+
+function formatDate(dateStr) {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
 const canReview = computed(() => {
   const s = plan.value.status

@@ -34,7 +34,11 @@
             <el-table :data="dept.items" border stripe size="small" style="margin-top: 12px">
               <el-table-column type="index" label="序" width="50" align="center" />
               <el-table-column prop="creator_name" label="提交人" width="100" />
-              <el-table-column prop="plan_date" label="日期" width="110" />
+              <el-table-column label="日期" width="110">
+                <template #default="{row}">
+                  {{ formatDate(row.plan_date) }}
+                </template>
+              </el-table-column>
               <el-table-column prop="weekday" label="星期" width="70" align="center" />
               <el-table-column prop="content" label="工作内容">
                 <template #default="{row}">
@@ -64,7 +68,11 @@
             <el-table :data="dept.items" border stripe size="small" style="margin-top: 12px">
               <el-table-column type="index" label="序" width="50" align="center" />
               <el-table-column prop="creator_name" label="提交人" width="100" />
-              <el-table-column prop="plan_date" label="日期" width="110" />
+              <el-table-column label="日期" width="110">
+                <template #default="{row}">
+                  {{ formatDate(row.plan_date) }}
+                </template>
+              </el-table-column>
               <el-table-column prop="weekday" label="星期" width="70" align="center" />
               <el-table-column prop="content" label="工作内容">
                 <template #default="{row}">
@@ -171,6 +179,15 @@ const data = reactive({ plans: [], items: [] })
 const loading = ref(false)
 const acting = ref(false)
 const comment = ref('')
+
+function formatDate(dateStr) {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
 const role = computed(() => userStore.userInfo?.role)
 const activeDeptTab = ref('')
