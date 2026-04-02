@@ -1,4 +1,7 @@
 /**
  * Vercel Serverless Function 适配器
  */
-module.exports = require('./app.js');
+const serverless = require('serverless-http');
+const app = require('./app.js');
+
+module.exports = serverless(app);
