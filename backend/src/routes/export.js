@@ -278,17 +278,19 @@ async function buildWeeklySummary(plans, weekNumber, schoolName, schoolSubName) 
   // 收集所有部门的条目
   const allItems = [];
   for (const plan of plans) {
-    const items = await query(
-      `SELECT * FROM biz_plan_item WHERE plan_id = ? AND is_deleted = 0 ORDER BY plan_date, sort_order`,
-      [plan.id]
-    );
-    items.forEach(item => {
-      allItems.push({
-        ...item,
-        dept_name: plan.dept_name,
-        dept_sort: getDeptSortOrder(plan.dept_name)
+    if (plan.id !== 0) { // 只对真实计划查询条目
+      const items = await query(
+        `SELECT * FROM biz_plan_item WHERE plan_id = ? AND is_deleted = false ORDER BY plan_date, sort_order`,
+        [plan.id]
+      );
+      items.forEach(item => {
+        allItems.push({
+          ...item,
+          dept_name: plan.dept_name,
+          dept_sort: getDeptSortOrder(plan.dept_name)
+        });
       });
-    });
+    }
   }
 
   // 按日期和部门排序
@@ -596,7 +598,7 @@ router.get('/plan/:planId', authMiddleware, async (req, res) => {
   if (!plan) return fail(res, '计划不存在', 404);
 
   const items = await query(
-    `SELECT * FROM biz_plan_item WHERE plan_id = ? AND is_deleted = 0 ORDER BY plan_date, sort_order`,
+    `SELECT * FROM biz_plan_item WHERE plan_id = ? AND is_deleted = false ORDER BY plan_date, sort_order`,
     [planId]
   );
 
@@ -757,7 +759,7 @@ router.get('/plan/:planId/pdf', authMiddleware, async (req, res) => {
   if (!plan) return fail(res, '计划不存在', 404);
 
   const items = await query(
-    `SELECT * FROM biz_plan_item WHERE plan_id = ? AND is_deleted = 0 ORDER BY plan_date, sort_order`,
+    `SELECT * FROM biz_plan_item WHERE plan_id = ? AND is_deleted = false ORDER BY plan_date, sort_order`,
     [planId]
   );
 
