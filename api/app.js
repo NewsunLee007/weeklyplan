@@ -3,6 +3,7 @@
  */
 const express = require('express');
 const cors = require('cors');
+const serverless = require('serverless-http');
 
 const app = express();
 
@@ -20,32 +21,39 @@ app.use((err, req, res, next) => {
 // 延迟加载数据库初始化和路由注册
 let routesInitialized = false;
 
+// 初始化路由
+async function initializeRoutes() {
+  if (!routesInitialized) {
+    const { initDatabase } = require('../backend/src/db/adapter');
+    await initDatabase();
+    
+    app.use('/api/auth', require('../backend/src/routes/auth'));
+    app.use('/api/users', require('../backend/src/routes/users'));
+    app.use('/api/departments', require('../backend/src/routes/departments'));
+    app.use('/api/plans', require('../backend/src/routes/plans'));
+    app.use('/api/reviews', require('../backend/src/routes/reviews'));
+    app.use('/api/published', require('../backend/src/routes/published'));
+    app.use('/api/feedbacks', require('../backend/src/routes/feedbacks'));
+    app.use('/api/configs', require('../backend/src/routes/configs'));
+    app.use('/api/export', require('../backend/src/routes/export'));
+    app.use('/api/dashboard', require('../backend/src/routes/dashboard'));
+    app.use('/api/ai', require('../backend/src/routes/ai'));
+    app.use('/api/knowledge', require('../backend/src/routes/knowledge'));
+    
+    routesInitialized = true;
+  }
+}
+
 // 导出 Vercel Serverless Function
+const handler = serverless(app);
+
 module.exports = async (req, res) => {
   try {
     // 确保路由已注册
-    if (!routesInitialized) {
-      const { initDatabase } = require('../backend/src/db/adapter');
-      await initDatabase();
-      
-      app.use('/auth', require('../backend/src/routes/auth'));
-      app.use('/users', require('../backend/src/routes/users'));
-      app.use('/departments', require('../backend/src/routes/departments'));
-      app.use('/plans', require('../backend/src/routes/plans'));
-      app.use('/reviews', require('../backend/src/routes/reviews'));
-      app.use('/published', require('../backend/src/routes/published'));
-      app.use('/feedbacks', require('../backend/src/routes/feedbacks'));
-      app.use('/configs', require('../backend/src/routes/configs'));
-      app.use('/export', require('../backend/src/routes/export'));
-      app.use('/dashboard', require('../backend/src/routes/dashboard'));
-      app.use('/ai', require('../backend/src/routes/ai'));
-      app.use('/knowledge', require('../backend/src/routes/knowledge'));
-      
-      routesInitialized = true;
-    }
+    await initializeRoutes();
     
     // 处理请求
-    app(req, res);
+    return await handler(req, res);
   } catch (error) {
     console.error('Serverless function error:', error);
     res.status(500).json({ code: 500, message: error.message || '服务器内部错误', data: null });
