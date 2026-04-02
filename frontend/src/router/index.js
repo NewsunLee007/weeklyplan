@@ -21,7 +21,8 @@ const routes = [
       { path: 'feedback/plan/:planId', component: () => import('../views/feedback/FeedbackForm.vue'), meta: { title: '填写反馈' } },
       { path: 'system/users', component: () => import('../views/system/UserManage.vue'), meta: { title: '用户管理', roles: ['ADMIN'] } },
       { path: 'system/departments', component: () => import('../views/system/DeptManage.vue'), meta: { title: '部门管理', roles: ['ADMIN'] } },
-      { path: 'system/config', component: () => import('../views/system/SystemConfig.vue'), meta: { title: '系统配置', roles: ['ADMIN'] } }
+      { path: 'system/config', component: () => import('../views/system/SystemConfig.vue'), meta: { title: '系统配置', roles: ['ADMIN'] } },
+      { path: 'system/knowledge', component: () => import('../views/system/KnowledgeBase.vue'), meta: { title: '知识库管理', roles: ['ADMIN'] } }
     ]
   },
   { path: '/:pathMatch(.*)*', redirect: '/dashboard' }

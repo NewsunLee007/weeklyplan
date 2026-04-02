@@ -31,6 +31,7 @@ async function bootstrap() {
   app.use('/api/export', require('./routes/export'));
   app.use('/api/dashboard', require('./routes/dashboard'));
   app.use('/api/ai', require('./routes/ai'));
+  app.use('/api/knowledge', require('./routes/knowledge'));
 
   // 全局错误处理
   app.use((err, req, res, next) => {

@@ -92,6 +92,11 @@
               <span class="menu-title">系统配置</span>
             </template>
           </el-menu-item>
+          <el-menu-item index="/system/knowledge" class="menu-item">
+            <template #title>
+              <span class="menu-title">知识库管理</span>
+            </template>
+          </el-menu-item>
         </el-sub-menu>
       </el-menu>
     </el-aside>

@@ -148,6 +148,38 @@ async function initDatabase() {
       )
     `);
 
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS biz_knowledge_base (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(200) NOT NULL,
+        description TEXT,
+        type VARCHAR(50) NOT NULL,
+        is_active BOOLEAN DEFAULT TRUE,
+        creator_id INTEGER REFERENCES sys_user(id),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        is_deleted BOOLEAN DEFAULT FALSE
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS biz_knowledge_item (
+        id SERIAL PRIMARY KEY,
+        knowledge_base_id INTEGER REFERENCES biz_knowledge_base(id) ON DELETE CASCADE,
+        title VARCHAR(200) NOT NULL,
+        content TEXT,
+        file_url VARCHAR(500),
+        file_name VARCHAR(200),
+        file_size INTEGER,
+        embedding TEXT,
+        is_active BOOLEAN DEFAULT TRUE,
+        creator_id INTEGER REFERENCES sys_user(id),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        is_deleted BOOLEAN DEFAULT FALSE
+      )
+    `);
+
     // 升级现有表结构
     await upgradeTableSchemas();
 
@@ -198,6 +230,38 @@ async function initDatabase() {
         id SERIAL PRIMARY KEY,
         config_key VARCHAR(50) UNIQUE NOT NULL,
         config_value TEXT
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS biz_knowledge_base (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(200) NOT NULL,
+        description TEXT,
+        type VARCHAR(50) NOT NULL,
+        is_active BOOLEAN DEFAULT TRUE,
+        creator_id INTEGER REFERENCES sys_user(id),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        is_deleted BOOLEAN DEFAULT FALSE
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS biz_knowledge_item (
+        id SERIAL PRIMARY KEY,
+        knowledge_base_id INTEGER REFERENCES biz_knowledge_base(id) ON DELETE CASCADE,
+        title VARCHAR(200) NOT NULL,
+        content TEXT,
+        file_url VARCHAR(500),
+        file_name VARCHAR(200),
+        file_size INTEGER,
+        embedding TEXT,
+        is_active BOOLEAN DEFAULT TRUE,
+        creator_id INTEGER REFERENCES sys_user(id),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        is_deleted BOOLEAN DEFAULT FALSE
       )
     `);
 

@@ -7,6 +7,32 @@ const { authMiddleware } = require('../middleware/auth');
 const { success, fail } = require('../utils/helper');
 const axios = require('axios');
 
+async function getKnowledgeContext() {
+  try {
+    const items = await query(
+      `SELECT ki.*, kb.name as knowledge_base_name 
+       FROM biz_knowledge_item ki
+       JOIN biz_knowledge_base kb ON ki.knowledge_base_id = kb.id
+       WHERE ki.is_deleted = FALSE AND kb.is_deleted = FALSE AND ki.is_active = TRUE AND kb.is_active = TRUE
+       ORDER BY kb.type, ki.created_at DESC`
+    );
+
+    if (items.length === 0) return '';
+
+    let context = '【知识库信息】\n';
+    items.forEach(item => {
+      context += `\n【${item.knowledge_base_name}】- ${item.title}\n`;
+      if (item.content) {
+        context += `${item.content}\n`;
+      }
+    });
+    return context;
+  } catch (error) {
+    console.error('获取知识库上下文失败:', error);
+    return '';
+  }
+}
+
 async function getAIConfig() {
   const configs = await query('SELECT config_key, config_value FROM sys_config WHERE config_key LIKE $1', ['ai_%']);
   const config = {
@@ -39,6 +65,7 @@ router.get('/config', authMiddleware, async (req, res) => {
 router.post('/chat', authMiddleware, async (req, res) => {
   const { messages, context } = req.body;
   const config = await getAIConfig();
+  const knowledgeContext = await getKnowledgeContext();
   
   if (config.ai_chat_enabled !== 'true' && config.ai_chat_enabled !== true) {
     return fail(res, 'AI对话功能未启用', 400);
@@ -55,9 +82,12 @@ router.post('/chat', authMiddleware, async (req, res) => {
     }
 
     // 构建系统提示
-    let systemPrompt = '你是一个智能助手，帮助用户进行工作计划管理、分析和建议。';
+    let systemPrompt = '你是一个智能助手，帮助用户进行工作计划管理、分析和建议。请基于提供的知识库信息来回答用户的问题。';
+    if (knowledgeContext) {
+      systemPrompt += `\n\n${knowledgeContext}`;
+    }
     if (context) {
-      systemPrompt += `\n\n上下文信息：\n${context}`;
+      systemPrompt += `\n\n额外上下文信息：\n${context}`;
     }
 
     const allMessages = [
