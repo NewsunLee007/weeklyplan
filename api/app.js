@@ -19,18 +19,19 @@ app.use((err, req, res, next) => {
 });
 
 // 路由注册（预先注册，不需要等待数据库初始化）
-app.use('/api/auth', require('../backend/src/routes/auth'));
-app.use('/api/users', require('../backend/src/routes/users'));
-app.use('/api/departments', require('../backend/src/routes/departments'));
-app.use('/api/plans', require('../backend/src/routes/plans'));
-app.use('/api/reviews', require('../backend/src/routes/reviews'));
-app.use('/api/published', require('../backend/src/routes/published'));
-app.use('/api/feedbacks', require('../backend/src/routes/feedbacks'));
-app.use('/api/configs', require('../backend/src/routes/configs'));
-app.use('/api/export', require('../backend/src/routes/export'));
-app.use('/api/dashboard', require('../backend/src/routes/dashboard'));
-app.use('/api/ai', require('../backend/src/routes/ai'));
-app.use('/api/knowledge', require('../backend/src/routes/knowledge'));
+// 注意：由于 Vercel 重写已经处理了 /api 前缀，这里不需要再添加 /api 前缀
+app.use('/auth', require('../backend/src/routes/auth'));
+app.use('/users', require('../backend/src/routes/users'));
+app.use('/departments', require('../backend/src/routes/departments'));
+app.use('/plans', require('../backend/src/routes/plans'));
+app.use('/reviews', require('../backend/src/routes/reviews'));
+app.use('/published', require('../backend/src/routes/published'));
+app.use('/feedbacks', require('../backend/src/routes/feedbacks'));
+app.use('/configs', require('../backend/src/routes/configs'));
+app.use('/export', require('../backend/src/routes/export'));
+app.use('/dashboard', require('../backend/src/routes/dashboard'));
+app.use('/ai', require('../backend/src/routes/ai'));
+app.use('/knowledge', require('../backend/src/routes/knowledge'));
 
 // 数据库初始化状态
 let dbInitialized = false;
