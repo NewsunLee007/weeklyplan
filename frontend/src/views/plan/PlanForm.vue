@@ -51,9 +51,28 @@
             <h3 class="section-title">
               <el-icon class="section-icon"><List /></el-icon> 计划条目
             </h3>
-            <el-button type="primary" :icon="Plus" @click="addItem" class="add-item-btn">
-              添加一行
-            </el-button>
+            <div class="section-actions">
+              <el-button :icon="MagicStick" @click="getAISuggestions" :loading="aiLoading" class="ai-suggest-btn">
+                AI 智能建议
+              </el-button>
+              <el-button type="primary" :icon="Plus" @click="addItem" class="add-item-btn">
+                添加一行
+              </el-button>
+            </div>
+          </div>
+
+          <!-- AI 建议区域 -->
+          <div v-if="aiSuggestions" class="ai-suggestions-section">
+            <div class="ai-suggestions-header">
+              <el-icon class="ai-suggest-icon"><MagicStick /></el-icon>
+              <span>AI 智能建议</span>
+              <el-button link size="small" @click="aiSuggestions = null">
+                <el-icon><Close /></el-icon>
+              </el-button>
+            </div>
+            <div class="ai-suggestions-content">
+              <div v-html="aiSuggestions" class="ai-suggestions-text"></div>
+            </div>
           </div>
 
           <el-table :data="form.items" border class="items-table">
@@ -124,12 +143,14 @@ import { useRouter, useRoute } from 'vue-router'
 import request from '../../utils/request'
 import { getWeekday, calcWeekRange, alignToWeekStart } from '../../utils/helper'
 import { ElMessage } from 'element-plus'
-import { Plus, Delete, ArrowLeft, Document, List, ChatDotRound, Check } from '@element-plus/icons-vue'
+import { Plus, Delete, ArrowLeft, Document, List, ChatDotRound, Check, MagicStick, Close } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const route = useRoute()
 const formRef = ref()
 const saving = ref(false)
+const aiLoading = ref(false)
+const aiSuggestions = ref(null)
 const isEdit = computed(() => !!route.params.id)
 
 const form = reactive({
@@ -209,6 +230,28 @@ async function save(mode) {
     router.push('/plan/list')
   } finally {
     saving.value = false
+  }
+}
+
+async function getAISuggestions() {
+  aiLoading.value = true
+  try {
+    const response = await request.post('/ai/suggestions', {
+      type: 'plan_create',
+      data: {
+        semester: form.semester,
+        week_number: form.week_number,
+        title: form.title,
+        items: form.items
+      }
+    })
+    aiSuggestions.value = response.suggestions
+    ElMessage.success('已获取AI建议')
+  } catch (error) {
+    console.error('获取AI建议失败:', error)
+    ElMessage.error(error.message || '获取AI建议失败，请检查AI配置')
+  } finally {
+    aiLoading.value = false
   }
 }
 
@@ -572,6 +615,84 @@ onMounted(async () => {
 
 .submit-btn:hover::before {
   left: 100%;
+}
+
+/* AI 建议相关样式 */
+.section-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.ai-suggest-btn {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-weight: 500;
+  background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
+  color: white;
+  border: none;
+}
+
+.ai-suggest-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.ai-suggestions-section {
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #F0F9FF 0%, #F5F3FF 100%);
+  border: 1px solid #BAE6FD;
+  border-radius: 12px;
+  overflow: hidden;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ai-suggestions-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: linear-gradient(90deg, #3B82F6 0%, #8B5CF6 100%);
+  color: white;
+}
+
+.ai-suggest-icon {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.ai-suggestions-content {
+  padding: 16px;
+}
+
+.ai-suggestions-text {
+  color: #1E293B;
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+
+.apply-suggest-btn {
+  margin-top: 12px;
 }
 
 /* 响应式设计 */

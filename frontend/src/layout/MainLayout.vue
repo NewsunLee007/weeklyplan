@@ -161,6 +161,9 @@
         </transition>
       </el-main>
     </el-container>
+    
+    <!-- AI 对话组件 -->
+    <AIChat />
   </el-container>
 </template>
 
@@ -172,6 +175,7 @@ import { ElMessageBox, ElNotification } from 'element-plus'
 import { House, Document, EditPen, ChatDotRound, Setting, Fold, Expand, SwitchButton, User, ArrowDown, BellFilled, Moon, Sunny } from '@element-plus/icons-vue'
 import { ROLES } from '../utils/helper'
 import request from '../utils/request'
+import AIChat from '../components/AIChat.vue'
 
 const router = useRouter()
 const route = useRoute()

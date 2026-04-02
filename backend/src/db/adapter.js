@@ -318,14 +318,22 @@ async function insertDefaultData() {
   }
 
   // 插入默认配置
-  const configs = [
-    { key: 'school_name', value: '上海新纪元教育集团瑞安总校' },
-    { key: 'school_sub_name', value: '初中部' },
-    { key: 'current_semester', value: '2025-2026学年第二学期' },
-    { key: 'current_week_start', value: '2025-02-16' },
-    { key: 'week_first_day', value: '0' },
-    { key: 'wechat_webhook_url', value: '' }
-  ];
+    const configs = [
+      { key: 'school_name', value: '上海新纪元教育集团瑞安总校' },
+      { key: 'school_sub_name', value: '初中部' },
+      { key: 'current_semester', value: '2025-2026学年第二学期' },
+      { key: 'current_week_start', value: '2025-02-16' },
+      { key: 'week_first_day', value: '0' },
+      { key: 'wechat_webhook_url', value: '' },
+      { key: 'ai_provider', value: 'openai' },
+      { key: 'ai_api_url', value: 'https://api.openai.com/v1' },
+      { key: 'ai_api_key', value: '' },
+      { key: 'ai_model', value: 'gpt-4o' },
+      { key: 'ai_temperature', value: '0.7' },
+      { key: 'ai_analysis_enabled', value: 'true' },
+      { key: 'ai_chat_enabled', value: 'true' },
+      { key: 'ai_suggestions_enabled', value: 'true' }
+    ];
 
   for (const config of configs) {
     await pool.query(

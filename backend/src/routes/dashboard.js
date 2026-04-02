@@ -527,4 +527,155 @@ function generateMockAIAnalysis() {
   };
 }
 
+// 图表数据API
+router.get('/chart-data', authMiddleware, async (req, res) => {
+  try {
+    // 1. 计划状态分布
+    const planStatusData = await query(`
+      SELECT 
+        status, 
+        COUNT(*) as count 
+      FROM biz_week_plan 
+      WHERE is_deleted=false 
+      GROUP BY status
+    `);
+    
+    const statusMap = {
+      'DRAFT': { name: '草稿', color: '#94A3B8' },
+      'SUBMITTED': { name: '待审核', color: '#F59E0B' },
+      'DEPT_APPROVED': { name: '部门已批', color: '#3B82F6' },
+      'OFFICE_APPROVED': { name: '办公室已批', color: '#8B5CF6' },
+      'PUBLISHED': { name: '已发布', color: '#0891B2' },
+      'COMPLETED': { name: '已完成', color: '#22C55E' }
+    };
+    
+    const statusChartData = planStatusData.map(item => ({
+      value: item.count,
+      name: statusMap[item.status]?.name || item.status,
+      itemStyle: { color: statusMap[item.status]?.color || '#94A3B8' }
+    }));
+    
+    // 如果没有数据，提供默认数据
+    if (statusChartData.length === 0) {
+      statusChartData.push(
+        { value: 0, name: '草稿', itemStyle: { color: '#94A3B8' } },
+        { value: 0, name: '待审核', itemStyle: { color: '#F59E0B' } },
+        { value: 0, name: '已发布', itemStyle: { color: '#0891B2' } },
+        { value: 0, name: '已完成', itemStyle: { color: '#22C55E' } }
+      );
+    }
+
+    // 2. 部门计划数量
+    const departmentPlanData = await query(`
+      SELECT 
+        d.name as departmentName,
+        COUNT(wp.id) as planCount
+      FROM sys_department d
+      LEFT JOIN biz_week_plan wp ON d.id = wp.department_id AND wp.is_deleted=false
+      WHERE d.is_deleted=false
+      GROUP BY d.id, d.name
+      ORDER BY d.id
+      LIMIT 7
+    `);
+    
+    const departmentNames = departmentPlanData.map(d => d.departmentName);
+    const departmentCounts = departmentPlanData.map(d => d.planCount);
+
+    // 3. 计划完成趋势（过去6周）
+    const currentWeek = await queryOne("SELECT EXTRACT(WEEK FROM NOW()) as week");
+    const currentWeekNum = currentWeek?.week || 1;
+    
+    const trendData = await query(`
+      SELECT 
+        EXTRACT(WEEK FROM start_date) as week,
+        COUNT(*) as total,
+        SUM(CASE WHEN status='COMPLETED' THEN 1 ELSE 0 END) as completed,
+        SUM(CASE WHEN status IN ('DRAFT','SUBMITTED','DEPT_APPROVED','OFFICE_APPROVED','PUBLISHED') THEN 1 ELSE 0 END) as inProgress
+      FROM biz_week_plan 
+      WHERE is_deleted=false 
+        AND EXTRACT(WEEK FROM start_date) BETWEEN $1 AND $2
+      GROUP BY EXTRACT(WEEK FROM start_date)
+      ORDER BY EXTRACT(WEEK FROM start_date)
+    `, [currentWeekNum - 5, currentWeekNum]);
+    
+    const weeks = [];
+    const totalPlans = [];
+    const completedPlans = [];
+    const inProgressPlans = [];
+    
+    for (let i = 5; i >= 0; i--) {
+      const weekNum = currentWeekNum - i;
+      const weekData = trendData.find(w => w.week === weekNum);
+      weeks.push(`第${weekNum}周`);
+      totalPlans.push(weekData?.total || 0);
+      completedPlans.push(weekData?.completed || 0);
+      inProgressPlans.push(weekData?.inProgress || 0);
+    }
+
+    // 4. 部门工作效率
+    const efficiencyData = await query(`
+      SELECT 
+        d.name as departmentName,
+        COUNT(wp.id) as totalPlans,
+        SUM(CASE WHEN wp.status='COMPLETED' THEN 1 ELSE 0 END) as completedPlans,
+        AVG(EXTRACT(DAY FROM AGE(wp.update_time, wp.create_time))) as avgDays
+      FROM sys_department d
+      LEFT JOIN biz_week_plan wp ON d.id = wp.department_id AND wp.is_deleted=false
+      WHERE d.is_deleted=false
+      GROUP BY d.id, d.name
+      ORDER BY d.id
+      LIMIT 7
+    `);
+    
+    const efficiencyDepartmentNames = efficiencyData.map(d => d.departmentName);
+    const completionRates = efficiencyData.map(d => d.totalplans > 0 ? Math.round((d.completedplans / d.totalplans) * 100) : 0);
+    const avgDays = efficiencyData.map(d => Math.round(d.avgdays || 0));
+
+    return success(res, {
+      planStatus: statusChartData,
+      departmentPlans: {
+        names: departmentNames.length > 0 ? departmentNames : ['办公室', '教务处', '政教处', '后勤部', '七年级', '八年级', '九年级'],
+        counts: departmentCounts.length > 0 ? departmentCounts : [0, 0, 0, 0, 0, 0, 0]
+      },
+      planTrend: {
+        weeks,
+        total: totalPlans,
+        completed: completedPlans,
+        inProgress: inProgressPlans
+      },
+      departmentEfficiency: {
+        names: efficiencyDepartmentNames.length > 0 ? efficiencyDepartmentNames : ['办公室', '教务处', '政教处', '后勤部', '七年级', '八年级', '九年级'],
+        completionRates: completionRates.length > 0 ? completionRates : [0, 0, 0, 0, 0, 0, 0],
+        avgDays: avgDays.length > 0 ? avgDays : [0, 0, 0, 0, 0, 0, 0]
+      }
+    });
+  } catch (error) {
+    console.error('获取图表数据失败:', error);
+    // 返回默认数据
+    return success(res, {
+      planStatus: [
+        { value: 0, name: '草稿', itemStyle: { color: '#94A3B8' } },
+        { value: 0, name: '待审核', itemStyle: { color: '#F59E0B' } },
+        { value: 0, name: '已发布', itemStyle: { color: '#0891B2' } },
+        { value: 0, name: '已完成', itemStyle: { color: '#22C55E' } }
+      ],
+      departmentPlans: {
+        names: ['办公室', '教务处', '政教处', '后勤部', '七年级', '八年级', '九年级'],
+        counts: [0, 0, 0, 0, 0, 0, 0]
+      },
+      planTrend: {
+        weeks: ['第1周', '第2周', '第3周', '第4周', '第5周', '第6周'],
+        total: [0, 0, 0, 0, 0, 0],
+        completed: [0, 0, 0, 0, 0, 0],
+        inProgress: [0, 0, 0, 0, 0, 0]
+      },
+      departmentEfficiency: {
+        names: ['办公室', '教务处', '政教处', '后勤部', '七年级', '八年级', '九年级'],
+        completionRates: [0, 0, 0, 0, 0, 0, 0],
+        avgDays: [0, 0, 0, 0, 0, 0, 0]
+      }
+    });
+  }
+});
+
 module.exports = router;

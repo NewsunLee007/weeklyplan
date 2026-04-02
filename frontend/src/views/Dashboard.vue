@@ -341,6 +341,7 @@ const chartTimeRange = ref('7d')
 const isScrolled = ref(false)
 const weatherData = ref(null)
 const recentActivities = ref([])
+const chartData = ref(null)
 let planStatusChart = null
 let departmentPlanChart = null
 let planTrendChart = null
@@ -380,8 +381,20 @@ function handleScroll() {
   isScrolled.value = window.scrollY > 50
 }
 
+// 获取图表数据
+async function fetchChartData() {
+  try {
+    const response = await request.get('/dashboard/chart-data')
+    chartData.value = response
+    return response
+  } catch (error) {
+    console.error('获取图表数据失败:', error)
+    return null
+  }
+}
+
 // 初始化计划状态分布图表
-function initPlanStatusChart() {
+function initPlanStatusChart(data) {
   const chartDom = document.getElementById('planStatusChart')
   if (chartDom) {
     planStatusChart = echarts.init(chartDom)
@@ -433,11 +446,11 @@ function initPlanStatusChart() {
           labelLine: {
             show: false
           },
-          data: [
-            { value: 12, name: '草稿', itemStyle: { color: '#94A3B8' } },
-            { value: 8, name: '待审核', itemStyle: { color: '#F59E0B' } },
-            { value: 5, name: '已通过', itemStyle: { color: '#22C55E' } },
-            { value: 3, name: '已发布', itemStyle: { color: '#0891B2' } }
+          data: data?.planStatus || [
+            { value: 0, name: '草稿', itemStyle: { color: '#94A3B8' } },
+            { value: 0, name: '待审核', itemStyle: { color: '#F59E0B' } },
+            { value: 0, name: '已发布', itemStyle: { color: '#0891B2' } },
+            { value: 0, name: '已完成', itemStyle: { color: '#22C55E' } }
           ]
         }
       ]
@@ -447,7 +460,7 @@ function initPlanStatusChart() {
 }
 
 // 初始化部门计划数量图表
-function initDepartmentPlanChart() {
+function initDepartmentPlanChart(data) {
   const chartDom = document.getElementById('departmentPlanChart')
   if (chartDom) {
     departmentPlanChart = echarts.init(chartDom)
@@ -473,7 +486,7 @@ function initDepartmentPlanChart() {
       },
       xAxis: {
         type: 'category',
-        data: ['办公室', '教务处', '政教处', '后勤部', '七年级', '八年级', '九年级'],
+        data: data?.departmentPlans?.names || ['办公室', '教务处', '政教处', '后勤部', '七年级', '八年级', '九年级'],
         axisLabel: {
           interval: 0,
           rotate: 30,
@@ -499,7 +512,7 @@ function initDepartmentPlanChart() {
         {
           name: '计划数量',
           type: 'bar',
-          data: [15, 12, 10, 8, 18, 16, 14],
+          data: data?.departmentPlans?.counts || [0, 0, 0, 0, 0, 0, 0],
           itemStyle: {
             color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
               { offset: 0, color: '#0891B2' },
@@ -523,7 +536,7 @@ function initDepartmentPlanChart() {
 }
 
 // 初始化计划完成趋势图表
-function initPlanTrendChart() {
+function initPlanTrendChart(data) {
   const chartDom = document.getElementById('planTrendChart')
   if (chartDom) {
     planTrendChart = echarts.init(chartDom)
@@ -549,7 +562,7 @@ function initPlanTrendChart() {
       xAxis: {
         type: 'category',
         boundaryGap: false,
-        data: ['第1周', '第2周', '第3周', '第4周', '第5周', '第6周'],
+        data: data?.planTrend?.weeks || ['第1周', '第2周', '第3周', '第4周', '第5周', '第6周'],
         axisLabel: {
           color: '#64748b'
         },
@@ -574,7 +587,7 @@ function initPlanTrendChart() {
           name: '计划总数',
           type: 'line',
           stack: 'Total',
-          data: [12, 19, 3, 5, 2, 3],
+          data: data?.planTrend?.total || [0, 0, 0, 0, 0, 0],
           lineStyle: { color: '#0891B2' },
           itemStyle: { color: '#0891B2' },
           areaStyle: {
@@ -588,7 +601,7 @@ function initPlanTrendChart() {
           name: '已完成',
           type: 'line',
           stack: 'Total',
-          data: [1, 3, 2, 3, 1, 2],
+          data: data?.planTrend?.completed || [0, 0, 0, 0, 0, 0],
           lineStyle: { color: '#22C55E' },
           itemStyle: { color: '#22C55E' },
           areaStyle: {
@@ -602,7 +615,7 @@ function initPlanTrendChart() {
           name: '进行中',
           type: 'line',
           stack: 'Total',
-          data: [5, 7, 2, 3, 1, 1],
+          data: data?.planTrend?.inProgress || [0, 0, 0, 0, 0, 0],
           lineStyle: { color: '#F59E0B' },
           itemStyle: { color: '#F59E0B' },
           areaStyle: {
@@ -619,7 +632,7 @@ function initPlanTrendChart() {
 }
 
 // 初始化部门工作效率图表
-function initDepartmentEfficiencyChart() {
+function initDepartmentEfficiencyChart(data) {
   const chartDom = document.getElementById('departmentEfficiencyChart')
   if (chartDom) {
     departmentEfficiencyChart = echarts.init(chartDom)
@@ -648,7 +661,7 @@ function initDepartmentEfficiencyChart() {
       xAxis: [
         {
           type: 'category',
-          data: ['办公室', '教务处', '政教处', '后勤部', '七年级', '八年级', '九年级'],
+          data: data?.departmentEfficiency?.names || ['办公室', '教务处', '政教处', '后勤部', '七年级', '八年级', '九年级'],
           axisLabel: {
             interval: 0,
             rotate: 30,
@@ -697,7 +710,7 @@ function initDepartmentEfficiencyChart() {
         {
           name: '完成率',
           type: 'bar',
-          data: [85, 92, 78, 88, 90, 85, 82],
+          data: data?.departmentEfficiency?.completionRates || [0, 0, 0, 0, 0, 0, 0],
           itemStyle: {
             color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
               { offset: 0, color: '#3B82F6' },
@@ -718,7 +731,7 @@ function initDepartmentEfficiencyChart() {
           name: '平均耗时(天)',
           type: 'line',
           yAxisIndex: 1,
-          data: [3.5, 2.8, 4.2, 3.0, 2.5, 3.2, 3.8],
+          data: data?.departmentEfficiency?.avgDays || [0, 0, 0, 0, 0, 0, 0],
           lineStyle: { color: '#F59E0B' },
           itemStyle: { color: '#F59E0B' },
           symbol: 'circle',
@@ -731,11 +744,12 @@ function initDepartmentEfficiencyChart() {
 }
 
 // 刷新图表
-function refreshCharts() {
-  initPlanStatusChart()
-  initDepartmentPlanChart()
-  initPlanTrendChart()
-  initDepartmentEfficiencyChart()
+async function refreshCharts() {
+  const data = await fetchChartData()
+  initPlanStatusChart(data)
+  initDepartmentPlanChart(data)
+  initPlanTrendChart(data)
+  initDepartmentEfficiencyChart(data)
 }
 
 // 刷新AI分析
@@ -1037,12 +1051,13 @@ onMounted(async () => {
     stats.value = await request.get('/dashboard/stats')
   } catch {}
   
-  // 初始化图表
+  // 获取图表数据并初始化图表
+  const chartData = await fetchChartData()
   setTimeout(() => {
-    initPlanStatusChart()
-    initDepartmentPlanChart()
-    initPlanTrendChart()
-    initDepartmentEfficiencyChart()
+    initPlanStatusChart(chartData)
+    initDepartmentPlanChart(chartData)
+    initPlanTrendChart(chartData)
+    initDepartmentEfficiencyChart(chartData)
     window.addEventListener('resize', handleResize)
     window.addEventListener('scroll', handleScroll)
   }, 100)
