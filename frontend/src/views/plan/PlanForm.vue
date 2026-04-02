@@ -138,7 +138,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import request from '../../utils/request'
 import { getWeekday, calcWeekRange, alignToWeekStart } from '../../utils/helper'
@@ -239,8 +239,9 @@ async function save(mode) {
       ElMessage.success('已提交审核')
     }
     
-    // 先设置 saving 为 false，再跳转
+    // 先设置 saving 为 false，等待 DOM 更新后再跳转
     saving.value = false
+    await nextTick()
     router.push('/plan/list')
   } catch (error) {
     saving.value = false
