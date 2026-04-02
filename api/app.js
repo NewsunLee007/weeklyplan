@@ -38,6 +38,7 @@ module.exports = async (req, res) => {
       app.use('/api/configs', require('../backend/src/routes/configs'));
       app.use('/api/export', require('../backend/src/routes/export'));
       app.use('/api/dashboard', require('../backend/src/routes/dashboard'));
+      app.use('/api/ai', require('../backend/src/routes/ai'));
       
       routesInitialized = true;
     }

@@ -757,8 +757,7 @@ async function refreshAIInsights() {
   loading.value = true
   try {
     // 调用后端API获取AI分析数据
-    const response = await request.get('/dashboard/ai-analysis')
-    const data = response.data
+    const data = await request.get('/dashboard/ai-analysis')
     
     // 更新AI洞察
     aiInsights.value = data.insights || []
