@@ -272,6 +272,14 @@ async function upgradeTableSchemas() {
       // 忽略错误，因为列可能已经存在
     });
 
+    // 升级 sys_config 表
+    await pool.query(`
+      ALTER TABLE sys_config 
+      ADD COLUMN IF NOT EXISTS update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    `).catch(() => {
+      // 忽略错误，因为列可能已经存在
+    });
+
     console.log('表结构升级完成');
   } catch (error) {
     console.log('表结构升级时出现错误（可能表或列已存在）:', error.message);

@@ -59,20 +59,43 @@ router.get('/ai-analysis', authMiddleware, async (req, res) => {
 
   try {
     // 获取当前周数
-    const currentWeek = await queryOne("SELECT EXTRACT(WEEK FROM NOW()) as week");
-    const currentWeekNum = currentWeek?.week || 0;
+    let currentWeekNum = 1;
+    try {
+      const currentWeek = await queryOne("SELECT EXTRACT(WEEK FROM NOW()) as week");
+      currentWeekNum = currentWeek?.week || 1;
+    } catch (error) {
+      console.log('获取当前周数失败，使用默认值');
+    }
 
     // 一次性获取所有统计数据
-    const stats = await queryOne(`
-      SELECT 
-        (SELECT COUNT(*) FROM biz_semester_plan WHERE is_deleted=false) as semesterPlans,
-        (SELECT COUNT(*) FROM sys_school_config WHERE is_deleted=false) as schoolInfo,
-        (SELECT COUNT(*) FROM biz_calendar_event WHERE is_deleted=false) as calendarEvents,
-        (SELECT COUNT(*) FROM biz_week_plan WHERE is_deleted=false) as weekPlans,
-        (SELECT COUNT(*) FROM biz_week_plan WHERE is_deleted=false AND EXTRACT(WEEK FROM start_date) = ?) as currentWeekTotal,
-        (SELECT COUNT(*) FROM biz_week_plan WHERE is_deleted=false AND EXTRACT(WEEK FROM start_date) = ? AND status='COMPLETED') as currentWeekCompleted,
-        (SELECT COUNT(*) FROM biz_week_plan WHERE is_deleted=false AND EXTRACT(WEEK FROM start_date) = ?) as nextWeekPlans
-    `, [currentWeekNum, currentWeekNum, currentWeekNum + 1]);
+    let stats = {
+      semesterplans: 0,
+      schoolinfo: 0,
+      calendarevents: 0,
+      weekplans: 0,
+      currentweektotal: 0,
+      currentweekcompleted: 0,
+      nextweekplans: 0
+    };
+    
+    try {
+      const dbStats = await queryOne(`
+        SELECT 
+          (SELECT COUNT(*) FROM biz_semester_plan WHERE is_deleted=false) as semesterPlans,
+          (SELECT COUNT(*) FROM sys_school_config WHERE is_deleted=false) as schoolInfo,
+          (SELECT COUNT(*) FROM biz_calendar_event WHERE is_deleted=false) as calendarEvents,
+          (SELECT COUNT(*) FROM biz_week_plan WHERE is_deleted=false) as weekPlans,
+          (SELECT COUNT(*) FROM biz_week_plan WHERE is_deleted=false AND EXTRACT(WEEK FROM start_date) = ?) as currentWeekTotal,
+          (SELECT COUNT(*) FROM biz_week_plan WHERE is_deleted=false AND EXTRACT(WEEK FROM start_date) = ? AND status='COMPLETED') as currentWeekCompleted,
+          (SELECT COUNT(*) FROM biz_week_plan WHERE is_deleted=false AND EXTRACT(WEEK FROM start_date) = ?) as nextWeekPlans
+      `, [currentWeekNum, currentWeekNum, currentWeekNum + 1]);
+      
+      if (dbStats) {
+        stats = dbStats;
+      }
+    } catch (error) {
+      console.log('获取统计数据失败，使用默认值:', error.message);
+    }
 
     // 获取历史数据 - 过去4周的完成情况
     const historicalData = [];
@@ -86,7 +109,8 @@ router.get('/ai-analysis', authMiddleware, async (req, res) => {
          WHERE is_deleted=false 
          AND EXTRACT(WEEK FROM start_date) BETWEEN ? AND ? 
          GROUP BY EXTRACT(WEEK FROM start_date) 
-         ORDER BY EXTRACT(WEEK FROM start_date) DESC`,
+         ORDER BY EXTRACT(WEEK FROM start_date) DESC 
+         LIMIT 4`,
         [currentWeekNum - 4, currentWeekNum - 1]
       );
 
@@ -103,7 +127,6 @@ router.get('/ai-analysis', authMiddleware, async (req, res) => {
       }
     } catch (error) {
       console.log('获取历史数据失败，使用默认数据:', error.message);
-      // 使用空历史数据
     }
 
     // 获取部门历史数据
