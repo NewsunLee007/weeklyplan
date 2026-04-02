@@ -16,7 +16,7 @@
           <el-descriptions :column="4" border>
             <el-descriptions-item label="学期">{{ plan.semester }}</el-descriptions-item>
             <el-descriptions-item label="周次">第{{ plan.week_number }}周</el-descriptions-item>
-            <el-descriptions-item label="日期范围">{{ plan.start_date }} ~ {{ plan.end_date }}</el-descriptions-item>
+            <el-descriptions-item label="日期范围">{{ formatDate(plan.start_date) }} ~ {{ formatDate(plan.end_date) }}</el-descriptions-item>
             <el-descriptions-item label="部门">{{ plan.dept_name }}</el-descriptions-item>
             <el-descriptions-item label="标题" :span="3">{{ plan.title }}</el-descriptions-item>
             <el-descriptions-item label="状态">
@@ -86,6 +86,15 @@ const loading = ref(true)
 
 const canEdit = computed(() => ['DRAFT','REJECTED'].includes(plan.value.status))
 const canSubmit = computed(() => ['DRAFT','REJECTED'].includes(plan.value.status))
+
+function formatDate(dateStr) {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
 async function loadData() {
   loading.value = true
