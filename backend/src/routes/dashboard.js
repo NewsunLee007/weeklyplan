@@ -2,7 +2,7 @@
  * 仪表盘统计 /api/dashboard
  */
 const router = require('express').Router();
-const { queryOne } = require('../db/adapter');
+const { queryOne, query } = require('../db/adapter');
 const { authMiddleware } = require('../middleware/auth');
 const { success } = require('../utils/helper');
 
@@ -78,6 +78,10 @@ router.get('/ai-analysis', authMiddleware, async (req, res) => {
       `SELECT COUNT(*) as cnt FROM biz_week_plan WHERE is_deleted=false`
     );
 
+      // 获取当前周数
+    const currentWeek = await queryOne("SELECT EXTRACT(WEEK FROM NOW()) as week");
+    const currentWeekNum = currentWeek?.week || 0;
+
     // 5. 获取本周计划完成情况
     const currentWeekPlans = await queryOne(
       `SELECT 
@@ -85,30 +89,40 @@ router.get('/ai-analysis', authMiddleware, async (req, res) => {
         SUM(CASE WHEN status='COMPLETED' THEN 1 ELSE 0 END) as completed 
        FROM biz_week_plan 
        WHERE is_deleted=false 
-       AND WEEK(start_date) = WEEK(NOW())`
+       AND EXTRACT(WEEK FROM start_date) = ?`,
+      [currentWeekNum]
     );
 
     // 6. 获取下周计划安排
     const nextWeekPlans = await queryOne(
       `SELECT COUNT(*) as cnt FROM biz_week_plan 
        WHERE is_deleted=false 
-       AND WEEK(start_date) = WEEK(NOW()) + 1`
+       AND EXTRACT(WEEK FROM start_date) = ?`,
+      [currentWeekNum + 1]
     );
 
     // 7. 获取历史数据 - 过去4周的完成情况
     const historicalData = [];
+    // 一次性获取过去4周的数据
+    const historicalWeeks = await query(
+      `SELECT 
+        EXTRACT(WEEK FROM start_date) as week, 
+        COUNT(*) as total, 
+        SUM(CASE WHEN status='COMPLETED' THEN 1 ELSE 0 END) as completed 
+       FROM biz_week_plan 
+       WHERE is_deleted=false 
+       AND EXTRACT(WEEK FROM start_date) BETWEEN ? AND ? 
+       GROUP BY EXTRACT(WEEK FROM start_date) 
+       ORDER BY EXTRACT(WEEK FROM start_date) DESC`,
+      [currentWeekNum - 4, currentWeekNum - 1]
+    );
+
+    // 填充历史数据
     for (let i = 1; i <= 4; i++) {
-      const weekData = await queryOne(
-        `SELECT 
-          COUNT(*) as total, 
-          SUM(CASE WHEN status='COMPLETED' THEN 1 ELSE 0 END) as completed 
-         FROM biz_week_plan 
-         WHERE is_deleted=false 
-         AND WEEK(start_date) = WEEK(NOW()) - ?`,
-        [i]
-      );
+      const weekNum = currentWeekNum - i;
+      const weekData = historicalWeeks.find(w => w.week === weekNum);
       historicalData.push({
-        week: `第${WEEK(NOW()) - i}周`,
+        week: `第${weekNum}周`,
         total: weekData?.total || 0,
         completed: weekData?.completed || 0,
         completionRate: weekData?.total > 0 ? Math.round((weekData.completed / weekData.total) * 100) : 0
@@ -116,26 +130,18 @@ router.get('/ai-analysis', authMiddleware, async (req, res) => {
     }
 
     // 8. 获取部门历史数据
-    const departmentHistory = [];
-    const departments = await queryOne(
-      `SELECT COUNT(*) as cnt FROM sys_department WHERE is_deleted=false`
+    const departmentHistory = await query(
+      `SELECT 
+        d.name as departmentName,
+        COUNT(wp.id) as totalPlans,
+        SUM(CASE WHEN wp.status='COMPLETED' THEN 1 ELSE 0 END) as completedPlans
+       FROM sys_department d
+       LEFT JOIN biz_week_plan wp ON d.id = wp.department_id AND wp.is_deleted=false
+       WHERE d.is_deleted=false
+       GROUP BY d.id, d.name
+       ORDER BY d.id
+       LIMIT 5`
     );
-    
-    if (departments?.cnt > 0) {
-      const deptData = await queryOne(
-        `SELECT 
-          d.name as departmentName,
-          COUNT(wp.id) as totalPlans,
-          SUM(CASE WHEN wp.status='COMPLETED' THEN 1 ELSE 0 END) as completedPlans
-         FROM sys_department d
-         LEFT JOIN biz_week_plan wp ON d.id = wp.department_id AND wp.is_deleted=false
-         WHERE d.is_deleted=false
-         GROUP BY d.id, d.name
-         ORDER BY d.id
-         LIMIT 5`
-      );
-      departmentHistory.push(deptData);
-    }
 
     // 9. 生成AI分析结果
     const analysis = generateAIAnalysis({

@@ -65,11 +65,14 @@ async function initDatabase() {
         end_date DATE NOT NULL,
         semester VARCHAR(20),
         status VARCHAR(20) DEFAULT 'DRAFT',
+        current_step VARCHAR(50) DEFAULT 'CREATE',
+        creator_id INTEGER REFERENCES sys_user(id),
         submitter_id INTEGER REFERENCES sys_user(id),
         reviewer_id INTEGER REFERENCES sys_user(id),
         reviewed_at TIMESTAMP,
         remark TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         is_deleted BOOLEAN DEFAULT FALSE
       )
     `);
@@ -83,7 +86,8 @@ async function initDatabase() {
         content TEXT NOT NULL,
         responsible VARCHAR(100),
         sort_order INTEGER DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         is_deleted BOOLEAN DEFAULT FALSE
       )
     `);
@@ -95,8 +99,52 @@ async function initDatabase() {
         status VARCHAR(20) NOT NULL,
         feedback TEXT,
         creator_id INTEGER REFERENCES sys_user(id),
+        feedback_user_id INTEGER REFERENCES sys_user(id),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         is_deleted BOOLEAN DEFAULT FALSE
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS biz_semester_plan (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(200) NOT NULL,
+        semester VARCHAR(20) NOT NULL,
+        school_year VARCHAR(20) NOT NULL,
+        start_date DATE NOT NULL,
+        end_date DATE NOT NULL,
+        status VARCHAR(20) DEFAULT 'DRAFT',
+        creator_id INTEGER REFERENCES sys_user(id),
+        submitter_id INTEGER REFERENCES sys_user(id),
+        reviewer_id INTEGER REFERENCES sys_user(id),
+        reviewed_at TIMESTAMP,
+        remark TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        is_deleted BOOLEAN DEFAULT FALSE
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS sys_school_config (
+        id SERIAL PRIMARY KEY,
+        config_key VARCHAR(50) UNIQUE NOT NULL,
+        config_value TEXT,
+        is_deleted BOOLEAN DEFAULT FALSE
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS biz_calendar_event (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(200) NOT NULL,
+        start_date DATE NOT NULL,
+        end_date DATE NOT NULL,
+        semester VARCHAR(20),
+        type VARCHAR(50),
+        location VARCHAR(100),
+        description TEXT,
+        is_deleted BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
