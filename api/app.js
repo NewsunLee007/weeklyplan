@@ -28,18 +28,18 @@ module.exports = async (req, res) => {
       const { initDatabase } = require('../backend/src/db/adapter');
       await initDatabase();
       
-      app.use('/api/auth', require('../backend/src/routes/auth'));
-      app.use('/api/users', require('../backend/src/routes/users'));
-      app.use('/api/departments', require('../backend/src/routes/departments'));
-      app.use('/api/plans', require('../backend/src/routes/plans'));
-      app.use('/api/reviews', require('../backend/src/routes/reviews'));
-      app.use('/api/published', require('../backend/src/routes/published'));
-      app.use('/api/feedbacks', require('../backend/src/routes/feedbacks'));
-      app.use('/api/configs', require('../backend/src/routes/configs'));
-      app.use('/api/export', require('../backend/src/routes/export'));
-      app.use('/api/dashboard', require('../backend/src/routes/dashboard'));
-      app.use('/api/ai', require('../backend/src/routes/ai'));
-      app.use('/api/knowledge', require('../backend/src/routes/knowledge'));
+      app.use('/auth', require('../backend/src/routes/auth'));
+      app.use('/users', require('../backend/src/routes/users'));
+      app.use('/departments', require('../backend/src/routes/departments'));
+      app.use('/plans', require('../backend/src/routes/plans'));
+      app.use('/reviews', require('../backend/src/routes/reviews'));
+      app.use('/published', require('../backend/src/routes/published'));
+      app.use('/feedbacks', require('../backend/src/routes/feedbacks'));
+      app.use('/configs', require('../backend/src/routes/configs'));
+      app.use('/export', require('../backend/src/routes/export'));
+      app.use('/dashboard', require('../backend/src/routes/dashboard'));
+      app.use('/ai', require('../backend/src/routes/ai'));
+      app.use('/knowledge', require('../backend/src/routes/knowledge'));
       
       routesInitialized = true;
     }
