@@ -1,0 +1,2 @@
+# 忽略 api/lib 目录，这些文件通过 api/index.js 统一访问
+api/lib/
