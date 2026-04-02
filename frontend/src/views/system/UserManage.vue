@@ -2,7 +2,20 @@
   <div class="page-container">
     <div class="page-header">
       <h2>用户管理</h2>
-      <el-button type="primary" :icon="Plus" @click="openDialog()">新增用户</el-button>
+      <div class="header-buttons">
+        <el-button type="primary" :icon="Plus" @click="openDialog()">新增用户</el-button>
+        <el-button type="success" :icon="Download" @click="exportUsers">导出用户</el-button>
+        <el-upload
+          class="upload-demo"
+          action="#"
+          :auto-upload="false"
+          :on-change="handleImport"
+          :show-file-list="false"
+          accept=".xlsx,.xls"
+        >
+          <el-button type="warning" :icon="Upload">导入用户</el-button>
+        </el-upload>
+      </div>
     </div>
 
     <!-- 搜索 -->
@@ -104,7 +117,7 @@ import { ref, reactive, onMounted } from 'vue'
 import request from '../../utils/request'
 import { ROLES } from '../../utils/helper'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, Download, Upload } from '@element-plus/icons-vue'
 
 const list = ref([])
 const depts = ref([])
@@ -181,6 +194,36 @@ async function deleteUser(row) {
   loadData()
 }
 
+async function exportUsers() {
+  try {
+    const res = await request.get('/users/export', { responseType: 'blob' })
+    const url = window.URL.createObjectURL(new Blob([res]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `用户数据_${new Date().toISOString().slice(0, 10)}.xlsx`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    ElMessage.success('导出成功')
+  } catch (error) {
+    ElMessage.error('导出失败')
+  }
+}
+
+async function handleImport(file) {
+  const formData = new FormData()
+  formData.append('file', file.raw)
+  try {
+    const res = await request.post('/users/import', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    ElMessage.success(`导入成功，成功${res.success}条，失败${res.fail}条`)
+    loadData()
+  } catch (error) {
+    ElMessage.error('导入失败')
+  }
+}
+
 onMounted(async () => {
   depts.value = await request.get('/departments')
   loadData()
@@ -191,6 +234,7 @@ onMounted(async () => {
 .page-container { padding: 24px; }
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .page-header h2 { font-size: 20px; color: #1e293b; }
+.header-buttons { display: flex; gap: 10px; }
 .filter-card { margin-bottom: 16px; }
 .pagination { margin-top: 16px; justify-content: flex-end; }
 </style>

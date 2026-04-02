@@ -80,4 +80,109 @@ router.put('/:id/reset-password', authMiddleware, requireRole('ADMIN'), async (r
   return success(res, null, '密码已重置为 123456');
 });
 
+// GET /export 导出用户
+router.get('/export', authMiddleware, requireRole('ADMIN'), async (req, res) => {
+  try {
+    const XLSX = require('xlsx');
+    const users = await query(
+      `SELECT u.username, u.real_name, u.role, u.phone, d.name as dept_name, u.status
+       FROM sys_user u LEFT JOIN sys_department d ON u.department_id = d.id
+       WHERE u.is_deleted = false ORDER BY u.id`
+    );
+
+    const data = users.map(user => ({
+      用户名: user.username,
+      姓名: user.real_name,
+      部门: user.dept_name || '',
+      角色: user.role === 'ADMIN' ? '管理员' : '普通用户',
+      手机号: user.phone || '',
+      状态: user.status === 1 ? '正常' : '禁用'
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '用户数据');
+    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'buffer' });
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=users_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    res.send(excelBuffer);
+  } catch (error) {
+    console.error('导出用户失败:', error);
+    return fail(res, '导出失败');
+  }
+});
+
+// POST /import 导入用户
+router.post('/import', authMiddleware, requireRole('ADMIN'), async (req, res) => {
+  try {
+    const XLSX = require('xlsx');
+    const multer = require('multer');
+    const upload = multer({ storage: multer.memoryStorage() }).single('file');
+
+    upload(req, res, async (err) => {
+      if (err) return fail(res, '文件上传失败');
+      if (!req.file) return fail(res, '请选择文件');
+
+      const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(worksheet);
+
+      let successCount = 0, failCount = 0;
+      const roleMap = { '管理员': 'ADMIN', '普通用户': 'STAFF' };
+      const statusMap = { '正常': 1, '禁用': 0 };
+
+      for (const row of data) {
+        try {
+          const username = row['用户名']?.toString().trim();
+          const realName = row['姓名']?.toString().trim();
+          const deptName = row['部门']?.toString().trim();
+          const roleText = row['角色']?.toString().trim();
+          const phone = row['手机号']?.toString().trim();
+          const statusText = row['状态']?.toString().trim();
+
+          if (!username || !realName) {
+            failCount++;
+            continue;
+          }
+
+          // 查找部门ID
+          let deptId = null;
+          if (deptName) {
+            const dept = await queryOne(`SELECT id FROM sys_department WHERE name = ? AND is_deleted = false`, [deptName]);
+            if (dept) deptId = dept.id;
+          }
+
+          // 检查用户是否存在
+          const existing = await queryOne(`SELECT id FROM sys_user WHERE username = ? AND is_deleted = false`, [username]);
+          if (existing) {
+            // 更新用户
+            await execute(
+              `UPDATE sys_user SET real_name=?, department_id=?, role=?, phone=?, status=?, update_time=? WHERE id=?`,
+              [realName, deptId, roleMap[roleText] || 'STAFF', phone, statusMap[statusText] || 1, now(), existing.id]
+            );
+          } else {
+            // 新增用户
+            const hashedPwd = bcrypt.hashSync('123456', 10);
+            const n = now();
+            await execute(
+              `INSERT INTO sys_user (username, password, real_name, department_id, role, phone, status, create_time, update_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              [username, hashedPwd, realName, deptId, roleMap[roleText] || 'STAFF', phone, statusMap[statusText] || 1, n, n, n]
+            );
+          }
+          successCount++;
+        } catch (e) {
+          console.error('导入用户失败:', e);
+          failCount++;
+        }
+      }
+
+      return success(res, { success: successCount, fail: failCount }, '导入完成');
+    });
+  } catch (error) {
+    console.error('导入用户失败:', error);
+    return fail(res, '导入失败');
+  }
+});
+
 module.exports = router;

@@ -49,4 +49,97 @@ router.delete('/:id', authMiddleware, requireRole('ADMIN'), async (req, res) => 
   return success(res, null, '删除成功');
 });
 
+// GET /export 导出部门
+router.get('/export', authMiddleware, requireRole('ADMIN'), async (req, res) => {
+  try {
+    const XLSX = require('xlsx');
+    const departments = await query(
+      `SELECT name, code, sort_order, description, status
+       FROM sys_department WHERE is_deleted = false ORDER BY sort_order`
+    );
+
+    const data = departments.map(dept => ({
+      部门名称: dept.name,
+      编码: dept.code,
+      排序: dept.sort_order,
+      描述: dept.description || '',
+      状态: dept.status === 1 ? '启用' : '禁用'
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '部门数据');
+    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'buffer' });
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=departments_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    res.send(excelBuffer);
+  } catch (error) {
+    console.error('导出部门失败:', error);
+    return fail(res, '导出失败');
+  }
+});
+
+// POST /import 导入部门
+router.post('/import', authMiddleware, requireRole('ADMIN'), async (req, res) => {
+  try {
+    const XLSX = require('xlsx');
+    const multer = require('multer');
+    const upload = multer({ storage: multer.memoryStorage() }).single('file');
+
+    upload(req, res, async (err) => {
+      if (err) return fail(res, '文件上传失败');
+      if (!req.file) return fail(res, '请选择文件');
+
+      const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(worksheet);
+
+      let successCount = 0, failCount = 0;
+      const statusMap = { '启用': 1, '禁用': 0 };
+
+      for (const row of data) {
+        try {
+          const name = row['部门名称']?.toString().trim();
+          const code = row['编码']?.toString().trim();
+          const sortOrder = parseInt(row['排序']) || 0;
+          const description = row['描述']?.toString().trim();
+          const statusText = row['状态']?.toString().trim();
+
+          if (!name || !code) {
+            failCount++;
+            continue;
+          }
+
+          // 检查部门是否存在
+          const existing = await queryOne(`SELECT id FROM sys_department WHERE code = ? AND is_deleted = false`, [code]);
+          if (existing) {
+            // 更新部门
+            await execute(
+              `UPDATE sys_department SET name=?, sort_order=?, description=?, status=?, update_time=? WHERE id=?`,
+              [name, sortOrder, description, statusMap[statusText] || 1, now(), existing.id]
+            );
+          } else {
+            // 新增部门
+            const n = now();
+            await execute(
+              `INSERT INTO sys_department (name, code, sort_order, description, status, create_time, update_time) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+              [name, code, sortOrder, description, statusMap[statusText] || 1, n, n]
+            );
+          }
+          successCount++;
+        } catch (e) {
+          console.error('导入部门失败:', e);
+          failCount++;
+        }
+      }
+
+      return success(res, { success: successCount, fail: failCount }, '导入完成');
+    });
+  } catch (error) {
+    console.error('导入部门失败:', error);
+    return fail(res, '导入失败');
+  }
+});
+
 module.exports = router;
