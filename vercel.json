@@ -1,11 +1,11 @@
 {
   "buildCommand": "cd frontend && npm run build",
   "outputDirectory": "frontend/dist",
-  "installCommand": "npm install && cd frontend && npm install && cd ../vercel-api && npm install",
+  "installCommand": "npm install && cd frontend && npm install && cd ../api && npm install",
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/vercel-api/index.js"
+      "destination": "/api/index.js"
     },
     {
       "source": "/(.*)",
@@ -13,7 +13,7 @@
     }
   ],
   "functions": {
-    "vercel-api/index.js": {
+    "api/index.js": {
       "maxDuration": 60
     }
   },
