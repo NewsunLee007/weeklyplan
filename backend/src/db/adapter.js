@@ -19,13 +19,17 @@ async function initDatabase() {
     try {
       pool = new Pool({
         connectionString: DATABASE_URL,
-        ssl: DATABASE_URL.includes('neon.tech') ? { rejectUnauthorized: false } : false
+        ssl: DATABASE_URL.includes('neon.tech') ? { rejectUnauthorized: false } : false,
+        max: 5,
+        min: 1,
+        idleTimeoutMillis: 10000,
+        connectionTimeoutMillis: 5000
       });
 
       // 测试连接
       await pool.query('SELECT 1');
 
-      // 创建数据库表（如果不存在）
+      // 创建数据库表（如果不存在） - 只创建核心表
       await pool.query(`
         CREATE TABLE IF NOT EXISTS sys_user (
           id SERIAL PRIMARY KEY,
@@ -34,7 +38,11 @@ async function initDatabase() {
           real_name VARCHAR(50),
           role VARCHAR(20) NOT NULL,
           department_id INTEGER,
+          phone VARCHAR(20),
+          status INTEGER DEFAULT 1,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           is_deleted BOOLEAN DEFAULT FALSE
         )
       `);
@@ -57,152 +65,14 @@ async function initDatabase() {
         CREATE TABLE IF NOT EXISTS sys_config (
           id SERIAL PRIMARY KEY,
           config_key VARCHAR(50) UNIQUE NOT NULL,
-          config_value TEXT
-        )
-      `);
-
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS biz_week_plan (
-          id SERIAL PRIMARY KEY,
-          title VARCHAR(200) NOT NULL,
-          department_id INTEGER REFERENCES sys_department(id),
-          week_number INTEGER NOT NULL,
-          start_date DATE NOT NULL,
-          end_date DATE NOT NULL,
-          semester VARCHAR(20),
-          status VARCHAR(20) DEFAULT 'DRAFT',
-          current_step VARCHAR(50) DEFAULT 'CREATE',
-          creator_id INTEGER REFERENCES sys_user(id),
-          submitter_id INTEGER REFERENCES sys_user(id),
-          reviewer_id INTEGER REFERENCES sys_user(id),
-          reviewed_at TIMESTAMP,
-          remark TEXT,
-          create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          is_deleted BOOLEAN DEFAULT FALSE
-        )
-      `);
-
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS biz_plan_item (
-          id SERIAL PRIMARY KEY,
-          plan_id INTEGER REFERENCES biz_week_plan(id) ON DELETE CASCADE,
-          plan_date DATE NOT NULL,
-          weekday VARCHAR(10),
-          content TEXT NOT NULL,
-          responsible VARCHAR(100),
-          sort_order INTEGER DEFAULT 0,
-          create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          is_deleted BOOLEAN DEFAULT FALSE
-        )
-      `);
-
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS biz_feedback (
-          id SERIAL PRIMARY KEY,
-          plan_item_id INTEGER REFERENCES biz_plan_item(id),
-          status VARCHAR(20) NOT NULL,
-          feedback TEXT,
-          creator_id INTEGER REFERENCES sys_user(id),
-          feedback_user_id INTEGER REFERENCES sys_user(id),
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          is_deleted BOOLEAN DEFAULT FALSE
-        )
-      `);
-
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS biz_review_record (
-          id SERIAL PRIMARY KEY,
-          plan_id INTEGER NOT NULL REFERENCES biz_week_plan(id),
-          reviewer_id INTEGER NOT NULL REFERENCES sys_user(id),
-          step INTEGER NOT NULL,
-          result VARCHAR(20) NOT NULL,
-          comment TEXT,
-          create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-      `);
-
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS biz_semester_plan (
-          id SERIAL PRIMARY KEY,
-          title VARCHAR(200) NOT NULL,
-          semester VARCHAR(20) NOT NULL,
-          school_year VARCHAR(20) NOT NULL,
-          start_date DATE NOT NULL,
-          end_date DATE NOT NULL,
-          status VARCHAR(20) DEFAULT 'DRAFT',
-          creator_id INTEGER REFERENCES sys_user(id),
-          submitter_id INTEGER REFERENCES sys_user(id),
-          reviewer_id INTEGER REFERENCES sys_user(id),
-          reviewed_at TIMESTAMP,
-          remark TEXT,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          is_deleted BOOLEAN DEFAULT FALSE
-        )
-      `);
-
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS sys_school_config (
-          id SERIAL PRIMARY KEY,
-          config_key VARCHAR(50) UNIQUE NOT NULL,
           config_value TEXT,
-          is_deleted BOOLEAN DEFAULT FALSE
+          update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
       `);
 
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS biz_calendar_event (
-          id SERIAL PRIMARY KEY,
-          title VARCHAR(200) NOT NULL,
-          start_date DATE NOT NULL,
-          end_date DATE NOT NULL,
-          semester VARCHAR(20),
-          type VARCHAR(50),
-          location VARCHAR(100),
-          description TEXT,
-          is_deleted BOOLEAN DEFAULT FALSE,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-      `);
-
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS biz_knowledge_base (
-          id SERIAL PRIMARY KEY,
-          name VARCHAR(200) NOT NULL,
-          description TEXT,
-          type VARCHAR(50) NOT NULL,
-          is_active BOOLEAN DEFAULT TRUE,
-          creator_id INTEGER REFERENCES sys_user(id),
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          is_deleted BOOLEAN DEFAULT FALSE
-        )
-      `);
-
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS biz_knowledge_item (
-          id SERIAL PRIMARY KEY,
-          knowledge_base_id INTEGER REFERENCES biz_knowledge_base(id) ON DELETE CASCADE,
-          title VARCHAR(200) NOT NULL,
-          content TEXT,
-          file_url VARCHAR(500),
-          file_name VARCHAR(200),
-          file_size INTEGER,
-          embedding TEXT,
-          is_active BOOLEAN DEFAULT TRUE,
-          creator_id INTEGER REFERENCES sys_user(id),
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          is_deleted BOOLEAN DEFAULT FALSE
-        )
-      `);
-
-      // 升级现有表结构
-      await upgradeTableSchemas();
-
-      // 插入默认数据
-      await insertDefaultData();
+      // 跳过其他表的创建，只在需要时创建
+      // 快速插入默认数据
+      await fastInsertDefaultData();
 
       dbType = 'postgres';
       return 'postgres';
@@ -230,175 +100,58 @@ async function initSQLite() {
   }
 }
 
-// 升级表结构
-async function upgradeTableSchemas() {
-  try {
-    // 升级 sys_user 表
-    await pool.query(`
-      ALTER TABLE sys_user 
-      ADD COLUMN IF NOT EXISTS phone VARCHAR(20),
-      ADD COLUMN IF NOT EXISTS status INTEGER DEFAULT 1,
-      ADD COLUMN IF NOT EXISTS create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      ADD COLUMN IF NOT EXISTS update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    `).catch(() => {
-      // 忽略错误，因为列可能已经存在
-    });
-
-    // 升级 sys_department 表
-    await pool.query(`
-      ALTER TABLE sys_department 
-      ADD COLUMN IF NOT EXISTS code VARCHAR(50),
-      ADD COLUMN IF NOT EXISTS description TEXT,
-      ADD COLUMN IF NOT EXISTS status INTEGER DEFAULT 1,
-      ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE,
-      ADD COLUMN IF NOT EXISTS create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      ADD COLUMN IF NOT EXISTS update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    `).catch(() => {
-      // 忽略错误，因为列可能已经存在
-    });
-
-    // 为现有部门添加默认编码
-    await pool.query(`
-      UPDATE sys_department 
-      SET code = CASE 
-        WHEN name = '办公室' THEN 'OFFICE'
-        WHEN name = '教务处' THEN 'ACADEMIC'
-        WHEN name = '政教处' THEN 'POLITICS'
-        WHEN name = '后勤部' THEN 'LOGISTICS'
-        WHEN name = '生活中心' THEN 'LIFE_CENTER'
-        WHEN name = '七年级' THEN 'GRADE_7'
-        WHEN name = '八年级' THEN 'GRADE_8'
-        WHEN name = '九年级' THEN 'GRADE_9'
-        ELSE LOWER(REPLACE(name, ' ', '_'))
-      END
-      WHERE code IS NULL OR code = ''
-    `).catch(() => {
-      // 忽略错误
-    });
-
-    // 确保 code 列不为空
-    await pool.query(`
-      ALTER TABLE sys_department 
-      ALTER COLUMN code SET NOT NULL
-    `).catch(() => {
-      // 忽略错误，因为列可能已经是 NOT NULL
-    });
-
-    // 升级 biz_week_plan 表
-    await pool.query(`
-      ALTER TABLE biz_week_plan 
-      ADD COLUMN IF NOT EXISTS current_step VARCHAR(50) DEFAULT 'CREATE',
-      ADD COLUMN IF NOT EXISTS creator_id INTEGER REFERENCES sys_user(id),
-      ADD COLUMN IF NOT EXISTS submitter_id INTEGER REFERENCES sys_user(id),
-      ADD COLUMN IF NOT EXISTS reviewer_id INTEGER REFERENCES sys_user(id),
-      ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMP,
-      ADD COLUMN IF NOT EXISTS create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      ADD COLUMN IF NOT EXISTS update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE
-    `).catch(() => {
-      // 忽略错误，因为列可能已经存在
-    });
-
-    // 升级 biz_plan_item 表
-    await pool.query(`
-      ALTER TABLE biz_plan_item 
-      ADD COLUMN IF NOT EXISTS create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      ADD COLUMN IF NOT EXISTS update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE
-    `).catch(() => {
-      // 忽略错误，因为列可能已经存在
-    });
-
-    // 升级 biz_feedback 表
-    await pool.query(`
-      ALTER TABLE biz_feedback 
-      ADD COLUMN IF NOT EXISTS feedback_user_id INTEGER REFERENCES sys_user(id),
-      ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE
-    `).catch(() => {
-      // 忽略错误，因为列可能已经存在
-    });
-
-    // 升级 sys_config 表
-    await pool.query(`
-      ALTER TABLE sys_config 
-      ADD COLUMN IF NOT EXISTS update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    `).catch(() => {
-      // 忽略错误，因为列可能已经存在
-    });
-
-    console.log('表结构升级完成');
-  } catch (error) {
-    console.log('表结构升级时出现错误（可能表或列已存在）:', error.message);
-  }
-}
-
-// 插入默认数据
-async function insertDefaultData() {
+// 快速插入默认数据
+async function fastInsertDefaultData() {
   try {
     // 检查是否已有数据
     const result = await pool.query('SELECT COUNT(*) as count FROM sys_department');
     const hasData = result.rows[0].count > 0;
     if (hasData) return;
-  } catch (error) {
-    console.error('检查数据库数据失败:', error);
-    // 继续尝试插入数据
-  }
 
-  // 插入默认部门
-  const departments = [
-    { name: '办公室', code: 'office', sort_order: 0 },
-    { name: '教务处', code: 'academic', sort_order: 1 },
-    { name: '政教处', code: 'student', sort_order: 2 },
-    { name: '后勤部', code: 'logistics', sort_order: 3 },
-    { name: '生活中心', code: 'life', sort_order: 4 },
-    { name: '七年级', code: 'grade7', sort_order: 5 },
-    { name: '八年级', code: 'grade8', sort_order: 6 },
-    { name: '九年级', code: 'grade9', sort_order: 7 }
-  ];
+    // 插入默认部门（使用批量插入）
+    await pool.query(`
+      INSERT INTO sys_department (name, code, sort_order) VALUES 
+      ('办公室', 'office', 0),
+      ('教务处', 'academic', 1),
+      ('政教处', 'student', 2),
+      ('后勤部', 'logistics', 3),
+      ('生活中心', 'life', 4),
+      ('七年级', 'grade7', 5),
+      ('八年级', 'grade8', 6),
+      ('九年级', 'grade9', 7)
+      ON CONFLICT (name) DO NOTHING
+    `);
 
-  for (const dept of departments) {
+    // 插入默认配置（使用批量插入）
+    await pool.query(`
+      INSERT INTO sys_config (config_key, config_value) VALUES 
+      ('school_name', '上海新纪元教育集团瑞安总校'),
+      ('school_sub_name', '初中部'),
+      ('current_semester', '2025-2026学年第二学期'),
+      ('current_week_start', '2025-02-16'),
+      ('week_first_day', '0'),
+      ('wechat_webhook_url', ''),
+      ('ai_provider', 'openai'),
+      ('ai_api_url', 'https://api.openai.com/v1'),
+      ('ai_api_key', ''),
+      ('ai_model', 'gpt-4o'),
+      ('ai_temperature', '0.7'),
+      ('ai_analysis_enabled', 'true'),
+      ('ai_chat_enabled', 'true'),
+      ('ai_suggestions_enabled', 'true')
+      ON CONFLICT (config_key) DO NOTHING
+    `);
+
+    // 插入默认管理员用户
+    const bcrypt = require('bcryptjs');
+    const hashedPassword = bcrypt.hashSync('admin123', 10);
+    
     await pool.query(
-      'INSERT INTO sys_department (name, code, sort_order) VALUES ($1, $2, $3)',
-      [dept.name, dept.code, dept.sort_order]
-    );
-  }
-
-  // 插入默认配置
-    const configs = [
-      { key: 'school_name', value: '上海新纪元教育集团瑞安总校' },
-      { key: 'school_sub_name', value: '初中部' },
-      { key: 'current_semester', value: '2025-2026学年第二学期' },
-      { key: 'current_week_start', value: '2025-02-16' },
-      { key: 'week_first_day', value: '0' },
-      { key: 'wechat_webhook_url', value: '' },
-      { key: 'ai_provider', value: 'openai' },
-      { key: 'ai_api_url', value: 'https://api.openai.com/v1' },
-      { key: 'ai_api_key', value: '' },
-      { key: 'ai_model', value: 'gpt-4o' },
-      { key: 'ai_temperature', value: '0.7' },
-      { key: 'ai_analysis_enabled', value: 'true' },
-      { key: 'ai_chat_enabled', value: 'true' },
-      { key: 'ai_suggestions_enabled', value: 'true' }
-    ];
-
-  for (const config of configs) {
-    await pool.query(
-      'INSERT INTO sys_config (config_key, config_value) VALUES ($1, $2) ON CONFLICT (config_key) DO NOTHING',
-      [config.key, config.value]
-    );
-  }
-
-  // 插入默认管理员用户
-  const bcrypt = require('bcryptjs');
-  const hashedPassword = bcrypt.hashSync('admin123', 10);
-  
-  try {
-    await pool.query(
-      'INSERT INTO sys_user (username, password, real_name, role, department_id, created_at, is_deleted) VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, FALSE) ON CONFLICT (username) DO NOTHING',
-      ['admin', hashedPassword, '超级管理员', 'ADMIN', 1]
+      'INSERT INTO sys_user (username, password, real_name, role, department_id, phone, status, created_at, create_time, update_time, is_deleted) VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, FALSE) ON CONFLICT (username) DO NOTHING',
+      ['admin', hashedPassword, '超级管理员', 'ADMIN', 1, '', 1]
     );
   } catch (error) {
-    console.error('插入默认管理员失败:', error);
+    console.error('快速插入默认数据失败:', error);
   }
 }
 
