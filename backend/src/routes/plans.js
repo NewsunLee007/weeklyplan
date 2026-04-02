@@ -40,6 +40,17 @@ router.get('/', authMiddleware, async (req, res) => {
      ${where} ORDER BY p.semester DESC, p.week_number DESC, p.id DESC LIMIT ? OFFSET ?`,
     [...params, Number(pageSize), offset]
   );
+
+  // 为每个计划添加工作内容条目
+  for (const plan of records) {
+    const items = await query(
+      `SELECT * FROM biz_plan_item WHERE plan_id = ? AND is_deleted = false ORDER BY plan_date, sort_order`,
+      [plan.id]
+    );
+    // 将工作内容条目合并为一个字符串显示
+    plan.workContent = items.map(item => item.content).join('；') || '无内容';
+  }
+
   return successPage(res, records, total, page, pageSize);
 });
 

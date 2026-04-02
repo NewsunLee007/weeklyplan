@@ -96,7 +96,7 @@
               <el-table-column prop="dept_name" label="部门" width="120" class="table-column" />
               <el-table-column label="工作内容" min-width="200" class="table-column">
                 <template #default="{row}">
-                  <div class="work-content">{{ row.title || '无内容' }}</div>
+                  <div class="work-content">{{ row.workContent || '无内容' }}</div>
                 </template>
               </el-table-column>
               <el-table-column label="日期范围" width="180" class="table-column">
@@ -121,6 +121,7 @@
                     <el-button link type="primary" v-if="canSubmit(row)" @click="submitPlan(row)" class="action-btn submit-btn">
                       <el-icon><Check /></el-icon> 提交
                     </el-button>
+                    <span v-else class="submitted-text">已提交</span>
                     <el-button link type="danger" v-if="canDelete(row)" @click="deletePlan(row)" class="action-btn delete-btn">
                       <el-icon><Delete /></el-icon> 删除
                     </el-button>
@@ -158,7 +159,7 @@
               <el-table-column prop="dept_name" label="部门" width="120" class="table-column" />
               <el-table-column label="工作内容" min-width="200" class="table-column">
                 <template #default="{row}">
-                  <div class="work-content">{{ row.title || '无内容' }}</div>
+                  <div class="work-content">{{ row.workContent || '无内容' }}</div>
                 </template>
               </el-table-column>
               <el-table-column label="日期范围" width="180" class="table-column">
@@ -183,6 +184,7 @@
                     <el-button link type="primary" v-if="canSubmit(row)" @click="submitPlan(row)" class="action-btn submit-btn">
                       <el-icon><Check /></el-icon> 提交
                     </el-button>
+                    <span v-else class="submitted-text">已提交</span>
                     <el-button link type="danger" v-if="canDelete(row)" @click="deletePlan(row)" class="action-btn delete-btn">
                       <el-icon><Delete /></el-icon> 删除
                     </el-button>
@@ -714,6 +716,13 @@ onMounted(loadData)
 
 .delete-btn:hover {
   color: #EF4444;
+}
+
+.submitted-text {
+  color: #64748B;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 8px;
 }
 
 /* 分页 */

@@ -34,7 +34,7 @@
             </el-col>
             <el-col :xs="24" :sm="12" :md="6">
               <el-form-item label="起止日期">
-                <el-input :value="`${form.start_date} ~ ${form.end_date}`" disabled class="form-input disabled-input" />
+                <el-input :value="`${formatDate(form.start_date)} ~ ${formatDate(form.end_date)}`" disabled class="form-input disabled-input" />
               </el-form-item>
             </el-col>
             <el-col :xs="24" :sm="12" :md="6">
@@ -197,6 +197,15 @@ async function loadConfig() {
   }
 }
 
+function formatDate(dateStr) {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 function onWeekChange(w) {
   if (!w) return
   const { start_date, end_date } = calcWeekRange(weekStartDate, w, weekFirstDay)
@@ -273,15 +282,19 @@ async function getAISuggestions() {
 
 async function loadPlan() {
   const data = await request.get(`/plans/${route.params.id}`)
-  Object.assign(form, {
-    semester: data.semester,
-    week_number: data.week_number,
-    start_date: data.start_date,
-    end_date: data.end_date,
-    title: data.title,
-    remark: data.remark || '',
-    items: data.items || []
-  })
+  form.semester = data.semester
+  form.week_number = data.week_number
+  form.start_date = data.start_date
+  form.end_date = data.end_date
+  form.title = data.title
+  form.remark = data.remark || ''
+  // 清空并重新填充 items 数组
+  form.items.length = 0
+  if (data.items && data.items.length > 0) {
+    data.items.forEach(item => {
+      form.items.push(item)
+    })
+  }
 }
 
 onMounted(async () => {
