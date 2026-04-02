@@ -45,7 +45,7 @@ router.post('/', authMiddleware, requireRole('ADMIN'), async (req, res) => {
   const n = now();
   const result = await execute(
     `INSERT INTO sys_user (username, password, real_name, department_id, role, phone, status, create_time, update_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [username, hashedPwd, real_name, department_id, role, phone || '', n, n, n]
+    [username, hashedPwd, real_name, department_id, role, phone || '', 1, n, n]
   );
   return success(res, { id: result.lastInsertRowid }, '用户创建成功');
 });
@@ -167,7 +167,7 @@ router.post('/import', authMiddleware, requireRole('ADMIN'), async (req, res) =>
             const n = now();
             await execute(
               `INSERT INTO sys_user (username, password, real_name, department_id, role, phone, status, create_time, update_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-              [username, hashedPwd, realName, deptId, roleMap[roleText] || 'STAFF', phone, statusMap[statusText] || 1, n, n, n]
+              [username, hashedPwd, realName, deptId, roleMap[roleText] || 'STAFF', phone, statusMap[statusText] || 1, n, n]
             );
           }
           successCount++;
