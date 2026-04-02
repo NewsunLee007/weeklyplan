@@ -239,8 +239,8 @@ async function loadData() {
 }
 
 async function exportPlan(plan) {
-  const res = await request.get(`/export/plan/${plan.id}`, { responseType: 'blob' })
-  const url = URL.createObjectURL(res.data)
+  const blob = await request.get(`/export/plan/${plan.id}`, { responseType: 'blob' })
+  const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
   a.download = `${plan.dept_name}第${plan.week_number}周工作计划.docx`
@@ -252,8 +252,8 @@ async function exportSummary() {
   if (!filter.week_number) return ElMessage.warning('请先选择周次')
   const params = {}
   if (filter.semester) params.semester = filter.semester
-  const res = await request.get(`/export/weekly-summary/${filter.week_number}`, { params, responseType: 'blob' })
-  const url = URL.createObjectURL(res.data)
+  const blob = await request.get(`/export/weekly-summary/${filter.week_number}`, { params, responseType: 'blob' })
+  const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
   a.download = `第${filter.week_number}周全校工作计划汇总.docx`
@@ -265,8 +265,8 @@ async function exportSummaryPdf() {
   if (!filter.week_number) return ElMessage.warning('请先选择周次')
   const params = {}
   if (filter.semester) params.semester = filter.semester
-  const res = await request.get(`/export/weekly-summary/${filter.week_number}/pdf`, { params, responseType: 'blob' })
-  const url = URL.createObjectURL(res.data)
+  const blob = await request.get(`/export/weekly-summary/${filter.week_number}/pdf`, { params, responseType: 'blob' })
+  const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
   a.download = `第${filter.week_number}周全校工作计划汇总.pdf`
