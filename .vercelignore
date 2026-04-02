@@ -1,0 +1,2 @@
+# 忽略 api/lib 目录，只使用 api/index.js 作为唯一的 Serverless 函数
+api/lib/
