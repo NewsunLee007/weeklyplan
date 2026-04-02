@@ -172,54 +172,92 @@ function convertPlaceholders(sql) {
 
 // 执行查询（用于 SELECT）
 async function query(sql, params = []) {
-  // 确保数据库已初始化
+  // 检查是否正在初始化
   if (!dbType) {
-    await initDatabase();
+    // 返回空数组，避免等待初始化
+    return [];
   }
   
   if (dbType === 'postgres') {
     // 将 ? 占位符转换为 $1, $2, ...
     const pgSql = convertPlaceholders(sql);
-    const result = await pool.query(pgSql, params);
-    return result.rows;
+    try {
+      const result = await pool.query(pgSql, params);
+      return result.rows;
+    } catch (error) {
+      console.error('查询失败:', error);
+      return [];
+    }
   } else {
     // 使用 SQLite
-    return sqliteDB.query(sql, params);
+    try {
+      return sqliteDB.query(sql, params);
+    } catch (error) {
+      console.error('查询失败:', error);
+      return [];
+    }
   }
 }
 
 // 执行查询（用于 SELECT 单行）
 async function queryOne(sql, params = []) {
-  // 确保数据库已初始化
+  // 检查是否正在初始化
   if (!dbType) {
-    await initDatabase();
+    // 返回 null，避免等待初始化
+    return null;
   }
   
   if (dbType === 'postgres') {
     // 将 ? 占位符转换为 $1, $2, ...
     const pgSql = convertPlaceholders(sql);
-    const result = await pool.query(pgSql, params);
-    return result.rows[0] || null;
+    try {
+      const result = await pool.query(pgSql, params);
+      return result.rows[0] || null;
+    } catch (error) {
+      console.error('查询失败:', error);
+      return null;
+    }
   } else {
     // 使用 SQLite
-    return sqliteDB.queryOne(sql, params);
+    try {
+      return sqliteDB.queryOne(sql, params);
+    } catch (error) {
+      console.error('查询失败:', error);
+      return null;
+    }
   }
 }
 
 // 执行查询（用于 INSERT/UPDATE/DELETE）
 async function execute(sql, params = []) {
-  // 确保数据库已初始化
+  // 检查是否正在初始化
   if (!dbType) {
-    await initDatabase();
+    // 尝试初始化数据库
+    try {
+      await initDatabase();
+    } catch (error) {
+      console.error('执行操作时初始化数据库失败:', error);
+      throw error;
+    }
   }
   
   if (dbType === 'postgres') {
     // 将 ? 占位符转换为 $1, $2, ...
     const pgSql = convertPlaceholders(sql);
-    return await pool.query(pgSql, params);
+    try {
+      return await pool.query(pgSql, params);
+    } catch (error) {
+      console.error('执行操作失败:', error);
+      throw error;
+    }
   } else {
     // 使用 SQLite
-    return sqliteDB.run(sql, params);
+    try {
+      return sqliteDB.run(sql, params);
+    } catch (error) {
+      console.error('执行操作失败:', error);
+      throw error;
+    }
   }
 }
 

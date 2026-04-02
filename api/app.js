@@ -60,13 +60,15 @@ async function initializeDatabase() {
 // 导出 Vercel Serverless Function
 const handler = serverless(app);
 
+// 启动数据库初始化（在模块加载时就开始）
+initializeDatabase().catch(error => {
+  console.error('数据库初始化失败:', error);
+});
+
 module.exports = async (req, res) => {
   try {
-    // 并行处理：启动数据库初始化但不等待，让请求继续处理
-    // 这样可以快速响应第一个请求，同时在后台初始化数据库
-    const initDb = initializeDatabase();
-    
-    // 处理请求（如果数据库还没初始化，路由会在首次查询时自动处理）
+    // 直接处理请求，不等待数据库初始化
+    // 数据库查询会在初始化完成前返回空数据，初始化完成后正常返回数据
     return await handler(req, res);
   } catch (error) {
     console.error('Serverless function error:', error);
