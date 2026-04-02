@@ -678,4 +678,210 @@ router.get('/chart-data', authMiddleware, async (req, res) => {
   }
 });
 
+// 快捷操作统计API
+router.get('/quick-actions-stats', authMiddleware, async (req, res) => {
+  const { role, userId, departmentId } = req.user;
+
+  try {
+    // 我的计划数量
+    const myPlans = (await queryOne(
+      'SELECT COUNT(*) as cnt FROM biz_week_plan WHERE creator_id=? AND is_deleted=false',
+      [userId]
+    ))?.cnt || 0;
+
+    // 已发布计划数量
+    const publishedPlans = (await queryOne(
+      'SELECT COUNT(*) as cnt FROM biz_week_plan WHERE status=\'PUBLISHED\' AND is_deleted=false'
+    ))?.cnt || 0;
+
+    // 待反馈数量
+    const pendingFeedback = (await queryOne(`
+      SELECT COUNT(*) as cnt FROM biz_plan_item pi
+      JOIN biz_week_plan p ON pi.plan_id = p.id
+      WHERE p.status='PUBLISHED' AND p.department_id=? AND pi.is_deleted=false
+      AND pi.id NOT IN (SELECT plan_item_id FROM biz_feedback WHERE feedback_user_id=?)
+    `, [departmentId, userId]))?.cnt || 0;
+
+    // 待审核数量
+    let pendingReview = 0;
+    if (role === 'DEPT_HEAD') {
+      pendingReview = (await queryOne(
+        'SELECT COUNT(*) as cnt FROM biz_week_plan WHERE status=\'SUBMITTED\' AND department_id=? AND is_deleted=false',
+        [departmentId]
+      ))?.cnt || 0;
+    } else if (role === 'OFFICE_HEAD') {
+      pendingReview = (await queryOne(
+        'SELECT COUNT(*) as cnt FROM biz_week_plan WHERE status=\'DEPT_APPROVED\' AND is_deleted=false'
+      ))?.cnt || 0;
+    } else if (role === 'PRINCIPAL') {
+      pendingReview = (await queryOne(
+        'SELECT COUNT(*) as cnt FROM biz_week_plan WHERE status=\'OFFICE_APPROVED\' AND is_deleted=false'
+      ))?.cnt || 0;
+    } else if (role === 'ADMIN') {
+      pendingReview = (await queryOne(
+        'SELECT COUNT(*) as cnt FROM biz_week_plan WHERE status IN (\'SUBMITTED\',\'DEPT_APPROVED\',\'OFFICE_APPROVED\') AND is_deleted=false'
+      ))?.cnt || 0;
+    }
+
+    return success(res, {
+      myPlans,
+      publishedPlans,
+      pendingFeedback,
+      pendingReview
+    });
+  } catch (error) {
+    console.error('获取快捷操作统计失败:', error);
+    return success(res, {
+      myPlans: 0,
+      publishedPlans: 0,
+      pendingFeedback: 0,
+      pendingReview: 0
+    });
+  }
+});
+
+// 最新活动API
+router.get('/recent-activities', authMiddleware, async (req, res) => {
+  const { role, userId, departmentId } = req.user;
+
+  try {
+    const activities = [];
+
+    // 1. 获取最近创建的计划
+    const recentPlans = await query(`
+      SELECT 
+        wp.id,
+        wp.title,
+        wp.create_time as time,
+        'create' as type,
+        u.real_name as user_name
+      FROM biz_week_plan wp
+      LEFT JOIN sys_user u ON wp.creator_id = u.id
+      WHERE wp.is_deleted=false
+      ORDER BY wp.create_time DESC
+      LIMIT 5
+    `);
+
+    // 2. 获取最近发布的计划
+    const publishedPlans = await query(`
+      SELECT 
+        wp.id,
+        wp.title,
+        wp.update_time as time,
+        'publish' as type,
+        u.real_name as user_name
+      FROM biz_week_plan wp
+      LEFT JOIN sys_user u ON wp.submitter_id = u.id
+      WHERE wp.status='PUBLISHED' AND wp.is_deleted=false
+      ORDER BY wp.update_time DESC
+      LIMIT 5
+    `);
+
+    // 3. 获取最近的审核活动（如果有审核权限）
+    let reviewActivities = [];
+    if (['DEPT_HEAD', 'OFFICE_HEAD', 'PRINCIPAL', 'ADMIN'].includes(role)) {
+      reviewActivities = await query(`
+        SELECT 
+          wp.id,
+          wp.title,
+          wp.update_time as time,
+          'review' as type,
+          u.real_name as user_name
+        FROM biz_week_plan wp
+        LEFT JOIN sys_user u ON wp.reviewer_id = u.id
+        WHERE wp.reviewer_id IS NOT NULL AND wp.is_deleted=false
+        ORDER BY wp.update_time DESC
+        LIMIT 5
+      `);
+    }
+
+    // 4. 获取最近的反馈
+    const feedbackActivities = await query(`
+      SELECT 
+        bf.id,
+        pi.content as title,
+        bf.created_at as time,
+        'feedback' as type,
+        u.real_name as user_name
+      FROM biz_feedback bf
+      LEFT JOIN biz_plan_item pi ON bf.plan_item_id = pi.id
+      LEFT JOIN sys_user u ON bf.feedback_user_id = u.id
+      WHERE bf.is_deleted=false
+      ORDER BY bf.created_at DESC
+      LIMIT 5
+    `);
+
+    // 合并所有活动
+    const allActivities = [
+      ...recentPlans.map(p => ({
+        ...p,
+        icon: 'Document',
+        description: p.user_name ? `${p.user_name} 创建了计划` : '创建了计划',
+        status: 'success',
+        statusText: '已创建',
+        color: '#0891B2'
+      })),
+      ...publishedPlans.map(p => ({
+        ...p,
+        icon: 'DocumentChecked',
+        description: p.user_name ? `${p.user_name} 发布了计划` : '发布了计划',
+        status: 'success',
+        statusText: '已发布',
+        color: '#22C55E'
+      })),
+      ...reviewActivities.map(p => ({
+        ...p,
+        icon: 'EditPen',
+        description: p.user_name ? `${p.user_name} 审核了计划` : '审核了计划',
+        status: 'warning',
+        statusText: '已审核',
+        color: '#F59E0B'
+      })),
+      ...feedbackActivities.map(f => ({
+        ...f,
+        icon: 'ChatDotRound',
+        description: f.user_name ? `${f.user_name} 提交了反馈` : '提交了反馈',
+        status: 'info',
+        statusText: '已反馈',
+        color: '#3B82F6'
+      }))
+    ];
+
+    // 按时间排序，取最近的10条
+    allActivities.sort((a, b) => new Date(b.time) - new Date(a.time));
+    const recent10 = allActivities.slice(0, 10);
+
+    // 格式化时间显示
+    const now = new Date();
+    const formattedActivities = recent10.map(activity => {
+      const activityTime = new Date(activity.time);
+      const diffMs = now - activityTime;
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
+
+      let timeText;
+      if (diffMins < 60) {
+        timeText = `${diffMins}分钟前`;
+      } else if (diffHours < 24) {
+        timeText = `${diffHours}小时前`;
+      } else if (diffDays < 7) {
+        timeText = `${diffDays}天前`;
+      } else {
+        timeText = activityTime.toLocaleDateString('zh-CN');
+      }
+
+      return {
+        ...activity,
+        time: timeText
+      };
+    });
+
+    return success(res, formattedActivities);
+  } catch (error) {
+    console.error('获取最新活动失败:', error);
+    return success(res, []);
+  }
+});
+
 module.exports = router;

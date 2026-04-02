@@ -363,20 +363,36 @@ const statCards = computed(() => {
   return cards
 })
 
+const quickActionsStats = ref({
+  myPlans: 0,
+  publishedPlans: 0,
+  pendingFeedback: 0,
+  pendingReview: 0
+})
+
 const quickActions = computed(() => {
   const all = [
-    { label: '查看列表', to: '/plan/list', icon: List, color: '#0891B2', badge: '12' },
-    { label: '已发布', to: '/plan/published', icon: View, color: '#22C55E', badge: '8' },
-    { label: '填写反馈', to: '/feedback/list', icon: ChatDotRound, color: '#F59E0B', badge: '5' }
+    { label: '查看列表', to: '/plan/list', icon: List, color: '#0891B2', badge: quickActionsStats.value.myPlans > 0 ? String(quickActionsStats.value.myPlans) : null },
+    { label: '已发布', to: '/plan/published', icon: View, color: '#22C55E', badge: quickActionsStats.value.publishedPlans > 0 ? String(quickActionsStats.value.publishedPlans) : null },
+    { label: '填写反馈', to: '/feedback/list', icon: ChatDotRound, color: '#F59E0B', badge: quickActionsStats.value.pendingFeedback > 0 ? String(quickActionsStats.value.pendingFeedback) : null }
   ]
   if (['DEPT_HEAD','OFFICE_HEAD','PRINCIPAL','ADMIN'].includes(role.value)) {
-    all.push({ label: '待审核', to: '/review/pending', icon: Clock, color: '#EF4444', badge: '3' })
+    all.push({ label: '待审核', to: '/review/pending', icon: Clock, color: '#EF4444', badge: quickActionsStats.value.pendingReview > 0 ? String(quickActionsStats.value.pendingReview) : null })
   }
   if (role.value === 'ADMIN') {
     all.push({ label: '用户管理', to: '/system/users', icon: User, color: '#8B5CF6' })
   }
   return all
 })
+
+async function fetchQuickActionsStats() {
+  try {
+    const data = await request.get('/dashboard/quick-actions-stats')
+    quickActionsStats.value = data
+  } catch (error) {
+    console.error('获取快捷操作统计失败:', error)
+  }
+}
 
 // 滚动检测
 function handleScroll() {
@@ -1004,46 +1020,65 @@ function fetchWeatherData() {
   }
 }
 
-// 模拟最近活动数据
-function fetchRecentActivities() {
-  recentActivities.value = [
-    {
-      icon: Document,
-      title: '创建了新计划',
-      description: '数学教研组学期计划',
-      time: '2小时前',
-      status: 'success',
-      statusText: '已完成',
-      color: '#0891B2'
-    },
-    {
-      icon: EditPen,
-      title: '审核了计划',
-      description: '语文教研组学期计划',
-      time: '4小时前',
-      status: 'warning',
-      statusText: '待修改',
-      color: '#F59E0B'
-    },
-    {
-      icon: ChatDotRound,
-      title: '收到了反馈',
-      description: '关于教学设备的反馈',
-      time: '昨天',
-      status: 'info',
-      statusText: '已查看',
-      color: '#3B82F6'
-    },
-    {
-      icon: DocumentChecked,
-      title: '发布了计划',
-      description: '学校年度工作计划',
-      time: '2天前',
-      status: 'success',
-      statusText: '已发布',
-      color: '#22C55E'
-    }
-  ]
+function getActivityIcon(iconName) {
+  const icons = {
+    'Document': Document,
+    'DocumentChecked': DocumentChecked,
+    'EditPen': EditPen,
+    'ChatDotRound': ChatDotRound
+  }
+  return icons[iconName] || Document
+}
+
+async function fetchRecentActivities() {
+  try {
+    const data = await request.get('/dashboard/recent-activities')
+    recentActivities.value = data.map(activity => ({
+      ...activity,
+      icon: getActivityIcon(activity.icon),
+      title: activity.title
+    }))
+  } catch (error) {
+    console.error('获取最近活动失败:', error)
+    recentActivities.value = [
+      {
+        icon: Document,
+        title: '创建了新计划',
+        description: '数学教研组学期计划',
+        time: '2小时前',
+        status: 'success',
+        statusText: '已完成',
+        color: '#0891B2'
+      },
+      {
+        icon: EditPen,
+        title: '审核了计划',
+        description: '语文教研组学期计划',
+        time: '4小时前',
+        status: 'warning',
+        statusText: '待修改',
+        color: '#F59E0B'
+      },
+      {
+        icon: ChatDotRound,
+        title: '收到了反馈',
+        description: '关于教学设备的反馈',
+        time: '昨天',
+        status: 'info',
+        statusText: '已查看',
+        color: '#3B82F6'
+      },
+      {
+        icon: DocumentChecked,
+        title: '发布了计划',
+        description: '学校年度工作计划',
+        time: '2天前',
+        status: 'success',
+        statusText: '已发布',
+        color: '#22C55E'
+      }
+    ]
+  }
 }
 
 // 监听统计周期变化
@@ -1066,6 +1101,9 @@ onMounted(async () => {
     stats.value = await request.get('/dashboard/stats')
   } catch {}
   
+  // 获取快捷操作统计数据
+  await fetchQuickActionsStats()
+  
   // 获取图表数据并初始化图表
   const chartData = await fetchChartData()
   setTimeout(() => {
@@ -1084,7 +1122,7 @@ onMounted(async () => {
   fetchWeatherData()
   
   // 加载最近活动
-  fetchRecentActivities()
+  await fetchRecentActivities()
 })
 
 onUnmounted(() => {
