@@ -123,8 +123,8 @@ async function deleteDept(row) {
 }
 async function exportDepts() {
   try {
-    const res = await request.get('/departments/export', { responseType: 'blob' })
-    const url = window.URL.createObjectURL(new Blob([res]))
+    const blob = await request.get('/departments/export', { responseType: 'blob' })
+    const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
     link.setAttribute('download', `部门数据_${new Date().toISOString().slice(0, 10)}.xlsx`)

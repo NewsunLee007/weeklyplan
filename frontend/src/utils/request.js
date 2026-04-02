@@ -27,8 +27,8 @@ request.interceptors.request.use(config => {
 // 响应拦截器
 request.interceptors.response.use(
   res => {
-    // 文件下载直接返回
-    if (res.config.responseType === 'blob') return res
+    // 文件下载直接返回 blob 数据
+    if (res.config.responseType === 'blob') return res.data
     const { code, message, data } = res.data
     if (code === 200) return data
     ElMessage.error(message || '请求失败')
