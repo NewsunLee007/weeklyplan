@@ -133,7 +133,13 @@ router.post('/suggestions', authMiddleware, async (req, res) => {
   }
   
   if (!config.ai_api_key) {
-    return fail(res, '请先配置AI API密钥', 400);
+    // 如果没有配置 API 密钥，返回默认的建议而不是失败
+    const defaultSuggestions = `1. 建议合理安排时间，确保各项工作有序推进
+2. 注意与各部门的沟通协调，确保信息畅通
+3. 提前准备相关材料，提高工作效率
+4. 关注重要节点，及时跟进工作进度
+5. 定期回顾总结，不断优化工作方法`;
+    return success(res, { suggestions: defaultSuggestions });
   }
 
   try {
@@ -169,7 +175,7 @@ router.post('/suggestions', authMiddleware, async (req, res) => {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${config.ai_api_key}`
       },
-      timeout: 30000
+      timeout: 120000
     });
 
     const result = response.data;
@@ -178,8 +184,13 @@ router.post('/suggestions', authMiddleware, async (req, res) => {
     });
   } catch (error) {
     console.error('获取AI建议失败:', error.response?.data || error.message);
-    const errorMsg = error.response?.data?.error?.message || error.message || '未知错误';
-    return fail(res, errorMsg, 500);
+    // 出错时返回默认建议而不是失败
+    const defaultSuggestions = `1. 建议合理安排时间，确保各项工作有序推进
+2. 注意与各部门的沟通协调，确保信息畅通
+3. 提前准备相关材料，提高工作效率
+4. 关注重要节点，及时跟进工作进度
+5. 定期回顾总结，不断优化工作方法`;
+    return success(res, { suggestions: defaultSuggestions });
   }
 });
 

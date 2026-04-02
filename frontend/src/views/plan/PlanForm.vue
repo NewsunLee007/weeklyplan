@@ -284,12 +284,13 @@ onMounted(async () => {
   if (isEdit.value) {
     await loadPlan()
   } else {
-    // 新建时：计算当前周次并自动选中下一周
-    const { calcWeekNumber } = await import('../../utils/helper')
+    // 新建时：计算当前周次并自动选中下一周，确保不超过学期总周数
     const currentWeek = calcWeekNumber(weekStartDate, weekFirstDay)
-    const nextWeek = currentWeek + 1
-    form.week_number = nextWeek
-    onWeekChange(nextWeek)
+    const nextWeek = Math.min(currentWeek + 1, semesterWeeks)
+    // 确保最小是1
+    const finalWeek = Math.max(1, nextWeek)
+    form.week_number = finalWeek
+    onWeekChange(finalWeek)
   }
 })
 </script>
@@ -456,6 +457,19 @@ onMounted(async () => {
 .date-picker:focus-within :deep(.el-input__wrapper) {
   border-color: #3B82F6 !important;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+/* 星期徽章 - 确保不遮挡日期选择器 */
+.weekday-badge {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3B82F6;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.3s var(--transition-base);
+  z-index: 1;
+  position: relative;
 }
 
 /* 工作内容输入框 */
