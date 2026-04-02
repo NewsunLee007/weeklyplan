@@ -94,6 +94,11 @@
               </el-table-column>
 
               <el-table-column prop="dept_name" label="部门" width="120" class="table-column" />
+              <el-table-column label="工作内容" min-width="200" class="table-column">
+                <template #default="{row}">
+                  <div class="work-content">{{ row.title || '无内容' }}</div>
+                </template>
+              </el-table-column>
               <el-table-column label="日期范围" width="180" class="table-column">
                 <template #default="{row}">
                   <div class="date-range">{{ formatDate(row.start_date) }} ~ {{ formatDate(row.end_date) }}</div>
@@ -151,6 +156,11 @@
               </el-table-column>
 
               <el-table-column prop="dept_name" label="部门" width="120" class="table-column" />
+              <el-table-column label="工作内容" min-width="200" class="table-column">
+                <template #default="{row}">
+                  <div class="work-content">{{ row.title || '无内容' }}</div>
+                </template>
+              </el-table-column>
               <el-table-column label="日期范围" width="180" class="table-column">
                 <template #default="{row}">
                   <div class="date-range">{{ formatDate(row.start_date) }} ~ {{ formatDate(row.end_date) }}</div>
