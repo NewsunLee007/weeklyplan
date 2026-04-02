@@ -258,7 +258,7 @@ async function buildWeeklySummary(plans, weekNumber, schoolName, schoolSubName) 
   // 标题：学校名称合并为一行
   const headerChildren = [];
   
-  // 构建学校名称标题
+  // 构建学校名称标题 - 二号字体（44 half-points）
   let schoolTitle = '';
   if (schoolName && schoolSubName) {
     schoolTitle = schoolName + ' ' + schoolSubName;
@@ -271,7 +271,7 @@ async function buildWeeklySummary(plans, weekNumber, schoolName, schoolSubName) 
   if (schoolTitle) {
     headerChildren.push(
       new Paragraph({
-        children: [new TextRun({ text: schoolTitle, bold: true, size: 32, color: '000000', font: FONT_TITLE })],
+        children: [new TextRun({ text: schoolTitle, bold: true, size: 44, color: '000000', font: FONT_TITLE })],
         alignment: AlignmentType.CENTER,
         spacing: { before: 100, after: 100 }
       })
