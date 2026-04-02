@@ -49,8 +49,10 @@
           <template #title>
             <div class="menu-title-with-badge">
               <el-icon class="menu-icon"><EditPen /></el-icon>
-              <span class="menu-title">审核中心</span>
-              <el-badge v-if="pendingCount > 0" :value="pendingCount" class="review-badge" />
+              <div class="menu-title-container">
+                <span class="menu-title">审核中心</span>
+                <el-badge v-if="pendingCount > 0" :value="pendingCount" class="review-badge" />
+              </div>
             </div>
           </template>
           <el-menu-item index="/review/pending" class="menu-item">
@@ -485,11 +487,17 @@ watch(() => route.path, () => {
   z-index: 1;
 }
 
+.menu-title-container {
+  position: relative;
+  display: inline-block;
+}
+
 .review-badge {
-  margin-left: auto;
+  position: absolute;
+  top: -8px;
+  right: -12px;
   animation: pulse 2s infinite;
   box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
-  position: relative;
   z-index: 1;
 }
 
