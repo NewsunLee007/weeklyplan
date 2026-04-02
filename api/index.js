@@ -8,8 +8,14 @@ function success(res, data = {}) {
   res.end(JSON.stringify({ code: 200, message: 'success', data }));
 }
 
+// 获取路径部分（忽略查询参数）
+function getPath(url) {
+  return url.split('?')[0];
+}
+
 module.exports = (req, res) => {
-  console.log('🎯 请求到达:', req.method, req.url);
+  const path = getPath(req.url);
+  console.log('🎯 请求到达:', req.method, req.url, '-> 路径:', path);
   
   // 设置 CORS 头
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -24,7 +30,7 @@ module.exports = (req, res) => {
   }
   
   // 健康检查
-  if (req.url === '/api/health' && req.method === 'GET') {
+  if (path === '/api/health' && req.method === 'GET') {
     console.log('🏥 健康检查响应');
     success(res, {
       timestamp: new Date().toISOString(),
@@ -34,7 +40,7 @@ module.exports = (req, res) => {
   }
   
   // 登录
-  if (req.url === '/api/auth/login' && req.method === 'POST') {
+  if (path === '/api/auth/login' && req.method === 'POST') {
     console.log('🔐 登录响应');
     success(res, {
       token: 'mock-token',
@@ -50,17 +56,19 @@ module.exports = (req, res) => {
   }
   
   // 用户列表
-  if (req.url === '/api/users' && req.method === 'GET') {
+  if (path === '/api/users' && req.method === 'GET') {
     console.log('👥 用户列表响应');
     success(res, [
       { id: 1, username: 'admin', real_name: '超级管理员', role: 'ADMIN', department_id: 1, phone: '', status: 1 },
-      { id: 2, username: 'test', real_name: '测试用户', role: 'USER', department_id: 2, phone: '13800138000', status: 1 }
+      { id: 2, username: 'test', real_name: '测试用户', role: 'USER', department_id: 2, phone: '13800138000', status: 1 },
+      { id: 3, username: 'teacher1', real_name: '张老师', role: 'USER', department_id: 2, phone: '13900139000', status: 1 },
+      { id: 4, username: 'teacher2', real_name: '李老师', role: 'USER', department_id: 3, phone: '13700137000', status: 1 }
     ]);
     return;
   }
   
   // 部门列表
-  if (req.url === '/api/departments' && req.method === 'GET') {
+  if (path === '/api/departments' && req.method === 'GET') {
     console.log('🏢 部门列表响应');
     success(res, [
       { id: 1, name: '办公室', code: 'office', sort_order: 0 },
@@ -76,7 +84,7 @@ module.exports = (req, res) => {
   }
   
   // 配置
-  if (req.url === '/api/configs' && req.method === 'GET') {
+  if (path === '/api/configs' && req.method === 'GET') {
     console.log('⚙️ 配置响应');
     success(res, [
       { config_key: 'school_name', config_value: '上海新纪元教育集团瑞安总校' },
@@ -89,7 +97,7 @@ module.exports = (req, res) => {
   }
   
   // AI 配置
-  if (req.url === '/api/ai/config' && req.method === 'GET') {
+  if (path === '/api/ai/config' && req.method === 'GET') {
     console.log('🤖 AI配置响应');
     success(res, {
       provider: 'openai',
@@ -104,7 +112,7 @@ module.exports = (req, res) => {
   }
   
   // 仪表盘统计
-  if (req.url === '/api/dashboard/stats' && req.method === 'GET') {
+  if (path === '/api/dashboard/stats' && req.method === 'GET') {
     console.log('📊 仪表盘统计响应');
     success(res, {
       myPlansTotal: 0, myPlansTrend: 0, myPlansProgress: 0,
@@ -116,7 +124,7 @@ module.exports = (req, res) => {
   }
   
   // 图表数据
-  if (req.url === '/api/dashboard/chart-data' && req.method === 'GET') {
+  if (path === '/api/dashboard/chart-data' && req.method === 'GET') {
     console.log('📈 图表数据响应');
     success(res, {
       planStatus: [],
@@ -128,14 +136,14 @@ module.exports = (req, res) => {
   }
   
   // 快捷操作统计
-  if (req.url === '/api/dashboard/quick-actions-stats' && req.method === 'GET') {
+  if (path === '/api/dashboard/quick-actions-stats' && req.method === 'GET') {
     console.log('⚡ 快捷操作统计响应');
     success(res, { myPlans: 0, publishedPlans: 0, pendingFeedback: 0, pendingReview: 0 });
     return;
   }
   
   // AI分析
-  if (req.url === '/api/dashboard/ai-analysis' && req.method === 'GET') {
+  if (path === '/api/dashboard/ai-analysis' && req.method === 'GET') {
     console.log('🧠 AI分析响应');
     success(res, {
       insights: [],
@@ -151,14 +159,14 @@ module.exports = (req, res) => {
   }
   
   // 最近活动
-  if (req.url === '/api/dashboard/recent-activities' && req.method === 'GET') {
+  if (path === '/api/dashboard/recent-activities' && req.method === 'GET') {
     console.log('📋 最近活动响应');
     success(res, []);
     return;
   }
   
   // 知识库
-  if (req.url === '/api/knowledge/bases' && req.method === 'GET') {
+  if (path === '/api/knowledge/bases' && req.method === 'GET') {
     console.log('📚 知识库响应');
     success(res, []);
     return;
