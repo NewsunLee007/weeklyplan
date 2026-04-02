@@ -148,6 +148,9 @@ async function initDatabase() {
       )
     `);
 
+    // 升级现有表结构
+    await upgradeTableSchemas();
+
     // 插入默认数据
     await insertDefaultData();
 
@@ -198,10 +201,69 @@ async function initDatabase() {
       )
     `);
 
+    // 升级现有表结构
+    await upgradeTableSchemas();
+
     // 插入默认数据
     await insertDefaultData();
 
     return 'postgres';
+  }
+}
+
+// 升级表结构
+async function upgradeTableSchemas() {
+  try {
+    // 升级 sys_department 表
+    await pool.query(`
+      ALTER TABLE sys_department 
+      ADD COLUMN IF NOT EXISTS code VARCHAR(50),
+      ADD COLUMN IF NOT EXISTS description TEXT,
+      ADD COLUMN IF NOT EXISTS status INTEGER DEFAULT 1,
+      ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE,
+      ADD COLUMN IF NOT EXISTS create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      ADD COLUMN IF NOT EXISTS update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    `).catch(() => {
+      // 忽略错误，因为列可能已经存在
+    });
+
+    // 升级 biz_week_plan 表
+    await pool.query(`
+      ALTER TABLE biz_week_plan 
+      ADD COLUMN IF NOT EXISTS current_step VARCHAR(50) DEFAULT 'CREATE',
+      ADD COLUMN IF NOT EXISTS creator_id INTEGER REFERENCES sys_user(id),
+      ADD COLUMN IF NOT EXISTS submitter_id INTEGER REFERENCES sys_user(id),
+      ADD COLUMN IF NOT EXISTS reviewer_id INTEGER REFERENCES sys_user(id),
+      ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMP,
+      ADD COLUMN IF NOT EXISTS create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      ADD COLUMN IF NOT EXISTS update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE
+    `).catch(() => {
+      // 忽略错误，因为列可能已经存在
+    });
+
+    // 升级 biz_plan_item 表
+    await pool.query(`
+      ALTER TABLE biz_plan_item 
+      ADD COLUMN IF NOT EXISTS create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      ADD COLUMN IF NOT EXISTS update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE
+    `).catch(() => {
+      // 忽略错误，因为列可能已经存在
+    });
+
+    // 升级 biz_feedback 表
+    await pool.query(`
+      ALTER TABLE biz_feedback 
+      ADD COLUMN IF NOT EXISTS feedback_user_id INTEGER REFERENCES sys_user(id),
+      ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE
+    `).catch(() => {
+      // 忽略错误，因为列可能已经存在
+    });
+
+    console.log('表结构升级完成');
+  } catch (error) {
+    console.log('表结构升级时出现错误（可能表或列已存在）:', error.message);
   }
 }
 
@@ -274,6 +336,10 @@ function getDatabaseType() {
 
 // 将 SQLite 的 ? 占位符转换为 PostgreSQL 的 $1, $2, ...
 function convertPlaceholders(sql) {
+  // 如果SQL中已经有$1、$2这样的占位符，直接返回
+  if (sql.includes('$1')) {
+    return sql;
+  }
   let count = 0;
   return sql.replace(/\?/g, () => `$${++count}`);
 }

@@ -58,102 +58,84 @@ router.get('/ai-analysis', authMiddleware, async (req, res) => {
   const { role, userId, departmentId } = req.user;
 
   try {
-    // 1. 获取学期计划数据
-    const semesterPlans = await queryOne(
-      `SELECT COUNT(*) as cnt FROM biz_semester_plan WHERE is_deleted=false`
-    );
-
-    // 2. 获取学校情况数据
-    const schoolInfo = await queryOne(
-      `SELECT COUNT(*) as cnt FROM sys_school_config WHERE is_deleted=false`
-    );
-
-    // 3. 获取学期行事历数据
-    const calendarEvents = await queryOne(
-      `SELECT COUNT(*) as cnt FROM biz_calendar_event WHERE is_deleted=false`
-    );
-
-    // 4. 获取每周计划数据
-    const weekPlans = await queryOne(
-      `SELECT COUNT(*) as cnt FROM biz_week_plan WHERE is_deleted=false`
-    );
-
-      // 获取当前周数
+    // 获取当前周数
     const currentWeek = await queryOne("SELECT EXTRACT(WEEK FROM NOW()) as week");
     const currentWeekNum = currentWeek?.week || 0;
 
-    // 5. 获取本周计划完成情况
-    const currentWeekPlans = await queryOne(
-      `SELECT 
-        COUNT(*) as total, 
-        SUM(CASE WHEN status='COMPLETED' THEN 1 ELSE 0 END) as completed 
-       FROM biz_week_plan 
-       WHERE is_deleted=false 
-       AND EXTRACT(WEEK FROM start_date) = ?`,
-      [currentWeekNum]
-    );
+    // 一次性获取所有统计数据
+    const stats = await queryOne(`
+      SELECT 
+        (SELECT COUNT(*) FROM biz_semester_plan WHERE is_deleted=false) as semesterPlans,
+        (SELECT COUNT(*) FROM sys_school_config WHERE is_deleted=false) as schoolInfo,
+        (SELECT COUNT(*) FROM biz_calendar_event WHERE is_deleted=false) as calendarEvents,
+        (SELECT COUNT(*) FROM biz_week_plan WHERE is_deleted=false) as weekPlans,
+        (SELECT COUNT(*) FROM biz_week_plan WHERE is_deleted=false AND EXTRACT(WEEK FROM start_date) = ?) as currentWeekTotal,
+        (SELECT COUNT(*) FROM biz_week_plan WHERE is_deleted=false AND EXTRACT(WEEK FROM start_date) = ? AND status='COMPLETED') as currentWeekCompleted,
+        (SELECT COUNT(*) FROM biz_week_plan WHERE is_deleted=false AND EXTRACT(WEEK FROM start_date) = ?) as nextWeekPlans
+    `, [currentWeekNum, currentWeekNum, currentWeekNum + 1]);
 
-    // 6. 获取下周计划安排
-    const nextWeekPlans = await queryOne(
-      `SELECT COUNT(*) as cnt FROM biz_week_plan 
-       WHERE is_deleted=false 
-       AND EXTRACT(WEEK FROM start_date) = ?`,
-      [currentWeekNum + 1]
-    );
-
-    // 7. 获取历史数据 - 过去4周的完成情况
+    // 获取历史数据 - 过去4周的完成情况
     const historicalData = [];
-    // 一次性获取过去4周的数据
-    const historicalWeeks = await query(
-      `SELECT 
-        EXTRACT(WEEK FROM start_date) as week, 
-        COUNT(*) as total, 
-        SUM(CASE WHEN status='COMPLETED' THEN 1 ELSE 0 END) as completed 
-       FROM biz_week_plan 
-       WHERE is_deleted=false 
-       AND EXTRACT(WEEK FROM start_date) BETWEEN ? AND ? 
-       GROUP BY EXTRACT(WEEK FROM start_date) 
-       ORDER BY EXTRACT(WEEK FROM start_date) DESC`,
-      [currentWeekNum - 4, currentWeekNum - 1]
-    );
+    try {
+      const historicalWeeks = await query(
+        `SELECT 
+          EXTRACT(WEEK FROM start_date) as week, 
+          COUNT(*) as total, 
+          SUM(CASE WHEN status='COMPLETED' THEN 1 ELSE 0 END) as completed 
+         FROM biz_week_plan 
+         WHERE is_deleted=false 
+         AND EXTRACT(WEEK FROM start_date) BETWEEN ? AND ? 
+         GROUP BY EXTRACT(WEEK FROM start_date) 
+         ORDER BY EXTRACT(WEEK FROM start_date) DESC`,
+        [currentWeekNum - 4, currentWeekNum - 1]
+      );
 
-    // 填充历史数据
-    for (let i = 1; i <= 4; i++) {
-      const weekNum = currentWeekNum - i;
-      const weekData = historicalWeeks.find(w => w.week === weekNum);
-      historicalData.push({
-        week: `第${weekNum}周`,
-        total: weekData?.total || 0,
-        completed: weekData?.completed || 0,
-        completionRate: weekData?.total > 0 ? Math.round((weekData.completed / weekData.total) * 100) : 0
-      });
+      // 填充历史数据
+      for (let i = 1; i <= 4; i++) {
+        const weekNum = currentWeekNum - i;
+        const weekData = historicalWeeks.find(w => w.week === weekNum);
+        historicalData.push({
+          week: `第${weekNum}周`,
+          total: weekData?.total || 0,
+          completed: weekData?.completed || 0,
+          completionRate: weekData?.total > 0 ? Math.round((weekData.completed / weekData.total) * 100) : 0
+        });
+      }
+    } catch (error) {
+      console.log('获取历史数据失败，使用默认数据:', error.message);
+      // 使用空历史数据
     }
 
-    // 8. 获取部门历史数据
-    const departmentHistory = await query(
-      `SELECT 
-        d.name as departmentName,
-        COUNT(wp.id) as totalPlans,
-        SUM(CASE WHEN wp.status='COMPLETED' THEN 1 ELSE 0 END) as completedPlans
-       FROM sys_department d
-       LEFT JOIN biz_week_plan wp ON d.id = wp.department_id AND wp.is_deleted=false
-       WHERE d.is_deleted=false
-       GROUP BY d.id, d.name
-       ORDER BY d.id
-       LIMIT 5`
-    );
+    // 获取部门历史数据
+    let departmentHistory = [];
+    try {
+      departmentHistory = await query(
+        `SELECT 
+          d.name as departmentName,
+          COUNT(wp.id) as totalPlans,
+          SUM(CASE WHEN wp.status='COMPLETED' THEN 1 ELSE 0 END) as completedPlans
+         FROM sys_department d
+         LEFT JOIN biz_week_plan wp ON d.id = wp.department_id AND wp.is_deleted=false
+         WHERE d.is_deleted=false
+         GROUP BY d.id, d.name
+         ORDER BY d.id
+         LIMIT 5`
+      );
+    } catch (error) {
+      console.log('获取部门数据失败，使用默认数据:', error.message);
+    }
 
-    // 9. 生成AI分析结果
+    // 生成AI分析结果
     const analysis = generateAIAnalysis({
-      semesterPlans: semesterPlans?.cnt || 0,
-      schoolInfo: schoolInfo?.cnt || 0,
-      calendarEvents: calendarEvents?.cnt || 0,
-      weekPlans: weekPlans?.cnt || 0,
+      semesterPlans: stats?.semesterplans || 0,
+      schoolInfo: stats?.schoolinfo || 0,
+      calendarEvents: stats?.calendarevents || 0,
+      weekPlans: stats?.weekplans || 0,
       currentWeek: {
-        total: currentWeekPlans?.total || 0,
-        completed: currentWeekPlans?.completed || 0
+        total: stats?.currentweektotal || 0,
+        completed: stats?.currentweekcompleted || 0
       },
-      nextWeek: nextWeekPlans?.cnt || 0,
+      nextWeek: stats?.nextweekplans || 0,
       historicalData,
       departmentHistory,
       role,
