@@ -28,7 +28,7 @@
             <el-col :xs="24" :sm="12" :md="6">
               <el-form-item label="周次" prop="week_number">
                 <el-select v-model="form.week_number" placeholder="选择周次" @change="onWeekChange" class="form-select">
-                  <el-option v-for="w in 20" :key="w" :label="`第${w}周`" :value="w" />
+                  <el-option v-for="option in weekOptions" :key="option.value" :label="option.label" :value="option.value" />
                 </el-select>
               </el-form-item>
             </el-col>
@@ -153,6 +153,14 @@ const aiLoading = ref(false)
 const aiSuggestions = ref(null)
 const isEdit = computed(() => !!route.params.id)
 
+const weekOptions = computed(() => {
+  const options = []
+  for (let w = 1; w <= semesterWeeks; w++) {
+    options.push({ label: `第${w}周`, value: w })
+  }
+  return options
+})
+
 const form = reactive({
   semester: '2025-2',
   week_number: null,
@@ -172,6 +180,7 @@ const rules = {
 // 从后端读取的配置
 let weekStartDate = '2026-02-25'
 let weekFirstDay = 0  // 0=周日, 1=周一
+let semesterWeeks = 20 // 学期周次总数
 
 async function loadConfig() {
   try {
@@ -182,6 +191,7 @@ async function loadConfig() {
     if (map.current_week_start) weekStartDate = map.current_week_start
     if (map.week_first_day !== undefined) weekFirstDay = parseInt(map.week_first_day) || 0
     if (map.current_semester) form.semester = map.current_semester
+    if (map.semester_weeks) semesterWeeks = parseInt(map.semester_weeks) || 20
   } catch (e) {
     console.warn('读取系统配置失败，使用默认值', e)
   }
@@ -422,18 +432,25 @@ onMounted(async () => {
   width: 100%;
   border-radius: 8px;
   transition: all 0.3s var(--transition-base);
+  min-width: 120px;
+}
+
+.date-picker :deep(.el-input) {
+  width: 100%;
 }
 
 .date-picker :deep(.el-input__wrapper) {
   border-radius: 8px;
   border: 1px solid #E0F2FE !important;
-  padding: 4px 11px;
+  padding: 6px 12px;
   box-shadow: none !important;
+  min-width: 120px;
 }
 
 .date-picker :deep(.el-input__inner) {
-  height: auto;
-  line-height: 1.5;
+  height: 20px;
+  line-height: 20px;
+  min-width: 100px;
 }
 
 .date-picker:focus-within :deep(.el-input__wrapper) {

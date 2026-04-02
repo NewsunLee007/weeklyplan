@@ -34,6 +34,10 @@
               </el-radio-group>
               <div style="color:#999;font-size:12px;margin-top:4px;">选择周日时，计划第1周起始日期应为某周日；选择周一时应为某周一。</div>
             </el-form-item>
+            <el-form-item label="学期周次总数">
+              <el-input-number v-model="form.semester_weeks" :min="1" :max="52" style="width:100%" />
+              <div style="color:#999;font-size:12px;margin-top:4px;">设置学期的总周数，用于限制历史数据显示和周次选择范围</div>
+            </el-form-item>
             <el-form-item label="企业微信 Webhook URL">
               <el-input v-model="form.wechat_webhook_url" placeholder="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=..." />
             </el-form-item>
@@ -120,6 +124,7 @@ const form = reactive({
   current_semester: '',
   current_week_start: '',
   week_first_day: '0',
+  semester_weeks: 20,
   wechat_webhook_url: '',
   ai_provider: 'openai',
   ai_api_url: 'https://api.openai.com/v1',

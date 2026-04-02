@@ -174,17 +174,24 @@ router.get('/ai-analysis', authMiddleware, async (req, res) => {
   try {
     // 获取系统配置
     let weekStartDate = '2026-02-25';
+    let semesterWeeks = 20;
     try {
-      const config = await queryOne("SELECT config_value FROM sys_config WHERE config_key = 'current_week_start'");
-      if (config?.config_value) {
-        weekStartDate = config.config_value;
-      }
+      const configs = await query("SELECT config_key, config_value FROM sys_config WHERE config_key IN ('current_week_start', 'semester_weeks')");
+      configs.forEach(config => {
+        if (config.config_key === 'current_week_start' && config.config_value) {
+          weekStartDate = config.config_value;
+        } else if (config.config_key === 'semester_weeks' && config.config_value) {
+          semesterWeeks = parseInt(config.config_value) || 20;
+        }
+      });
     } catch (error) {
-      console.log('获取学期起始日期失败，使用默认值');
+      console.log('获取系统配置失败，使用默认值');
     }
 
     // 获取当前周数（根据学期起始日期计算）
     const currentWeekNum = calcWeekNumber(weekStartDate);
+    // 限制显示的周数不超过学期总周数
+    const displayWeeks = Math.min(currentWeekNum, semesterWeeks);
 
     // 一次性获取所有统计数据
     let stats = {
@@ -216,7 +223,7 @@ router.get('/ai-analysis', authMiddleware, async (req, res) => {
       console.log('获取统计数据失败，使用默认值:', error.message);
     }
 
-    // 获取历史数据 - 从第1周到当前周的完成情况
+    // 获取历史数据 - 从第1周到当前周的完成情况，不超过学期总周数
     const historicalData = [];
     try {
       const historicalWeeks = await query(
@@ -229,11 +236,11 @@ router.get('/ai-analysis', authMiddleware, async (req, res) => {
          AND week_number BETWEEN 1 AND ? 
          GROUP BY week_number 
          ORDER BY week_number`,
-        [currentWeekNum]
+        [displayWeeks]
       );
 
-      // 填充历史数据（从第1周到当前周）
-      for (let i = 1; i <= currentWeekNum; i++) {
+      // 填充历史数据（从第1周到当前周，不超过学期总周数）
+      for (let i = 1; i <= displayWeeks; i++) {
         const weekData = historicalWeeks.find(w => w.week === i);
         historicalData.push({
           week: `第${i}周`,
@@ -649,17 +656,24 @@ router.get('/chart-data', authMiddleware, async (req, res) => {
   try {
     // 获取系统配置
     let weekStartDate = '2026-02-25';
+    let semesterWeeks = 20;
     try {
-      const config = await queryOne("SELECT config_value FROM sys_config WHERE config_key = 'current_week_start'");
-      if (config?.config_value) {
-        weekStartDate = config.config_value;
-      }
+      const configs = await query("SELECT config_key, config_value FROM sys_config WHERE config_key IN ('current_week_start', 'semester_weeks')");
+      configs.forEach(config => {
+        if (config.config_key === 'current_week_start' && config.config_value) {
+          weekStartDate = config.config_value;
+        } else if (config.config_key === 'semester_weeks' && config.config_value) {
+          semesterWeeks = parseInt(config.config_value) || 20;
+        }
+      });
     } catch (error) {
-      console.log('获取学期起始日期失败，使用默认值');
+      console.log('获取系统配置失败，使用默认值');
     }
 
     // 获取当前周数（根据学期起始日期计算）
     const currentWeekNum = calcWeekNumber(weekStartDate);
+    // 限制显示的周数不超过学期总周数
+    const displayWeeks = Math.min(currentWeekNum, semesterWeeks);
 
     // 1. 计划状态分布
     const planStatusData = await query(`
@@ -712,7 +726,7 @@ router.get('/chart-data', authMiddleware, async (req, res) => {
     const departmentNames = departmentPlanData.map(d => d.departmentName);
     const departmentCounts = departmentPlanData.map(d => d.planCount);
 
-    // 3. 计划完成趋势（从第1周到当前周）
+    // 3. 计划完成趋势（从第1周到当前周，不超过学期总周数）
     const trendData = await query(`
       SELECT 
         week_number as week,
@@ -724,14 +738,14 @@ router.get('/chart-data', authMiddleware, async (req, res) => {
         AND week_number BETWEEN 1 AND ?
       GROUP BY week_number
       ORDER BY week_number
-    `, [currentWeekNum]);
+    `, [displayWeeks]);
     
     const weeks = [];
     const totalPlans = [];
     const completedPlans = [];
     const inProgressPlans = [];
     
-    for (let i = 1; i <= currentWeekNum; i++) {
+    for (let i = 1; i <= displayWeeks; i++) {
       const weekData = trendData.find(w => w.week === i);
       weeks.push(`第${i}周`);
       totalPlans.push(weekData?.total || 0);

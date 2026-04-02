@@ -362,6 +362,7 @@ const isScrolled = ref(false)
 const weatherData = ref(null)
 const recentActivities = ref([])
 const chartData = ref(null)
+const semesterWeeks = ref(20) // 学期周次总数
 const activeTab = ref('chart')
 
 let planStatusChart = null
@@ -1049,6 +1050,19 @@ function fetchWeatherData() {
   weatherData.value = {
     temperature: 22,
     description: '晴天'
+  }
+}
+
+async function loadConfig() {
+  try {
+    const configs = await request.get('/configs')
+    const map = {}
+    configs.forEach(c => { map[c.config_key] = c.config_value })
+    if (map.semester_weeks) {
+      semesterWeeks.value = parseInt(map.semester_weeks) || 20
+    }
+  } catch (e) {
+    console.warn('读取系统配置失败，使用默认值', e)
   }
 }
 
