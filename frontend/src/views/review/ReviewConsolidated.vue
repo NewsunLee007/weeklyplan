@@ -460,4 +460,34 @@ onMounted(loadData)
     padding: 16px;
   }
 }
+
+/* 深色模式支持 */
+:global(.dark-mode) .page-header h2 {
+  color: #f8fafc;
+}
+
+:global(.dark-mode) .plan-summary {
+  background: linear-gradient(135deg, rgba(96, 165, 250, 0.1) 0%, rgba(8, 145, 178, 0.1) 100%);
+  border: 1px solid rgba(96, 165, 250, 0.2);
+  color: #cbd5e1;
+}
+
+:global(.dark-mode) .plan-summary strong {
+  color: #60a5fa;
+}
+
+:global(.dark-mode) .dept-info {
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(96, 165, 250, 0.2);
+  color: #cbd5e1;
+}
+
+:global(.dark-mode) .dept-info strong {
+  color: #60a5fa;
+}
+
+:global(.dark-mode) .action-area {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.8) 100%);
+  border: 1px solid rgba(96, 165, 250, 0.2);
+}
 </style>

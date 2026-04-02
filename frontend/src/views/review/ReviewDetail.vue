@@ -187,4 +187,21 @@ onMounted(loadData)
 .remark { margin-top: 10px; color: #64748b; font-size: 13px; }
 .reviewer { font-weight: 500; margin: 0 8px; }
 .comment { color: #64748b; font-size: 13px; margin-top: 4px; }
+
+/* 深色模式支持 */
+:global(.dark-mode) .page-header h2 {
+  color: #f8fafc;
+}
+
+:global(.dark-mode) .remark {
+  color: #94a3b8;
+}
+
+:global(.dark-mode) .comment {
+  color: #94a3b8;
+}
+
+:global(.dark-mode) .reviewer {
+  color: #cbd5e1;
+}
 </style>
