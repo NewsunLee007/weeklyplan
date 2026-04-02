@@ -3,7 +3,7 @@
  */
 const express = require('express');
 const cors = require('cors');
-const { initDatabase } = require('./lib/db/adapter');
+const { initDatabase } = require('./_lib/db/adapter');
 
 const app = express();
 
@@ -29,18 +29,18 @@ app.use(express.urlencoded({ extended: true }));
 async function bootstrap() {
   await initDatabase();
 
-  app.use('/api/auth', require('./lib/routes/auth'));
-  app.use('/api/users', require('./lib/routes/users'));
-  app.use('/api/departments', require('./lib/routes/departments'));
-  app.use('/api/plans', require('./lib/routes/plans'));
-  app.use('/api/reviews', require('./lib/routes/reviews'));
-  app.use('/api/published', require('./lib/routes/published'));
-  app.use('/api/feedbacks', require('./lib/routes/feedbacks'));
-  app.use('/api/configs', require('./lib/routes/configs'));
-  app.use('/api/export', require('./lib/routes/export'));
-  app.use('/api/dashboard', require('./lib/routes/dashboard'));
-  app.use('/api/ai', require('./lib/routes/ai'));
-  app.use('/api/knowledge', require('./lib/routes/knowledge'));
+  app.use('/api/auth', require('./_lib/routes/auth'));
+  app.use('/api/users', require('./_lib/routes/users'));
+  app.use('/api/departments', require('./_lib/routes/departments'));
+  app.use('/api/plans', require('./_lib/routes/plans'));
+  app.use('/api/reviews', require('./_lib/routes/reviews'));
+  app.use('/api/published', require('./_lib/routes/published'));
+  app.use('/api/feedbacks', require('./_lib/routes/feedbacks'));
+  app.use('/api/configs', require('./_lib/routes/configs'));
+  app.use('/api/export', require('./_lib/routes/export'));
+  app.use('/api/dashboard', require('./_lib/routes/dashboard'));
+  app.use('/api/ai', require('./_lib/routes/ai'));
+  app.use('/api/knowledge', require('./_lib/routes/knowledge'));
 
   // 全局错误处理
   app.use((err, req, res, next) => {
