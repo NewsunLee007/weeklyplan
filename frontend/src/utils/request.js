@@ -9,7 +9,7 @@ import router from '../router'
 const isProduction = import.meta.env.PROD
 const request = axios.create({
   baseURL: isProduction ? '/api' : 'http://localhost:3001/api',
-  timeout: 15000
+  timeout: 30000
 })
 
 // 登录过期提示标志，防止重复提示

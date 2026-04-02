@@ -10,80 +10,127 @@ const DATABASE_URL = process.env.DATABASE_URL || process.env.NEON_DATABASE_URL;
 let db = null;
 let pool = null;
 let dbType = null;
+let isInitializing = false;
+let initError = null;
+
+console.log('📊 数据库适配器加载 - DATABASE_URL:', DATABASE_URL ? '已配置' : '未配置');
 
 // 初始化数据库
 async function initDatabase() {
-  if (DATABASE_URL && DATABASE_URL.startsWith('postgresql://')) {
-    // 使用 PostgreSQL (Neon)
-    console.log('📦 使用 PostgreSQL 数据库');
-    try {
-      pool = new Pool({
-        connectionString: DATABASE_URL,
-        ssl: DATABASE_URL.includes('neon.tech') ? { rejectUnauthorized: false } : false,
-        max: 5,
-        min: 1,
-        idleTimeoutMillis: 10000,
-        connectionTimeoutMillis: 5000
-      });
+  if (dbType) {
+    console.log('📊 数据库已经初始化完成:', dbType);
+    return dbType;
+  }
+  
+  if (isInitializing) {
+    console.log('📊 数据库正在初始化中，等待完成...');
+    // 如果正在初始化，等待一下然后返回
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    return dbType || 'sqlite';
+  }
 
-      // 测试连接
-      await pool.query('SELECT 1');
+  if (initError) {
+    console.log('📊 之前初始化失败，使用SQLite');
+    return dbType || 'sqlite';
+  }
 
-      // 创建数据库表（如果不存在） - 只创建核心表
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS sys_user (
-          id SERIAL PRIMARY KEY,
-          username VARCHAR(50) UNIQUE NOT NULL,
-          password VARCHAR(255) NOT NULL,
-          real_name VARCHAR(50),
-          role VARCHAR(20) NOT NULL,
-          department_id INTEGER,
-          phone VARCHAR(20),
-          status INTEGER DEFAULT 1,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          is_deleted BOOLEAN DEFAULT FALSE
-        )
-      `);
+  isInitializing = true;
+  console.log('📦 开始初始化数据库...');
 
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS sys_department (
-          id SERIAL PRIMARY KEY,
-          name VARCHAR(50) UNIQUE NOT NULL,
-          code VARCHAR(50) UNIQUE NOT NULL,
-          sort_order INTEGER DEFAULT 0,
-          description TEXT,
-          status INTEGER DEFAULT 1,
-          is_deleted BOOLEAN DEFAULT FALSE,
-          create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-      `);
+  try {
+    if (DATABASE_URL && DATABASE_URL.startsWith('postgresql://')) {
+      // 使用 PostgreSQL (Neon)
+      console.log('📦 尝试使用 PostgreSQL 数据库');
+      try {
+        pool = new Pool({
+          connectionString: DATABASE_URL,
+          ssl: DATABASE_URL.includes('neon.tech') ? { rejectUnauthorized: false } : false,
+          max: 3,
+          min: 0,
+          idleTimeoutMillis: 5000,
+          connectionTimeoutMillis: 3000
+        });
 
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS sys_config (
-          id SERIAL PRIMARY KEY,
-          config_key VARCHAR(50) UNIQUE NOT NULL,
-          config_value TEXT,
-          update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-      `);
+        // 测试连接
+        console.log('📦 测试 PostgreSQL 连接...');
+        await pool.query('SELECT 1');
+        console.log('✅ PostgreSQL 连接成功');
 
-      // 跳过其他表的创建，只在需要时创建
-      // 快速插入默认数据
-      await fastInsertDefaultData();
+        // 只快速创建核心表，其他表在需要时创建
+        console.log('📦 创建核心表...');
+        
+        // 使用 CREATE TABLE IF NOT EXISTS 但不等待太久
+        const createTablePromises = [];
+        
+        createTablePromises.push(pool.query(`
+          CREATE TABLE IF NOT EXISTS sys_user (
+            id SERIAL PRIMARY KEY,
+            username VARCHAR(50) UNIQUE NOT NULL,
+            password VARCHAR(255) NOT NULL,
+            real_name VARCHAR(50),
+            role VARCHAR(20) NOT NULL,
+            department_id INTEGER,
+            phone VARCHAR(20),
+            status INTEGER DEFAULT 1,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            is_deleted BOOLEAN DEFAULT FALSE
+          )
+        `));
 
-      dbType = 'postgres';
-      return 'postgres';
-    } catch (error) {
-      console.error('PostgreSQL 连接失败，使用 SQLite 数据库:', error.message);
-      // 回退到 SQLite
+        createTablePromises.push(pool.query(`
+          CREATE TABLE IF NOT EXISTS sys_department (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(50) UNIQUE NOT NULL,
+            code VARCHAR(50) UNIQUE NOT NULL,
+            sort_order INTEGER DEFAULT 0,
+            description TEXT,
+            status INTEGER DEFAULT 1,
+            is_deleted BOOLEAN DEFAULT FALSE,
+            create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          )
+        `));
+
+        createTablePromises.push(pool.query(`
+          CREATE TABLE IF NOT EXISTS sys_config (
+            id SERIAL PRIMARY KEY,
+            config_key VARCHAR(50) UNIQUE NOT NULL,
+            config_value TEXT,
+            update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          )
+        `));
+
+        // 等待表创建，但设置超时
+        await Promise.race([
+          Promise.all(createTablePromises),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('表创建超时')), 2000))
+        ]);
+
+        console.log('✅ 核心表创建完成');
+
+        // 快速插入默认数据（不等待）
+        fastInsertDefaultData().catch(err => {
+          console.log('⚠️ 默认数据插入失败，但继续运行:', err.message);
+        });
+
+        dbType = 'postgres';
+        console.log('✅ PostgreSQL 数据库初始化完成');
+        return 'postgres';
+      } catch (error) {
+        console.error('❌ PostgreSQL 连接失败，回退到 SQLite:', error.message);
+        initError = error;
+        // 回退到 SQLite
+        return await initSQLite();
+      }
+    } else {
+      // 直接使用 SQLite
+      console.log('📦 使用 SQLite 数据库');
       return await initSQLite();
     }
-  } else {
-    // 直接使用 SQLite
-    return await initSQLite();
+  } finally {
+    isInitializing = false;
   }
 }
 
@@ -172,8 +219,11 @@ function convertPlaceholders(sql) {
 
 // 执行查询（用于 SELECT）
 async function query(sql, params = []) {
+  console.log('🔍 查询执行:', sql.substring(0, 100));
+  
   // 检查是否正在初始化
   if (!dbType) {
+    console.log('⚠️ 数据库未初始化，返回空结果');
     // 返回空数组，避免等待初始化
     return [];
   }
@@ -182,18 +232,25 @@ async function query(sql, params = []) {
     // 将 ? 占位符转换为 $1, $2, ...
     const pgSql = convertPlaceholders(sql);
     try {
-      const result = await pool.query(pgSql, params);
+      // 添加查询超时
+      const result = await Promise.race([
+        pool.query(pgSql, params),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('查询超时')), 3000))
+      ]);
+      console.log('✅ 查询成功，返回', result.rows.length, '行');
       return result.rows;
     } catch (error) {
-      console.error('查询失败:', error);
+      console.error('❌ 查询失败:', error.message);
       return [];
     }
   } else {
     // 使用 SQLite
     try {
-      return sqliteDB.query(sql, params);
+      const result = sqliteDB.query(sql, params);
+      console.log('✅ SQLite 查询成功');
+      return result;
     } catch (error) {
-      console.error('查询失败:', error);
+      console.error('❌ SQLite 查询失败:', error.message);
       return [];
     }
   }
@@ -201,8 +258,11 @@ async function query(sql, params = []) {
 
 // 执行查询（用于 SELECT 单行）
 async function queryOne(sql, params = []) {
+  console.log('🔍 查询单行:', sql.substring(0, 100));
+  
   // 检查是否正在初始化
   if (!dbType) {
+    console.log('⚠️ 数据库未初始化，返回null');
     // 返回 null，避免等待初始化
     return null;
   }
@@ -211,18 +271,25 @@ async function queryOne(sql, params = []) {
     // 将 ? 占位符转换为 $1, $2, ...
     const pgSql = convertPlaceholders(sql);
     try {
-      const result = await pool.query(pgSql, params);
+      // 添加查询超时
+      const result = await Promise.race([
+        pool.query(pgSql, params),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('查询超时')), 3000))
+      ]);
+      console.log('✅ 查询单行成功');
       return result.rows[0] || null;
     } catch (error) {
-      console.error('查询失败:', error);
+      console.error('❌ 查询单行失败:', error.message);
       return null;
     }
   } else {
     // 使用 SQLite
     try {
-      return sqliteDB.queryOne(sql, params);
+      const result = sqliteDB.queryOne(sql, params);
+      console.log('✅ SQLite 查询单行成功');
+      return result;
     } catch (error) {
-      console.error('查询失败:', error);
+      console.error('❌ SQLite 查询单行失败:', error.message);
       return null;
     }
   }
@@ -230,13 +297,16 @@ async function queryOne(sql, params = []) {
 
 // 执行查询（用于 INSERT/UPDATE/DELETE）
 async function execute(sql, params = []) {
+  console.log('✏️ 执行操作:', sql.substring(0, 100));
+  
   // 检查是否正在初始化
   if (!dbType) {
+    console.log('⚠️ 数据库未初始化，尝试初始化...');
     // 尝试初始化数据库
     try {
       await initDatabase();
     } catch (error) {
-      console.error('执行操作时初始化数据库失败:', error);
+      console.error('❌ 执行操作时初始化数据库失败:', error);
       throw error;
     }
   }
@@ -245,17 +315,21 @@ async function execute(sql, params = []) {
     // 将 ? 占位符转换为 $1, $2, ...
     const pgSql = convertPlaceholders(sql);
     try {
-      return await pool.query(pgSql, params);
+      const result = await pool.query(pgSql, params);
+      console.log('✅ 执行操作成功');
+      return result;
     } catch (error) {
-      console.error('执行操作失败:', error);
+      console.error('❌ 执行操作失败:', error);
       throw error;
     }
   } else {
     // 使用 SQLite
     try {
-      return sqliteDB.run(sql, params);
+      const result = sqliteDB.run(sql, params);
+      console.log('✅ SQLite 执行操作成功');
+      return result;
     } catch (error) {
-      console.error('执行操作失败:', error);
+      console.error('❌ SQLite 执行操作失败:', error);
       throw error;
     }
   }
