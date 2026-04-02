@@ -4,7 +4,7 @@
 const router = require('express').Router();
 const { query } = require('../db/adapter');
 const { authMiddleware } = require('../middleware/auth');
-const { success } = require('../utils/helper');
+const { success, fail } = require('../utils/helper');
 const axios = require('axios');
 
 async function getAIConfig() {
@@ -41,11 +41,11 @@ router.post('/chat', authMiddleware, async (req, res) => {
   const config = await getAIConfig();
   
   if (config.ai_chat_enabled !== 'true' && config.ai_chat_enabled !== true) {
-    return res.status(400).json({ error: 'AI对话功能未启用' });
+    return fail(res, 'AI对话功能未启用', 400);
   }
   
   if (!config.ai_api_key) {
-    return res.status(400).json({ error: '请先配置AI API密钥' });
+    return fail(res, '请先配置AI API密钥', 400);
   }
 
   try {
@@ -65,6 +65,8 @@ router.post('/chat', authMiddleware, async (req, res) => {
       ...messages
     ];
 
+    console.log('正在调用AI API:', baseUrl, config.ai_model);
+    
     const response = await axios.post(`${baseUrl}/chat/completions`, {
       model: config.ai_model || 'gpt-4o',
       messages: allMessages,
@@ -74,18 +76,20 @@ router.post('/chat', authMiddleware, async (req, res) => {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${config.ai_api_key}`
-      }
+      },
+      timeout: 30000
     });
 
     const result = response.data;
+    console.log('AI API调用成功');
     return success(res, {
       message: result.choices[0].message.content,
       usage: result.usage
     });
   } catch (error) {
-    console.error('AI聊天失败:', error);
+    console.error('AI聊天失败:', error.response?.data || error.message);
     const errorMsg = error.response?.data?.error?.message || error.message || '未知错误';
-    return res.status(500).json({ error: errorMsg });
+    return fail(res, errorMsg, 500);
   }
 });
 
@@ -95,11 +99,11 @@ router.post('/suggestions', authMiddleware, async (req, res) => {
   const config = await getAIConfig();
   
   if (config.ai_suggestions_enabled !== 'true' && config.ai_suggestions_enabled !== true) {
-    return res.status(400).json({ error: 'AI建议功能未启用' });
+    return fail(res, 'AI建议功能未启用', 400);
   }
   
   if (!config.ai_api_key) {
-    return res.status(400).json({ error: '请先配置AI API密钥' });
+    return fail(res, '请先配置AI API密钥', 400);
   }
 
   try {
@@ -134,7 +138,8 @@ router.post('/suggestions', authMiddleware, async (req, res) => {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${config.ai_api_key}`
-      }
+      },
+      timeout: 30000
     });
 
     const result = response.data;
@@ -142,9 +147,9 @@ router.post('/suggestions', authMiddleware, async (req, res) => {
       suggestions: result.choices[0].message.content
     });
   } catch (error) {
-    console.error('获取AI建议失败:', error);
+    console.error('获取AI建议失败:', error.response?.data || error.message);
     const errorMsg = error.response?.data?.error?.message || error.message || '未知错误';
-    return res.status(500).json({ error: errorMsg });
+    return fail(res, errorMsg, 500);
   }
 });
 

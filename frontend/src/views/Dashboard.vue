@@ -171,7 +171,9 @@
               </h4>
               <div class="ai-insights">
                 <div class="insight-item" v-for="(insight, index) in aiInsights" :key="index">
-                  <el-icon class="insight-icon">{{ insight.icon }}</el-icon>
+                  <el-icon class="insight-icon">
+                    <component :is="getInsightIcon(insight.icon)" />
+                  </el-icon>
                   <div class="insight-text">{{ insight.text }}</div>
                   <el-tag v-if="insight.priority" :type="insight.priority === 'high' ? 'danger' : 'warning'" size="small" class="insight-priority">
                     {{ insight.priority === 'high' ? '重要' : '提醒' }}
@@ -325,7 +327,7 @@ import * as echarts from 'echarts'
 import { 
   Plus, Document, DocumentChecked, EditPen, ChatDotRound, 
   Clock, Setting, View, List, ArrowUp, ArrowDown, Refresh, 
-  Calendar, Warning, Download, Check, Top, DataLine, User
+  Calendar, Warning, Download, Check, Top, DataLine, User, InfoFilled
 } from '@element-plus/icons-vue'
 
 const router = useRouter()
@@ -830,6 +832,20 @@ async function refreshAIInsights() {
   } finally {
     loading.value = false
   }
+}
+
+// 获取洞察图标
+function getInsightIcon(iconName) {
+  const icons = {
+    'Document': Document,
+    'Warning': Warning,
+    'Calendar': Calendar,
+    'InfoFilled': InfoFilled,
+    'User': User,
+    'Top': Top,
+    'Check': Check
+  }
+  return icons[iconName] || Document
 }
 
 // 获取指标标签
