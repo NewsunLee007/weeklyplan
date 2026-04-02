@@ -39,6 +39,7 @@ module.exports = async (req, res) => {
       app.use('/api/export', require('../backend/src/routes/export'));
       app.use('/api/dashboard', require('../backend/src/routes/dashboard'));
       app.use('/api/ai', require('../backend/src/routes/ai'));
+      app.use('/api/knowledge', require('../backend/src/routes/knowledge'));
       
       routesInitialized = true;
     }

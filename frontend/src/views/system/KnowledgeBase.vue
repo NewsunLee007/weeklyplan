@@ -59,13 +59,23 @@
       v-model="baseDialogVisible"
       :title="editingBase ? '编辑知识库' : '新建知识库'"
       width="500px"
+      class="knowledge-dialog"
     >
-      <el-form :model="baseForm" label-width="80px">
-        <el-form-item label="名称">
-          <el-input v-model="baseForm.name" placeholder="请输入知识库名称" />
+      <el-form :model="baseForm" label-width="80px" class="dialog-form">
+        <el-form-item label="名称" required>
+          <el-input 
+            v-model="baseForm.name" 
+            placeholder="请输入知识库名称" 
+            class="form-input"
+          />
         </el-form-item>
-        <el-form-item label="类型">
-          <el-select v-model="baseForm.type" placeholder="请选择类型" style="width: 100%">
+        <el-form-item label="类型" required>
+          <el-select 
+            v-model="baseForm.type" 
+            placeholder="请选择类型" 
+            style="width: 100%"
+            class="form-select"
+          >
             <el-option label="学期计划" value="semester" />
             <el-option label="学校行事历" value="calendar" />
             <el-option label="工作安排" value="workplan" />
@@ -77,14 +87,15 @@
           <el-input
             v-model="baseForm.description"
             type="textarea"
-            :rows="3"
+            :rows="4"
             placeholder="请输入知识库描述"
+            class="form-textarea"
           />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="baseDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="saveBase">保存</el-button>
+        <el-button @click="baseDialogVisible = false" class="dialog-button">取消</el-button>
+        <el-button type="primary" @click="saveBase" class="dialog-button primary-button">保存</el-button>
       </template>
     </el-dialog>
 
@@ -155,23 +166,29 @@
       v-model="itemDialogVisible"
       :title="editingItem ? '编辑知识项' : '添加知识项'"
       width="600px"
+      class="knowledge-dialog"
     >
-      <el-form :model="itemForm" label-width="80px">
-        <el-form-item label="标题">
-          <el-input v-model="itemForm.title" placeholder="请输入知识项标题" />
+      <el-form :model="itemForm" label-width="80px" class="dialog-form">
+        <el-form-item label="标题" required>
+          <el-input 
+            v-model="itemForm.title" 
+            placeholder="请输入知识项标题" 
+            class="form-input"
+          />
         </el-form-item>
-        <el-form-item label="内容">
+        <el-form-item label="内容" required>
           <el-input
             v-model="itemForm.content"
             type="textarea"
             :rows="6"
             placeholder="请输入知识项内容"
+            class="form-textarea"
           />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="itemDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="saveItem">保存</el-button>
+        <el-button @click="itemDialogVisible = false" class="dialog-button">取消</el-button>
+        <el-button type="primary" @click="saveItem" class="dialog-button primary-button">保存</el-button>
       </template>
     </el-dialog>
   </div>
@@ -610,5 +627,89 @@ onMounted(() => {
   gap: 4px;
   padding-top: 8px;
   border-top: 1px solid #e2e8f0;
+}
+
+/* 对话框样式 */
+.knowledge-dialog {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+}
+
+.knowledge-dialog :deep(.el-dialog__header) {
+  background: linear-gradient(135deg, #3b82f6, #60a5fa);
+  color: white;
+  padding: 20px 24px;
+  border-radius: 16px 16px 0 0;
+}
+
+.knowledge-dialog :deep(.el-dialog__title) {
+  font-size: 18px;
+  font-weight: 600;
+  color: white;
+}
+
+.knowledge-dialog :deep(.el-dialog__body) {
+  padding: 24px;
+  background: #f8fafc;
+}
+
+.knowledge-dialog :deep(.el-dialog__footer) {
+  padding: 16px 24px;
+  background: white;
+  border-top: 1px solid #e2e8f0;
+  border-radius: 0 0 16px 16px;
+}
+
+.dialog-form {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.form-input,
+.form-select {
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.form-input:focus,
+.form-select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-textarea {
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  resize: vertical;
+  transition: all 0.3s ease;
+}
+
+.form-textarea:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.dialog-button {
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.primary-button {
+  background: linear-gradient(135deg, #3b82f6, #60a5fa);
+  border: none;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.primary-button:hover {
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 </style>
