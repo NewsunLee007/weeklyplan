@@ -14,8 +14,13 @@ router.get('/', authMiddleware, async (req, res) => {
 
   // 非管理员只能看自己部门的计划（已发布计划可见全部）
   if (!['ADMIN', 'OFFICE_HEAD', 'PRINCIPAL'].includes(req.user.role)) {
-    where += ` AND (p.department_id = ? OR p.status = 'PUBLISHED')`;
-    params.push(req.user.departmentId);
+    const deptId = req.user.departmentId || null;
+    if (deptId) {
+      where += ` AND (p.department_id = ? OR p.status = 'PUBLISHED')`;
+      params.push(deptId);
+    } else {
+      where += ` AND p.status = 'PUBLISHED'`;
+    }
   }
   if (department_id) { where += ` AND p.department_id = ?`; params.push(department_id); }
   if (week_number) { where += ` AND p.week_number = ?`; params.push(week_number); }

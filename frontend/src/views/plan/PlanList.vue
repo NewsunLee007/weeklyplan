@@ -92,11 +92,7 @@
                   <div class="week-badge">{{ row.week_number }}周</div>
                 </template>
               </el-table-column>
-              <el-table-column prop="title" label="标题" min-width="250" class="table-column">
-                <template #default="{row}">
-                  <div class="plan-title" @click="router.push(`/plan/detail/${row.id}`)">{{ row.title }}</div>
-                </template>
-              </el-table-column>
+
               <el-table-column prop="dept_name" label="部门" width="120" class="table-column" />
               <el-table-column label="日期范围" width="180" class="table-column">
                 <template #default="{row}">
@@ -153,11 +149,7 @@
                   <div class="week-badge">{{ row.week_number }}周</div>
                 </template>
               </el-table-column>
-              <el-table-column prop="title" label="标题" min-width="250" class="table-column">
-                <template #default="{row}">
-                  <div class="plan-title" @click="router.push(`/plan/detail/${row.id}`)">{{ row.title }}</div>
-                </template>
-              </el-table-column>
+
               <el-table-column prop="dept_name" label="部门" width="120" class="table-column" />
               <el-table-column label="日期范围" width="180" class="table-column">
                 <template #default="{row}">
