@@ -214,6 +214,17 @@ async function initDatabase() {
 // 升级表结构
 async function upgradeTableSchemas() {
   try {
+    // 升级 sys_user 表
+    await pool.query(`
+      ALTER TABLE sys_user 
+      ADD COLUMN IF NOT EXISTS phone VARCHAR(20),
+      ADD COLUMN IF NOT EXISTS status INTEGER DEFAULT 1,
+      ADD COLUMN IF NOT EXISTS create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      ADD COLUMN IF NOT EXISTS update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    `).catch(() => {
+      // 忽略错误，因为列可能已经存在
+    });
+
     // 升级 sys_department 表
     await pool.query(`
       ALTER TABLE sys_department 

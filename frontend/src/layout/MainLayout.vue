@@ -303,32 +303,7 @@ watch(() => route.path, () => {
   backdrop-filter: blur(10px);
 }
 
-.sidebar::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 4px;
-  height: 100%;
-  background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%);
-  opacity: 0;
-  transition: opacity 0.3s var(--transition-base);
-  box-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
-}
 
-.sidebar:hover::before {
-  opacity: 1;
-  animation: sidebarGlow 2s ease-in-out infinite alternate;
-}
-
-@keyframes sidebarGlow {
-  0% {
-    box-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
-  }
-  100% {
-    box-shadow: 0 0 20px rgba(96, 165, 250, 0.8);
-  }
-}
 
 .logo-area {
   height: 70px;
