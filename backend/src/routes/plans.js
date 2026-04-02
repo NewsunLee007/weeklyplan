@@ -102,10 +102,11 @@ router.post('/', authMiddleware, async (req, res) => {
   }
 
   const n = now();
+  const deptId = req.user.departmentId || null;
   const result = await execute(
     `INSERT INTO biz_week_plan (department_id, creator_id, week_number, semester, start_date, end_date, title, status, current_step, remark, create_time, update_time)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [req.user.departmentId, req.user.userId, week_number, semester, start_date, end_date, title, 'DRAFT', 'CREATE', remark || '', n, n]
+    [deptId, req.user.userId, week_number, semester, start_date, end_date, title, 'DRAFT', 'CREATE', remark || '', n, n]
   );
   const planId = result.lastInsertRowid;
 

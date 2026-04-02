@@ -141,7 +141,7 @@
 import { ref, reactive, onMounted, computed, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import request from '../../utils/request'
-import { getWeekday, calcWeekRange, alignToWeekStart } from '../../utils/helper'
+import { getWeekday, calcWeekRange, alignToWeekStart, calcWeekNumber } from '../../utils/helper'
 import { ElMessage } from 'element-plus'
 import { Plus, Delete, ArrowLeft, Document, List, ChatDotRound, Check, MagicStick, Close } from '@element-plus/icons-vue'
 
