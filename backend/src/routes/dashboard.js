@@ -9,15 +9,57 @@ const { success } = require('../utils/helper');
 router.get('/stats', authMiddleware, async (req, res) => {
   const { role, userId, departmentId } = req.user;
 
-  // 我的计划总数
+  // 获取当前周数
+  let currentWeekNum = 1;
+  try {
+    const currentWeek = await queryOne("SELECT EXTRACT(WEEK FROM NOW()) as week");
+    currentWeekNum = currentWeek?.week || 1;
+  } catch (error) {
+    console.log('获取当前周数失败，使用默认值');
+  }
+
+  // 我的计划总数（本周）
   const myPlansTotal = (await queryOne(
     `SELECT COUNT(*) as cnt FROM biz_week_plan WHERE creator_id=? AND is_deleted=false`,
     [userId]
   ))?.cnt || 0;
 
-  // 已发布计划数
+  // 我的计划总数（上周）
+  const myPlansTotalLastWeek = (await queryOne(
+    `SELECT COUNT(*) as cnt FROM biz_week_plan 
+     WHERE creator_id=? AND is_deleted=false 
+     AND EXTRACT(WEEK FROM create_time) = ?`,
+    [userId, currentWeekNum - 1]
+  ))?.cnt || 0;
+
+  // 我的计划已完成数量
+  const myPlansCompleted = (await queryOne(
+    `SELECT COUNT(*) as cnt FROM biz_week_plan 
+     WHERE creator_id=? AND status='COMPLETED' AND is_deleted=false`,
+    [userId]
+  ))?.cnt || 0;
+
+  // 已发布计划数（本周）
   const publishedTotal = (await queryOne(
     `SELECT COUNT(*) as cnt FROM biz_week_plan WHERE status='PUBLISHED' AND is_deleted=false`
+  ))?.cnt || 0;
+
+  // 已发布计划数（上周）
+  const publishedTotalLastWeek = (await queryOne(
+    `SELECT COUNT(*) as cnt FROM biz_week_plan 
+     WHERE status='PUBLISHED' AND is_deleted=false 
+     AND EXTRACT(WEEK FROM update_time) = ?`,
+    [currentWeekNum - 1]
+  ))?.cnt || 0;
+
+  // 总计划数
+  const totalPlans = (await queryOne(
+    `SELECT COUNT(*) as cnt FROM biz_week_plan WHERE is_deleted=false`
+  ))?.cnt || 0;
+
+  // 已完成计划数
+  const totalCompleted = (await queryOne(
+    `SELECT COUNT(*) as cnt FROM biz_week_plan WHERE status='COMPLETED' AND is_deleted=false`
   ))?.cnt || 0;
 
   // 待审核数量
@@ -41,6 +83,24 @@ router.get('/stats', authMiddleware, async (req, res) => {
     ))?.cnt || 0;
   }
 
+  // 待审核数量（上周）
+  let pendingReviewLastWeek = 0;
+  if (role === 'DEPT_HEAD') {
+    pendingReviewLastWeek = (await queryOne(
+      `SELECT COUNT(*) as cnt FROM biz_week_plan 
+       WHERE status='SUBMITTED' AND department_id=? AND is_deleted=false 
+       AND EXTRACT(WEEK FROM update_time) = ?`,
+      [departmentId, currentWeekNum - 1]
+    ))?.cnt || 0;
+  } else if (['OFFICE_HEAD', 'PRINCIPAL', 'ADMIN'].includes(role)) {
+    pendingReviewLastWeek = (await queryOne(
+      `SELECT COUNT(*) as cnt FROM biz_week_plan 
+       WHERE status IN ('SUBMITTED','DEPT_APPROVED','OFFICE_APPROVED') AND is_deleted=false 
+       AND EXTRACT(WEEK FROM update_time) = ?`,
+      [currentWeekNum - 1]
+    ))?.cnt || 0;
+  }
+
   // 待反馈数（已发布且本部门未全部反馈）
   const pendingFeedback = (await queryOne(
     `SELECT COUNT(*) as cnt FROM biz_plan_item pi
@@ -50,7 +110,41 @@ router.get('/stats', authMiddleware, async (req, res) => {
     [departmentId, userId]
   ))?.cnt || 0;
 
-  return success(res, { myPlansTotal, publishedTotal, pendingReview, pendingFeedback });
+  // 待反馈数（上周）
+  const pendingFeedbackLastWeek = (await queryOne(
+    `SELECT COUNT(*) as cnt FROM biz_plan_item pi
+     JOIN biz_week_plan p ON pi.plan_id = p.id
+     WHERE p.status='PUBLISHED' AND p.department_id=? AND pi.is_deleted=false
+     AND pi.id NOT IN (SELECT plan_item_id FROM biz_feedback bf WHERE bf.feedback_user_id=? AND EXTRACT(WEEK FROM bf.created_at) = ?)`,
+    [departmentId, userId, currentWeekNum - 1]
+  ))?.cnt || 0;
+
+  // 计算趋势
+  function calculateTrend(current, last) {
+    if (last === 0) return current > 0 ? 100 : 0;
+    return Math.round(((current - last) / last) * 100);
+  }
+
+  // 计算进度
+  function calculateProgress(current, total) {
+    if (total === 0) return 0;
+    return Math.round((current / total) * 100);
+  }
+
+  return success(res, {
+    myPlansTotal,
+    myPlansTrend: calculateTrend(myPlansTotal, myPlansTotalLastWeek),
+    myPlansProgress: calculateProgress(myPlansCompleted, myPlansTotal),
+    publishedTotal,
+    publishedTrend: calculateTrend(publishedTotal, publishedTotalLastWeek),
+    publishedProgress: calculateProgress(totalCompleted, totalPlans),
+    pendingReview,
+    pendingReviewTrend: calculateTrend(pendingReview, pendingReviewLastWeek),
+    pendingReviewProgress: 100 - calculateProgress(pendingReview, totalPlans),
+    pendingFeedback,
+    pendingFeedbackTrend: calculateTrend(pendingFeedback, pendingFeedbackLastWeek),
+    pendingFeedbackProgress: 100 - calculateProgress(pendingFeedback, pendingFeedback + 10)
+  });
 });
 
 // AI分析接口

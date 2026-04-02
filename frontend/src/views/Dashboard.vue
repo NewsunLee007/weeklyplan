@@ -353,12 +353,44 @@ const todayStr = dayjs().format('YYYY年MM月DD日 dddd')
 
 const statCards = computed(() => {
   const cards = [
-    { key: 'myPlansTotal', label: '我的计划', color: '#0891B2', icon: Document, route: '/plan/list', trend: 15, progress: 75 },
-    { key: 'publishedTotal', label: '已发布计划', color: '#22C55E', icon: DocumentChecked, route: '/plan/published', trend: 8, progress: 90 },
-    { key: 'pendingFeedback', label: '待反馈条目', color: '#F59E0B', icon: ChatDotRound, route: '/feedback/list', trend: -5, progress: 45 }
+    { 
+      key: 'myPlansTotal', 
+      label: '我的计划', 
+      color: '#0891B2', 
+      icon: Document, 
+      route: '/plan/list', 
+      trend: stats.value?.myPlansTrend ?? 15, 
+      progress: stats.value?.myPlansProgress ?? 75 
+    },
+    { 
+      key: 'publishedTotal', 
+      label: '已发布计划', 
+      color: '#22C55E', 
+      icon: DocumentChecked, 
+      route: '/plan/published', 
+      trend: stats.value?.publishedTrend ?? 8, 
+      progress: stats.value?.publishedProgress ?? 90 
+    },
+    { 
+      key: 'pendingFeedback', 
+      label: '待反馈条目', 
+      color: '#F59E0B', 
+      icon: ChatDotRound, 
+      route: '/feedback/list', 
+      trend: stats.value?.pendingFeedbackTrend ?? -5, 
+      progress: stats.value?.pendingFeedbackProgress ?? 45 
+    }
   ]
   if (['DEPT_HEAD','OFFICE_HEAD','PRINCIPAL','ADMIN'].includes(role.value)) {
-    cards.splice(1, 0, { key: 'pendingReview', label: '待我审核', color: '#EF4444', icon: EditPen, route: '/review/pending', trend: 20, progress: 30 })
+    cards.splice(1, 0, { 
+      key: 'pendingReview', 
+      label: '待我审核', 
+      color: '#EF4444', 
+      icon: EditPen, 
+      route: '/review/pending', 
+      trend: stats.value?.pendingReviewTrend ?? 20, 
+      progress: stats.value?.pendingReviewProgress ?? 30 
+    })
   }
   return cards
 })
