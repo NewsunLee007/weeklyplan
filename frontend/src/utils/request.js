@@ -12,6 +12,9 @@ const request = axios.create({
   timeout: 15000
 })
 
+// 登录过期提示标志，防止重复提示
+let loginExpiredMessageShown = false
+
 // 请求拦截器：附加 Token
 request.interceptors.request.use(config => {
   const token = localStorage.getItem('token')
@@ -34,8 +37,16 @@ request.interceptors.response.use(
   err => {
     if (err.response?.status === 401) {
       localStorage.removeItem('token')
+      // 只显示一次登录过期提示
+      if (!loginExpiredMessageShown) {
+        loginExpiredMessageShown = true
+        ElMessage.error('登录已过期，请重新登录')
+        // 3秒后重置标志，允许再次显示提示
+        setTimeout(() => {
+          loginExpiredMessageShown = false
+        }, 3000)
+      }
       router.push('/login')
-      ElMessage.error('登录已过期，请重新登录')
     } else if (import.meta.env.DEV) {
       // 开发环境下静默处理错误，使用模拟数据
       console.log('开发环境网络错误:', err.message)
