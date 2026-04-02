@@ -144,7 +144,14 @@ async function loadData() {
     if (filter.keyword) params.keyword = filter.keyword
     if (filter.department_id) params.department_id = filter.department_id
     if (filter.role) params.role = filter.role
-    const res = await request.get('/users', { params })
+    const res = await request.get('/users', {
+      params,
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    })
     list.value = res.records
     pagination.total = res.total
   } finally { loading.value = false }
