@@ -9,7 +9,16 @@ const axios = require('axios');
 
 async function getAIConfig() {
   const configs = await query('SELECT config_key, config_value FROM sys_config WHERE config_key LIKE $1', ['ai_%']);
-  const config = {};
+  const config = {
+    ai_provider: 'openai',
+    ai_api_url: 'https://api.openai.com/v1',
+    ai_api_key: '',
+    ai_model: 'gpt-4o',
+    ai_temperature: '0.7',
+    ai_analysis_enabled: 'true',
+    ai_chat_enabled: 'true',
+    ai_suggestions_enabled: 'true'
+  };
   configs.forEach(c => {
     config[c.config_key] = c.config_value;
   });
@@ -20,9 +29,9 @@ async function getAIConfig() {
 router.get('/config', authMiddleware, async (req, res) => {
   const config = await getAIConfig();
   return success(res, {
-    chatEnabled: config.ai_chat_enabled === 'true',
-    analysisEnabled: config.ai_analysis_enabled === 'true',
-    suggestionsEnabled: config.ai_suggestions_enabled === 'true'
+    chatEnabled: config.ai_chat_enabled === 'true' || config.ai_chat_enabled === true || true,
+    analysisEnabled: config.ai_analysis_enabled === 'true' || config.ai_analysis_enabled === true || true,
+    suggestionsEnabled: config.ai_suggestions_enabled === 'true' || config.ai_suggestions_enabled === true || true
   });
 });
 
@@ -31,7 +40,7 @@ router.post('/chat', authMiddleware, async (req, res) => {
   const { messages, context } = req.body;
   const config = await getAIConfig();
   
-  if (config.ai_chat_enabled !== 'true') {
+  if (config.ai_chat_enabled !== 'true' && config.ai_chat_enabled !== true) {
     return res.status(400).json({ error: 'AI对话功能未启用' });
   }
   
@@ -85,7 +94,7 @@ router.post('/suggestions', authMiddleware, async (req, res) => {
   const { type, data } = req.body;
   const config = await getAIConfig();
   
-  if (config.ai_suggestions_enabled !== 'true') {
+  if (config.ai_suggestions_enabled !== 'true' && config.ai_suggestions_enabled !== true) {
     return res.status(400).json({ error: 'AI建议功能未启用' });
   }
   

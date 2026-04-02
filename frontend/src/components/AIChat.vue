@@ -93,9 +93,19 @@ function toggleChat() {
 async function fetchAIConfig() {
   try {
     const config = await request.get('/ai/config')
-    aiConfig.value = config
+    console.log('获取到的AI配置:', config)
+    aiConfig.value = {
+      chatEnabled: config.chatEnabled !== false,
+      analysisEnabled: config.analysisEnabled !== false,
+      suggestionsEnabled: config.suggestionsEnabled !== false
+    }
   } catch (error) {
     console.error('获取AI配置失败:', error)
+    aiConfig.value = {
+      chatEnabled: true,
+      analysisEnabled: true,
+      suggestionsEnabled: true
+    }
   }
 }
 
