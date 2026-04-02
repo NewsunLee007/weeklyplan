@@ -2,7 +2,20 @@
   <div class="page-container">
     <div class="page-header">
       <h2>部门管理</h2>
-      <el-button type="primary" :icon="Plus" @click="openDialog()">新增部门</el-button>
+      <div class="header-buttons">
+        <el-button type="primary" :icon="Plus" @click="openDialog()">新增部门</el-button>
+        <el-button type="success" :icon="Download" @click="exportDepts">导出部门</el-button>
+        <el-upload
+          class="upload-demo"
+          action="#"
+          :auto-upload="false"
+          :on-change="handleImport"
+          :show-file-list="false"
+          accept=".xlsx,.xls"
+        >
+          <el-button type="warning" :icon="Upload">导入部门</el-button>
+        </el-upload>
+      </div>
     </div>
 
     <el-card shadow="never">
@@ -57,7 +70,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import request from '../../utils/request'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, Download, Upload } from '@element-plus/icons-vue'
 
 const list = ref([])
 const loading = ref(false)
@@ -108,6 +121,36 @@ async function deleteDept(row) {
   ElMessage.success('删除成功')
   loadData()
 }
+async function exportDepts() {
+  try {
+    const blob = await request.get('/departments/export', { responseType: 'blob' })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `部门数据_${new Date().toISOString().slice(0, 10)}.xlsx`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    ElMessage.success('导出成功')
+  } catch (error) {
+    ElMessage.error('导出失败')
+  }
+}
+
+async function handleImport(file) {
+  const formData = new FormData()
+  formData.append('file', file.raw)
+  try {
+    const res = await request.post('/departments/import', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    ElMessage.success(`导入成功，成功${res.success}条，失败${res.fail}条`)
+    loadData()
+  } catch (error) {
+    ElMessage.error('导入失败')
+  }
+}
+
 onMounted(loadData)
 </script>
 
@@ -115,4 +158,5 @@ onMounted(loadData)
 .page-container { padding: 24px; }
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .page-header h2 { font-size: 20px; color: #1e293b; }
+.header-buttons { display: flex; gap: 10px; }
 </style>

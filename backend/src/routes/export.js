@@ -257,16 +257,32 @@ async function buildWeeklySummary(plans, weekNumber, schoolName, schoolSubName) 
 
   // 标题：学校名称合并为一行
   const headerChildren = [];
+  
+  // 构建学校名称标题 - 二号字体（44 half-points）
+  let schoolTitle = '';
+  if (schoolName && schoolSubName) {
+    schoolTitle = schoolName + ' ' + schoolSubName;
+  } else if (schoolName) {
+    schoolTitle = schoolName;
+  } else if (schoolSubName) {
+    schoolTitle = schoolSubName;
+  }
+  
+  if (schoolTitle) {
+    headerChildren.push(
+      new Paragraph({
+        children: [new TextRun({ text: schoolTitle, bold: true, size: 44, color: '000000', font: FONT_TITLE })],
+        alignment: AlignmentType.CENTER,
+        spacing: { before: 100, after: 100 }
+      })
+    );
+  }
+  
   headerChildren.push(
-    new Paragraph({
-      children: [new TextRun({ text: schoolName + ' ' + (schoolSubName || ''), bold: true, size: 32, color: '000000', font: FONT_TITLE })],
-      alignment: AlignmentType.CENTER,
-      spacing: { before: 100, after: 100 }
-    }),
     new Paragraph({
       children: [new TextRun({ text: '周工作行事历', bold: true, size: 36, color: '0891B2', font: FONT_TITLE })],
       alignment: AlignmentType.CENTER,
-      spacing: { before: 200, after: 200 }
+      spacing: { before: schoolTitle ? 200 : 100, after: 200 }
     }),
     new Paragraph({
       children: [new TextRun({ text: `第${weekNumber}周（${dateRange}）`, size: 24, color: '333333', font: FONT_TITLE })],
@@ -278,17 +294,19 @@ async function buildWeeklySummary(plans, weekNumber, schoolName, schoolSubName) 
   // 收集所有部门的条目
   const allItems = [];
   for (const plan of plans) {
-    const items = query(
-      `SELECT * FROM biz_plan_item WHERE plan_id = ? AND is_deleted = 0 ORDER BY plan_date, sort_order`,
-      [plan.id]
-    );
-    items.forEach(item => {
-      allItems.push({
-        ...item,
-        dept_name: plan.dept_name,
-        dept_sort: getDeptSortOrder(plan.dept_name)
+    if (plan.id !== 0) { // 只对真实计划查询条目
+      const items = await query(
+        `SELECT * FROM biz_plan_item WHERE plan_id = ? AND is_deleted = false ORDER BY plan_date, sort_order`,
+        [plan.id]
+      );
+      items.forEach(item => {
+        allItems.push({
+          ...item,
+          dept_name: plan.dept_name,
+          dept_sort: getDeptSortOrder(plan.dept_name)
+        });
       });
-    });
+    }
   }
 
   // 按日期和部门排序
@@ -589,19 +607,19 @@ async function buildWeeklySummary(plans, weekNumber, schoolName, schoolSubName) 
 // GET /plan/:planId 导出单个部门计划
 router.get('/plan/:planId', authMiddleware, async (req, res) => {
   const { planId } = req.params;
-  const plan = queryOne(
-    `SELECT p.*, d.name as dept_name FROM biz_week_plan p LEFT JOIN sys_department d ON p.department_id=d.id WHERE p.id=? AND p.is_deleted=0`,
+  const plan = await queryOne(
+    `SELECT p.*, d.name as dept_name FROM biz_week_plan p LEFT JOIN sys_department d ON p.department_id=d.id WHERE p.id=? AND p.is_deleted=false`,
     [planId]
   );
   if (!plan) return fail(res, '计划不存在', 404);
 
-  const items = query(
-    `SELECT * FROM biz_plan_item WHERE plan_id = ? AND is_deleted = 0 ORDER BY plan_date, sort_order`,
+  const items = await query(
+    `SELECT * FROM biz_plan_item WHERE plan_id = ? AND is_deleted = false ORDER BY plan_date, sort_order`,
     [planId]
   );
 
-  const schoolName = queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_name'`)?.config_value || '';
-  const schoolSubName = queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_sub_name'`)?.config_value || '';
+  const schoolName = await queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_name'`)?.config_value || '';
+  const schoolSubName = await queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_sub_name'`)?.config_value || '';
 
   try {
     const doc = buildDocxFromPlan(plan, items, schoolName, schoolSubName);
@@ -621,21 +639,56 @@ router.get('/weekly-summary/:weekNumber', authMiddleware, async (req, res) => {
   const { weekNumber } = req.params;
   const { semester } = req.query;
 
-  let where = `WHERE p.status='PUBLISHED' AND p.is_deleted=0 AND p.week_number=?`;
+  let where = `WHERE p.status='PUBLISHED' AND p.is_deleted=false AND p.week_number=?`;
   const params = [weekNumber];
   if (semester) { where += ` AND p.semester=?`; params.push(semester); }
 
-  const plans = query(
+  const plans = await query(
     `SELECT p.*, d.name as dept_name FROM biz_week_plan p LEFT JOIN sys_department d ON p.department_id=d.id ${where} ORDER BY d.sort_order`,
     params
   );
-  if (!plans.length) return fail(res, '该周暂无已发布计划');
 
-  const schoolName = queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_name'`)?.config_value || '';
-  const schoolSubName = queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_sub_name'`)?.config_value || '';
+  const schoolName = await queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_name'`)?.config_value || '';
+  const schoolSubName = await queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_sub_name'`)?.config_value || '';
+
+  // 如果没有计划，生成默认计划（仅包含空表格）
+  let doc;
+  if (!plans.length) {
+    // 创建一个空计划用于生成模板
+    const fakePlan = {
+      id: 0,
+      start_date: null,
+      end_date: null
+    };
+    // 尝试获取当前学期的周次范围或者使用默认日期
+    try {
+      const weekStartConfig = await queryOne(`SELECT config_value FROM sys_config WHERE config_key='current_week_start'`);
+      if (weekStartConfig?.config_value) {
+        const startDate = new Date(weekStartConfig.config_value);
+        startDate.setDate(startDate.getDate() + (parseInt(weekNumber) - 1) * 7);
+        fakePlan.start_date = startDate.toISOString().split('T')[0];
+        fakePlan.end_date = new Date(startDate.getTime() + 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      } else {
+        // 如果没有配置，使用当前日期往前推到最近的周一
+        const today = new Date();
+        const day = today.getDay();
+        const diff = (day === 1 ? 0 : (day === 0 ? -6 : 1 - day));
+        const monday = new Date(today);
+        monday.setDate(today.getDate() + diff + (parseInt(weekNumber) - 1) * 7);
+        fakePlan.start_date = monday.toISOString().split('T')[0];
+        fakePlan.end_date = new Date(monday.getTime() + 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      }
+    } catch (e) {
+      // 出错时使用任意日期
+      fakePlan.start_date = '2026-01-01';
+      fakePlan.end_date = '2026-01-07';
+    }
+    doc = await buildWeeklySummary([fakePlan], weekNumber, schoolName, schoolSubName);
+  } else {
+    doc = await buildWeeklySummary(plans, weekNumber, schoolName, schoolSubName);
+  }
 
   try {
-    const doc = await buildWeeklySummary(plans, weekNumber, schoolName, schoolSubName);
     const buffer = await Packer.toBuffer(doc);
     const filename = encodeURIComponent(`第${weekNumber}周全校工作计划汇总.docx`);
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
@@ -715,19 +768,19 @@ async function convertWordToPdf(wordBuffer, outputPdfPath) {
 // GET /plan/:planId/pdf 导出单个部门计划为 PDF
 router.get('/plan/:planId/pdf', authMiddleware, async (req, res) => {
   const { planId } = req.params;
-  const plan = queryOne(
-    `SELECT p.*, d.name as dept_name FROM biz_week_plan p LEFT JOIN sys_department d ON p.department_id=d.id WHERE p.id=? AND p.is_deleted=0`,
+  const plan = await queryOne(
+    `SELECT p.*, d.name as dept_name FROM biz_week_plan p LEFT JOIN sys_department d ON p.department_id=d.id WHERE p.id=? AND p.is_deleted=false`,
     [planId]
   );
   if (!plan) return fail(res, '计划不存在', 404);
 
-  const items = query(
-    `SELECT * FROM biz_plan_item WHERE plan_id = ? AND is_deleted = 0 ORDER BY plan_date, sort_order`,
+  const items = await query(
+    `SELECT * FROM biz_plan_item WHERE plan_id = ? AND is_deleted = false ORDER BY plan_date, sort_order`,
     [planId]
   );
 
-  const schoolName = queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_name'`)?.config_value || '';
-  const schoolSubName = queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_sub_name'`)?.config_value || '';
+  const schoolName = await queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_name'`)?.config_value || '';
+  const schoolSubName = await queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_sub_name'`)?.config_value || '';
 
   try {
     const doc = buildDocxFromPlan(plan, items, schoolName, schoolSubName);
@@ -756,21 +809,56 @@ router.get('/weekly-summary/:weekNumber/pdf', authMiddleware, async (req, res) =
   const { weekNumber } = req.params;
   const { semester } = req.query;
 
-  let where = `WHERE p.status='PUBLISHED' AND p.is_deleted=0 AND p.week_number=?`;
+  let where = `WHERE p.status='PUBLISHED' AND p.is_deleted=false AND p.week_number=?`;
   const params = [weekNumber];
   if (semester) { where += ` AND p.semester=?`; params.push(semester); }
 
-  const plans = query(
+  const plans = await query(
     `SELECT p.*, d.name as dept_name FROM biz_week_plan p LEFT JOIN sys_department d ON p.department_id=d.id ${where} ORDER BY d.sort_order`,
     params
   );
-  if (!plans.length) return fail(res, '该周暂无已发布计划');
 
-  const schoolName = queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_name'`)?.config_value || '';
-  const schoolSubName = queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_sub_name'`)?.config_value || '';
+  const schoolName = await queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_name'`)?.config_value || '';
+  const schoolSubName = await queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_sub_name'`)?.config_value || '';
+
+  // 如果没有计划，生成默认计划（仅包含空表格）
+  let doc;
+  if (!plans.length) {
+    // 创建一个空计划用于生成模板
+    const fakePlan = {
+      id: 0,
+      start_date: null,
+      end_date: null
+    };
+    // 尝试获取当前学期的周次范围或者使用默认日期
+    try {
+      const weekStartConfig = await queryOne(`SELECT config_value FROM sys_config WHERE config_key='current_week_start'`);
+      if (weekStartConfig?.config_value) {
+        const startDate = new Date(weekStartConfig.config_value);
+        startDate.setDate(startDate.getDate() + (parseInt(weekNumber) - 1) * 7);
+        fakePlan.start_date = startDate.toISOString().split('T')[0];
+        fakePlan.end_date = new Date(startDate.getTime() + 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      } else {
+        // 如果没有配置，使用当前日期往前推到最近的周一
+        const today = new Date();
+        const day = today.getDay();
+        const diff = (day === 1 ? 0 : (day === 0 ? -6 : 1 - day));
+        const monday = new Date(today);
+        monday.setDate(today.getDate() + diff + (parseInt(weekNumber) - 1) * 7);
+        fakePlan.start_date = monday.toISOString().split('T')[0];
+        fakePlan.end_date = new Date(monday.getTime() + 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      }
+    } catch (e) {
+      // 出错时使用任意日期
+      fakePlan.start_date = '2026-01-01';
+      fakePlan.end_date = '2026-01-07';
+    }
+    doc = await buildWeeklySummary([fakePlan], weekNumber, schoolName, schoolSubName);
+  } else {
+    doc = await buildWeeklySummary(plans, weekNumber, schoolName, schoolSubName);
+  }
 
   try {
-    const doc = await buildWeeklySummary(plans, weekNumber, schoolName, schoolSubName);
     const wordBuffer = await Packer.toBuffer(doc);
     const tempPdfPath = path.join(__dirname, `../../temp/pdf_summary_${Date.now()}.pdf`);
     await convertWordToPdf(wordBuffer, tempPdfPath);

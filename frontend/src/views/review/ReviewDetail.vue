@@ -15,7 +15,7 @@
             <el-descriptions-item label="提交人">{{ plan.creator_name }}</el-descriptions-item>
             <el-descriptions-item label="学期">{{ plan.semester }}</el-descriptions-item>
             <el-descriptions-item label="周次">第{{ plan.week_number }}周</el-descriptions-item>
-            <el-descriptions-item label="日期">{{ plan.start_date }} ~ {{ plan.end_date }}</el-descriptions-item>
+            <el-descriptions-item label="日期">{{ formatDate(plan.start_date) }} ~ {{ formatDate(plan.end_date) }}</el-descriptions-item>
             <el-descriptions-item label="状态">
               <el-tag :type="STATUS_MAP[plan.status]?.type">{{ STATUS_MAP[plan.status]?.label }}</el-tag>
             </el-descriptions-item>
@@ -27,15 +27,17 @@
           <template #header>
             <div class="card-header">
               <span>计划条目（审核时可编辑）</span>
-              <el-button type="primary" text :icon="Plus" @click="addItem">添加条目</el-button>
+              <el-button type="primary" @click="addItem" class="add-item-btn">
+                <el-icon><Plus /></el-icon> 添加条目
+              </el-button>
             </div>
           </template>
           <el-table :data="plan.items || []" border stripe size="small">
             <el-table-column type="index" label="序" width="50" align="center" />
             <el-table-column label="日期" width="150">
               <template #default="{row}">
-                <el-input v-if="canReview" v-model="row.plan_date" placeholder="YYYY-MM-DD" size="small" />
-                <span v-else>{{ row.plan_date }}</span>
+                <el-input v-if="canReview" v-model="row.plan_date" placeholder="YYYY-MM-DD" size="small" @focus="formatInputDate(row)" />
+                <span v-else>{{ formatDate(row.plan_date) }}</span>
               </template>
             </el-table-column>
             <el-table-column label="星期" width="70" align="center">
@@ -73,7 +75,7 @@
               v-for="r in plan.reviews"
               :key="r.id"
               :type="r.result === 'APPROVED' ? 'success' : 'danger'"
-              :timestamp="r.create_time"
+              :timestamp="formatDate(r.create_time)"
             >
               <el-tag :type="r.result === 'APPROVED' ? 'success' : 'danger'" size="small">
                 {{ r.result === 'APPROVED' ? '通过' : '退回' }}
@@ -121,6 +123,21 @@ const comment = ref('')
 
 const role = computed(() => userStore.userInfo?.role)
 
+function formatDate(dateStr) {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function formatInputDate(row) {
+  if (row.plan_date && row.plan_date.includes('T')) {
+    row.plan_date = formatDate(row.plan_date)
+  }
+}
+
 const canReview = computed(() => {
   const s = plan.value.status
   const r = role.value
@@ -133,8 +150,17 @@ const canReview = computed(() => {
 
 async function loadData() {
   loading.value = true
-  try { plan.value = await request.get(`/plans/${route.params.id}`) }
-  finally { loading.value = false }
+  try {
+    plan.value = await request.get(`/plans/${route.params.id}`)
+    // 格式化所有条目的日期
+    if (plan.value.items && plan.value.items.length > 0) {
+      plan.value.items.forEach(item => {
+        if (item.plan_date && item.plan_date.includes('T')) {
+          item.plan_date = formatDate(item.plan_date)
+        }
+      })
+    }
+  } finally { loading.value = false }
 }
 
 function addItem() {
@@ -178,4 +204,34 @@ onMounted(loadData)
 .remark { margin-top: 10px; color: #64748b; font-size: 13px; }
 .reviewer { font-weight: 500; margin: 0 8px; }
 .comment { color: #64748b; font-size: 13px; margin-top: 4px; }
+
+/* 深色模式支持 */
+:global(.dark-mode) .page-header h2 {
+  color: #f8fafc;
+}
+
+:global(.dark-mode) .remark {
+  color: #94a3b8;
+}
+
+:global(.dark-mode) .comment {
+  color: #94a3b8;
+}
+
+:global(.dark-mode) .reviewer {
+  color: #cbd5e1;
+}
+
+/* 添加条目按钮样式 */
+.add-item-btn {
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.add-item-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(8, 145, 178, 0.3);
+}
 </style>

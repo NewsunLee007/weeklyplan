@@ -41,7 +41,11 @@
       <template #header>我的已发布条目（{{ filter.week_number ? `第${filter.week_number}周` : '全部' }}）</template>
       <el-table :data="personalItems" border stripe size="small">
         <el-table-column type="index" label="序" width="50" align="center" />
-        <el-table-column prop="plan_date" label="日期" width="110" />
+        <el-table-column label="日期" width="110">
+          <template #default="{row}">
+            {{ formatDate(row.plan_date) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="weekday" label="星期" width="60" align="center" />
         <el-table-column prop="content" label="工作内容" />
         <el-table-column prop="responsible" label="负责人/部门" width="150" />
@@ -63,7 +67,11 @@
           </div>
           <el-table :data="group.items" border stripe size="small" style="margin-top: 12px">
             <el-table-column type="index" label="序" width="50" align="center" />
-            <el-table-column prop="plan_date" label="日期" width="110" />
+            <el-table-column label="日期" width="110">
+              <template #default="{row}">
+                {{ formatDate(row.plan_date) }}
+              </template>
+            </el-table-column>
             <el-table-column prop="weekday" label="星期" width="60" align="center" />
             <el-table-column prop="content" label="工作内容" />
             <el-table-column prop="responsible" label="负责人/部门" width="150" />
@@ -77,7 +85,11 @@
       <template #header>全校已发布计划汇总（{{ filter.week_number ? `第${filter.week_number}周` : '全部' }}）</template>
       <el-table :data="allItems" border stripe size="small">
         <el-table-column type="index" label="序" width="50" align="center" />
-        <el-table-column prop="plan_date" label="日期" width="110" />
+        <el-table-column label="日期" width="110">
+          <template #default="{row}">
+            {{ formatDate(row.plan_date) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="weekday" label="星期" width="60" align="center" />
         <el-table-column prop="dept_name" label="部门" width="110" />
         <el-table-column prop="content" label="工作内容" />
@@ -105,6 +117,15 @@ const personalItems = ref([])
 const allItems = ref([])
 const departments = ref([]) // 部门列表
 const filter = reactive({ semester: '2025-2', week_number: 6 })
+
+function formatDate(dateStr) {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
 const hasData = computed(() => {
   if (viewMode.value === 'personal') return personalItems.value.length > 0
@@ -239,8 +260,8 @@ async function loadData() {
 }
 
 async function exportPlan(plan) {
-  const res = await request.get(`/export/plan/${plan.id}`, { responseType: 'blob' })
-  const url = URL.createObjectURL(res.data)
+  const blob = await request.get(`/export/plan/${plan.id}`, { responseType: 'blob' })
+  const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
   a.download = `${plan.dept_name}第${plan.week_number}周工作计划.docx`
@@ -252,8 +273,8 @@ async function exportSummary() {
   if (!filter.week_number) return ElMessage.warning('请先选择周次')
   const params = {}
   if (filter.semester) params.semester = filter.semester
-  const res = await request.get(`/export/weekly-summary/${filter.week_number}`, { params, responseType: 'blob' })
-  const url = URL.createObjectURL(res.data)
+  const blob = await request.get(`/export/weekly-summary/${filter.week_number}`, { params, responseType: 'blob' })
+  const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
   a.download = `第${filter.week_number}周全校工作计划汇总.docx`
@@ -265,8 +286,8 @@ async function exportSummaryPdf() {
   if (!filter.week_number) return ElMessage.warning('请先选择周次')
   const params = {}
   if (filter.semester) params.semester = filter.semester
-  const res = await request.get(`/export/weekly-summary/${filter.week_number}/pdf`, { params, responseType: 'blob' })
-  const url = URL.createObjectURL(res.data)
+  const blob = await request.get(`/export/weekly-summary/${filter.week_number}/pdf`, { params, responseType: 'blob' })
+  const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
   a.download = `第${filter.week_number}周全校工作计划汇总.pdf`
