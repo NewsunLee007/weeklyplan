@@ -302,6 +302,33 @@ async function upgradeTableSchemas() {
       // 忽略错误，因为列可能已经存在
     });
 
+    // 为现有部门添加默认编码
+    await pool.query(`
+      UPDATE sys_department 
+      SET code = CASE 
+        WHEN name = '办公室' THEN 'OFFICE'
+        WHEN name = '教务处' THEN 'ACADEMIC'
+        WHEN name = '政教处' THEN 'POLITICS'
+        WHEN name = '后勤部' THEN 'LOGISTICS'
+        WHEN name = '生活中心' THEN 'LIFE_CENTER'
+        WHEN name = '七年级' THEN 'GRADE_7'
+        WHEN name = '八年级' THEN 'GRADE_8'
+        WHEN name = '九年级' THEN 'GRADE_9'
+        ELSE LOWER(REPLACE(name, ' ', '_'))
+      END
+      WHERE code IS NULL OR code = ''
+    `).catch(() => {
+      // 忽略错误
+    });
+
+    // 确保 code 列不为空
+    await pool.query(`
+      ALTER TABLE sys_department 
+      ALTER COLUMN code SET NOT NULL
+    `).catch(() => {
+      // 忽略错误，因为列可能已经是 NOT NULL
+    });
+
     // 升级 biz_week_plan 表
     await pool.query(`
       ALTER TABLE biz_week_plan 
