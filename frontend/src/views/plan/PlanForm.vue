@@ -233,13 +233,18 @@ async function save(mode) {
       planId = res.id
       ElMessage.success('计划已创建')
     }
+    
     if (mode === 'SUBMIT') {
       await request.post(`/plans/${planId}/submit`)
       ElMessage.success('已提交审核')
     }
-    router.push('/plan/list')
-  } finally {
+    
+    // 先设置 saving 为 false，再跳转
     saving.value = false
+    router.push('/plan/list')
+  } catch (error) {
+    saving.value = false
+    console.error('保存失败:', error)
   }
 }
 
