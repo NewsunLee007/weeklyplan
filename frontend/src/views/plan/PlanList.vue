@@ -100,7 +100,7 @@
               <el-table-column prop="dept_name" label="部门" width="120" class="table-column" />
               <el-table-column label="日期范围" width="180" class="table-column">
                 <template #default="{row}">
-                  <div class="date-range">{{ row.start_date }} ~ {{ row.end_date }}</div>
+                  <div class="date-range">{{ formatDate(row.start_date) }} ~ {{ formatDate(row.end_date) }}</div>
                 </template>
               </el-table-column>
               <el-table-column label="状态" width="130" align="center" class="table-column">
@@ -108,7 +108,7 @@
                   <el-tag :type="STATUS_MAP[row.status]?.type" class="status-tag">{{ STATUS_MAP[row.status]?.label }}</el-tag>
                 </template>
               </el-table-column>
-              <el-table-column label="操作" width="240" fixed="right" class="table-column">
+              <el-table-column label="操作" width="280" fixed="right" class="table-column">
                 <template #default="{row}">
                   <div class="table-actions">
                     <el-button link type="primary" @click="router.push(`/plan/detail/${row.id}`)" class="action-btn view-btn">
@@ -161,7 +161,7 @@
               <el-table-column prop="dept_name" label="部门" width="120" class="table-column" />
               <el-table-column label="日期范围" width="180" class="table-column">
                 <template #default="{row}">
-                  <div class="date-range">{{ row.start_date }} ~ {{ row.end_date }}</div>
+                  <div class="date-range">{{ formatDate(row.start_date) }} ~ {{ formatDate(row.end_date) }}</div>
                 </template>
               </el-table-column>
               <el-table-column label="状态" width="130" align="center" class="table-column">
@@ -169,7 +169,7 @@
                   <el-tag :type="STATUS_MAP[row.status]?.type" class="status-tag">{{ STATUS_MAP[row.status]?.label }}</el-tag>
                 </template>
               </el-table-column>
-              <el-table-column label="操作" width="240" fixed="right" class="table-column">
+              <el-table-column label="操作" width="280" fixed="right" class="table-column">
                 <template #default="{row}">
                   <div class="table-actions">
                     <el-button link type="primary" @click="router.push(`/plan/detail/${row.id}`)" class="action-btn view-btn">
@@ -244,6 +244,15 @@ function getTotal(deptId) {
 function canEdit(row) { return ['DRAFT','REJECTED'].includes(row.status) }
 function canSubmit(row) { return ['DRAFT','REJECTED'].includes(row.status) }
 function canDelete(row) { return row.status === 'DRAFT' }
+
+function formatDate(dateStr) {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
 async function loadData() {
   loading.value = true
