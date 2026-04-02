@@ -379,11 +379,25 @@ onMounted(async () => {
   border-radius: 8px;
   border: 1px solid #E0F2FE;
   transition: all 0.3s var(--transition-base);
+  height: 32px;
+  display: flex;
+  align-items: center;
 }
 
-.date-picker:focus {
-  border-color: #3B82F6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+.date-picker .el-input__wrapper {
+  border-radius: 8px;
+  border: 1px solid #E0F2FE !important;
+  height: 100%;
+}
+
+.date-picker .el-input__inner {
+  height: 100%;
+  line-height: 32px;
+}
+
+.date-picker:focus-within .el-input__wrapper {
+  border-color: #3B82F6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
 }
 
 /* 工作内容输入框 */
@@ -391,11 +405,42 @@ onMounted(async () => {
   border-radius: 8px;
   border: 1px solid #E0F2FE;
   transition: all 0.3s var(--transition-base);
+  min-height: 64px;
 }
 
-.content-input:focus {
+.content-input .el-textarea__inner {
+  border-radius: 8px;
+  border: 1px solid #E0F2FE;
+  min-height: 64px;
+}
+
+.content-input:focus-within .el-textarea__inner {
   border-color: #3B82F6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* 表单输入框 */
+.form-input {
+  border-radius: 8px;
+  border: 1px solid #E0F2FE;
+  transition: all 0.3s var(--transition-base);
+  height: 32px;
+}
+
+.form-input .el-input__wrapper {
+  border-radius: 8px;
+  border: 1px solid #E0F2FE !important;
+  height: 100%;
+}
+
+.form-input .el-input__inner {
+  height: 100%;
+  line-height: 32px;
+}
+
+.form-input:focus-within .el-input__wrapper {
+  border-color: #3B82F6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
 }
 
 /* 星期徽章 */
