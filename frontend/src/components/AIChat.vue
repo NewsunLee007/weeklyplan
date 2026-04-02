@@ -115,7 +115,7 @@
 import { ref, nextTick, onMounted, computed } from 'vue'
 import { ChatDotRound, User, Close, Delete, Promotion, Minus } from '@element-plus/icons-vue'
 import request from '../utils/request'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { useUserStore } from '../stores/user'
 
 const userStore = useUserStore()
@@ -183,11 +183,19 @@ function loadChatHistory() {
 }
 
 function formatMessage(content) {
-  return content
+  // Remove markdown formatting
+  let formatted = content
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/\n/g, '<br>')
+    .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold
+    .replace(/\*(.*?)\*/g, '$1') // Remove italic
+    .replace(/`(.*?)`/g, '$1') // Remove code
+    .replace(/\[(.*?)\]\((.*?)\)/g, '$1') // Remove links
+    .replace(/^-\s/gm, '• '); // Convert bullet points
+  
+  return formatted
 }
 
 function formatTime(timestamp) {
