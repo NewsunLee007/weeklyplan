@@ -13,7 +13,7 @@ async function getKnowledgeContext() {
       `SELECT ki.*, kb.name as knowledge_base_name 
        FROM biz_knowledge_item ki
        JOIN biz_knowledge_base kb ON ki.knowledge_base_id = kb.id
-       WHERE ki.is_deleted = FALSE AND kb.is_deleted = FALSE AND ki.is_active = TRUE AND kb.is_active = TRUE
+       WHERE ki.is_deleted = 0 AND kb.is_deleted = 0 AND ki.is_active = 1 AND kb.is_active = 1
        ORDER BY kb.type, ki.created_at DESC`
     );
 
