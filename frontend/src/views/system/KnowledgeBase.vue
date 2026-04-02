@@ -58,7 +58,7 @@
     <el-dialog
       v-model="baseDialogVisible"
       :title="editingBase ? '编辑知识库' : '新建知识库'"
-      width="500px"
+      width="700px"
       class="knowledge-dialog"
     >
       <el-form :model="baseForm" label-width="80px" class="dialog-form">
@@ -87,7 +87,7 @@
           <el-input
             v-model="baseForm.description"
             type="textarea"
-            :rows="4"
+            :rows="6"
             placeholder="请输入知识库描述"
             class="form-textarea"
           />
@@ -165,7 +165,7 @@
     <el-dialog
       v-model="itemDialogVisible"
       :title="editingItem ? '编辑知识项' : '添加知识项'"
-      width="600px"
+      width="800px"
       class="knowledge-dialog"
     >
       <el-form :model="itemForm" label-width="80px" class="dialog-form">
@@ -180,7 +180,7 @@
           <el-input
             v-model="itemForm.content"
             type="textarea"
-            :rows="6"
+            :rows="10"
             placeholder="请输入知识项内容"
             class="form-textarea"
           />
