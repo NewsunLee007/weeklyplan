@@ -42,7 +42,7 @@ router.post('/', authMiddleware, requireRole('ADMIN'), async (req, res) => {
   const { username, password, real_name, department_id, role, phone } = req.body;
   if (!username || !real_name || !department_id || !role) return fail(res, '必填字段不能为空');
 
-  const exists = await queryOne(`SELECT id FROM sys_user WHERE username = ? AND is_deleted = false`, [username]);
+  const exists = await queryOne(`SELECT id FROM sys_user WHERE username = ?`, [username]);
   if (exists) return fail(res, '用户名已存在');
 
   const hashedPwd = bcrypt.hashSync(password || '123456', 10);
@@ -163,12 +163,12 @@ router.post('/import', authMiddleware, requireRole('ADMIN'), async (req, res) =>
             if (dept) deptId = dept.id;
           }
 
-          // 检查用户是否存在
-          const existing = await queryOne(`SELECT id FROM sys_user WHERE username = ? AND is_deleted = false`, [username]);
+          // 检查用户是否存在 (不管是否已经被软删除)
+          const existing = await queryOne(`SELECT id FROM sys_user WHERE username = ?`, [username]);
           if (existing) {
-            // 更新用户
+            // 更新用户，并恢复其未删除状态
             await execute(
-              `UPDATE sys_user SET real_name=?, department_id=?, role=?, phone=?, status=?, update_time=? WHERE id=?`,
+              `UPDATE sys_user SET real_name=?, department_id=?, role=?, phone=?, status=?, is_deleted=false, update_time=? WHERE id=?`,
               [realName, deptId, roleMap[roleText] || 'STAFF', phone, statusMap[statusText] || 1, now(), existing.id]
             );
           } else {
