@@ -7,6 +7,7 @@ export const ROLES = {
   ADMIN: '系统管理员',
   STAFF: '普通教师/职员',
   DEPT_HEAD: '部门主任',
+  ACADEMIC_HEAD: '教务处主任',
   OFFICE_HEAD: '办公室主任',
   PRINCIPAL: '校长'
 }

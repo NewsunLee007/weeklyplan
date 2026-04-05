@@ -121,10 +121,7 @@
                     <el-button link type="primary" v-if="canSubmit(row)" @click="submitPlan(row)" class="action-btn submit-btn">
                       <el-icon><Check /></el-icon> 提交
                     </el-button>
-                    <span v-else class="submitted-text">已提交</span>
-                    <el-button link type="warning" v-if="canWithdraw(row)" @click="withdrawPlan(row)" class="action-btn withdraw-btn">
-                      <el-icon><RefreshLeft /></el-icon> 撤回
-                    </el-button>
+                    <span v-else class="submitted-text"></span>
                     <el-button link type="warning" v-if="canWithdraw(row)" @click="withdrawPlan(row)" class="action-btn withdraw-btn">
                       <el-icon><RefreshLeft /></el-icon> 撤回
                     </el-button>
@@ -190,7 +187,10 @@
                     <el-button link type="primary" v-if="canSubmit(row)" @click="submitPlan(row)" class="action-btn submit-btn">
                       <el-icon><Check /></el-icon> 提交
                     </el-button>
-                    <span v-else class="submitted-text">已提交</span>
+                    <span v-else class="submitted-text"></span>
+                    <el-button link type="warning" v-if="canWithdraw(row)" @click="withdrawPlan(row)" class="action-btn withdraw-btn">
+                      <el-icon><RefreshLeft /></el-icon> 撤回
+                    </el-button>
                     <el-button link type="danger" v-if="canDelete(row)" @click="deletePlan(row)" class="action-btn delete-btn">
                       <el-icon><Delete /></el-icon> 删除
                     </el-button>

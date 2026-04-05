@@ -139,7 +139,7 @@ router.post('/import', authMiddleware, requireRole('ADMIN'), async (req, res) =>
       const data = XLSX.utils.sheet_to_json(worksheet);
 
       let successCount = 0, failCount = 0;
-      const roleMap = { '管理员': 'ADMIN', '普通用户': 'STAFF' };
+      const roleMap = { '管理员': 'ADMIN', '普通用户': 'STAFF', '部门主任': 'DEPT_HEAD', '办公室主任': 'OFFICE_HEAD', '教务处主任': 'ACADEMIC_HEAD', '校长': 'PRINCIPAL' };
       const statusMap = { '正常': 1, '禁用': 0 };
 
       for (const row of data) {

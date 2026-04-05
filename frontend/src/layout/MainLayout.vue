@@ -43,7 +43,7 @@
 
         <el-sub-menu
           index="/review"
-          v-if="['DEPT_HEAD','OFFICE_HEAD','PRINCIPAL','ADMIN'].includes(role)"
+          v-if="['DEPT_HEAD','OFFICE_HEAD','ACADEMIC_HEAD','PRINCIPAL','ADMIN'].includes(role) || role.includes('HEAD')"
           class="menu-sub"
         >
           <template #title>

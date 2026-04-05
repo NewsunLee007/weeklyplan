@@ -7,7 +7,7 @@ const { authMiddleware, requireRole } = require('../middleware/auth');
 const { success, fail, now } = require('../utils/helper');
 const wechatService = require('../services/wechat');
 
-const REVIEW_ROLES = ['DEPT_HEAD', 'OFFICE_HEAD', 'PRINCIPAL', 'ADMIN'];
+const REVIEW_ROLES = ['DEPT_HEAD', 'OFFICE_HEAD', 'ACADEMIC_HEAD', 'PRINCIPAL', 'ADMIN'];
 
 // 状态流转
 const STATUS_FLOW = {
@@ -19,6 +19,7 @@ const STATUS_FLOW = {
 // 角色对应审核步骤
 const ROLE_STEP = {
   DEPT_HEAD: 1,
+  ACADEMIC_HEAD: 1,
   OFFICE_HEAD: 2,
   PRINCIPAL: 3,
   ADMIN: null // ADMIN 可审核任意步骤
@@ -29,7 +30,7 @@ router.get('/pending', authMiddleware, requireRole(...REVIEW_ROLES), async (req,
   const { role, departmentId } = req.user;
   let where = `WHERE p.is_deleted = false`;
 
-  if (role === 'DEPT_HEAD') {
+  if (role === 'DEPT_HEAD' || role === 'ACADEMIC_HEAD') {
     where += ` AND p.status = 'SUBMITTED' AND p.department_id = ${departmentId}`;
   } else if (role === 'OFFICE_HEAD') {
     where += ` AND p.status IN ('DEPT_APPROVED', 'OFFICE_APPROVED')`;
@@ -64,8 +65,8 @@ router.post('/:planId/approve', authMiddleware, requireRole(...REVIEW_ROLES), as
   if (plan.status !== flow.from) return fail(res, `当前状态(${plan.status})不允许此操作`);
 
   // 验证审核人权限
-  if (role === 'DEPT_HEAD') {
-    if (step !== 1) return fail(res, '部门主任只能进行第一步审核');
+  if (role === 'DEPT_HEAD' || role === 'ACADEMIC_HEAD') {
+    if (step !== 1) return fail(res, '部门/教务主任只能进行第一步审核');
     if (plan.department_id !== departmentId) return fail(res, '只能审核本部门计划');
   } else if (role === 'OFFICE_HEAD') {
     if (step !== 2 && step !== 3) return fail(res, '办公室主任只能进行第二步或最终发布');
@@ -140,7 +141,7 @@ router.post('/:planId/reject', authMiddleware, requireRole(...REVIEW_ROLES), asy
   if (!plan) return fail(res, '计划不存在', 404);
 
   const step = plan.current_step;
-  if (role === 'DEPT_HEAD' && (step !== 1 || plan.department_id !== departmentId)) {
+  if ((role === 'DEPT_HEAD' || role === 'ACADEMIC_HEAD') && (step !== 1 || plan.department_id !== departmentId)) {
     return fail(res, '无权操作');
   }
 
@@ -162,7 +163,7 @@ router.get('/consolidated/:weekNumber/:semester', authMiddleware, requireRole(..
   let where = `WHERE p.is_deleted = false AND p.week_number = ${weekNumber} AND p.semester = '${semester}'`;
 
   // 根据角色筛选待审核的计划
-  if (role === 'DEPT_HEAD') {
+  if (role === 'DEPT_HEAD' || role === 'ACADEMIC_HEAD') {
     where += ` AND p.status = 'SUBMITTED' AND p.department_id = ${departmentId}`;
   } else if (role === 'OFFICE_HEAD') {
     where += ` AND p.status IN ('DEPT_APPROVED', 'OFFICE_APPROVED')`;
@@ -207,7 +208,7 @@ router.post('/consolidated/:weekNumber/:semester/approve', authMiddleware, requi
   let where = `WHERE is_deleted = false AND week_number = ${weekNumber} AND semester = '${semester}'`;
 
   // 筛选待审核的计划
-  if (role === 'DEPT_HEAD') {
+  if (role === 'DEPT_HEAD' || role === 'ACADEMIC_HEAD') {
     where += ` AND status = 'SUBMITTED' AND department_id = ${departmentId}`;
   } else if (role === 'OFFICE_HEAD') {
     where += ` AND status IN ('DEPT_APPROVED', 'OFFICE_APPROVED')`;

@@ -13,7 +13,7 @@ router.get('/', authMiddleware, async (req, res) => {
   const params = [];
 
   // 非管理员只能看自己部门的计划（已发布计划可见全部）
-  if (!['ADMIN', 'OFFICE_HEAD', 'PRINCIPAL'].includes(req.user.role)) {
+  if (!['ADMIN', 'OFFICE_HEAD', 'PRINCIPAL', 'ACADEMIC_HEAD'].includes(req.user.role)) {
     const deptId = req.user.departmentId || null;
     if (deptId) {
       where += ` AND (p.department_id = ? OR p.status = 'PUBLISHED')`;
@@ -202,10 +202,10 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
   if (plan.creator_id !== req.user.userId && req.user.role !== 'ADMIN') {
     return fail(res, '无权操作', 403);
   }
-  // 根据角色设置提交状态，部门主任免第一步审核
+  // 根据角色设置提交状态，部门主任和教务主任免第一步审核
   let targetStatus = 'SUBMITTED';
   let targetStep = 1;
-  if (req.user.role === 'DEPT_HEAD') {
+  if (req.user.role === 'DEPT_HEAD' || req.user.role === 'ACADEMIC_HEAD') {
     targetStatus = 'DEPT_APPROVED';
     targetStep = 2;
   }
