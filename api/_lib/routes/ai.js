@@ -2,21 +2,10 @@
  * AI 服务 /api/ai
  */
 const router = require('express').Router();
-const { query, getDatabaseType } = require('../db/adapter');
+const { query } = require('../db/adapter');
 const { authMiddleware } = require('../middleware/auth');
 const { success, fail } = require('../utils/helper');
 const axios = require('axios');
-
-function getBooleanValue(value) {
-  const dbType = getDatabaseType();
-  if (dbType === 'postgres') {
-    return value ? true : false;
-  }
-  return value ? 1 : 0;
-}
-
-const IS_DELETED_FALSE = getBooleanValue(false);
-const IS_ACTIVE_TRUE = getBooleanValue(true);
 
 async function getKnowledgeContext() {
   try {
@@ -24,9 +13,8 @@ async function getKnowledgeContext() {
       `SELECT ki.*, kb.name as knowledge_base_name 
        FROM biz_knowledge_item ki
        JOIN biz_knowledge_base kb ON ki.knowledge_base_id = kb.id
-       WHERE ki.is_deleted = ? AND kb.is_deleted = ? AND ki.is_active = ? AND kb.is_active = ?
-       ORDER BY kb.type, ki.created_at DESC`,
-      [IS_DELETED_FALSE, IS_DELETED_FALSE, IS_ACTIVE_TRUE, IS_ACTIVE_TRUE]
+       WHERE ki.is_deleted = false AND kb.is_deleted = false AND ki.is_active = true AND kb.is_active = true
+       ORDER BY kb.type, ki.created_at DESC`
     );
 
     if (items.length === 0) return '';

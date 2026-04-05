@@ -3,26 +3,16 @@
  */
 const router = require('express').Router();
 const bcrypt = require('bcryptjs');
-const { query, queryOne, execute, getDatabaseType } = require('../db/adapter');
+const { query, queryOne, execute } = require('../db/adapter');
 const { authMiddleware, requireRole } = require('../middleware/auth');
 const { success, successPage, fail, now } = require('../utils/helper');
-
-function getBooleanValue(value) {
-  const dbType = getDatabaseType();
-  if (dbType === 'postgres') {
-    return value ? true : false;
-  }
-  return value ? 1 : 0;
-}
-
-const IS_DELETED_FALSE = getBooleanValue(false);
-const IS_DELETED_TRUE = getBooleanValue(true);
 
 // GET / 用户列表（分页）
 router.get('/', authMiddleware, requireRole('ADMIN'), async (req, res) => {
   const { page = 1, pageSize = 10, department_id, role, keyword } = req.query;
-  let where = `WHERE u.is_deleted = ?`;
-  const params = [IS_DELETED_FALSE];
+  let where = `WHERE u.is_deleted = false`;
+  const params = [];
+
   if (department_id) { where += ` AND u.department_id = ?`; params.push(department_id); }
   if (role) { where += ` AND u.role = ?`; params.push(role); }
   if (keyword) { where += ` AND (u.username LIKE ? OR u.real_name LIKE ?)`; params.push(`%${keyword}%`, `%${keyword}%`); }
@@ -49,7 +39,7 @@ router.post('/', authMiddleware, requireRole('ADMIN'), async (req, res) => {
   const { username, password, real_name, department_id, role, phone } = req.body;
   if (!username || !real_name || !department_id || !role) return fail(res, '必填字段不能为空');
 
-  const exists = await queryOne(`SELECT id FROM sys_user WHERE username = ? AND is_deleted = ?`, [username, IS_DELETED_FALSE]);
+  const exists = await queryOne(`SELECT id FROM sys_user WHERE username = ? AND is_deleted = false`, [username]);
   if (exists) return fail(res, '用户名已存在');
 
   const hashedPwd = bcrypt.hashSync(password || '123456', 10);
@@ -65,7 +55,7 @@ router.post('/', authMiddleware, requireRole('ADMIN'), async (req, res) => {
 router.put('/:id', authMiddleware, requireRole('ADMIN'), async (req, res) => {
   const { id } = req.params;
   const { real_name, department_id, role, phone, status } = req.body;
-  const user = await queryOne(`SELECT id FROM sys_user WHERE id = ? AND is_deleted = ?`, [id, IS_DELETED_FALSE]);
+  const user = await queryOne(`SELECT id FROM sys_user WHERE id = ? AND is_deleted = false`, [id]);
   if (!user) return fail(res, '用户不存在', 404);
 
   await execute(
@@ -98,8 +88,7 @@ router.get('/export', authMiddleware, requireRole('ADMIN'), async (req, res) => 
     const users = await query(
       `SELECT u.username, u.real_name, u.role, u.phone, d.name as dept_name, u.status
        FROM sys_user u LEFT JOIN sys_department d ON u.department_id = d.id
-       WHERE u.is_deleted = ? ORDER BY u.id`,
-      [IS_DELETED_FALSE]
+       WHERE u.is_deleted = false ORDER BY u.id`
     );
 
     const data = users.map(user => ({
@@ -161,12 +150,12 @@ router.post('/import', authMiddleware, requireRole('ADMIN'), async (req, res) =>
           // 查找部门ID
           let deptId = null;
           if (deptName) {
-            const dept = await queryOne(`SELECT id FROM sys_department WHERE name = ? AND is_deleted = ?`, [deptName, IS_DELETED_FALSE]);
+            const dept = await queryOne(`SELECT id FROM sys_department WHERE name = ? AND is_deleted = false`, [deptName]);
             if (dept) deptId = dept.id;
           }
 
           // 检查用户是否存在
-          const existing = await queryOne(`SELECT id FROM sys_user WHERE username = ? AND is_deleted = ?`, [username, IS_DELETED_FALSE]);
+          const existing = await queryOne(`SELECT id FROM sys_user WHERE username = ? AND is_deleted = false`, [username]);
           if (existing) {
             // 更新用户
             await execute(

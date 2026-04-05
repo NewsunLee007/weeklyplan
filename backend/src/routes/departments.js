@@ -2,24 +2,13 @@
  * 部门管理 /api/departments
  */
 const router = require('express').Router();
-const { query, queryOne, execute, run, getDatabaseType } = require('../db/adapter');
+const { query, queryOne, execute, run } = require('../db/adapter');
 const { authMiddleware, requireRole } = require('../middleware/auth');
 const { success, fail, now } = require('../utils/helper');
 
-function getBooleanValue(value) {
-  const dbType = getDatabaseType();
-  if (dbType === 'postgres') {
-    return value ? true : false;
-  }
-  return value ? 1 : 0;
-}
-
-const IS_DELETED_FALSE = getBooleanValue(false);
-const IS_DELETED_TRUE = getBooleanValue(true);
-
 // GET / 获取所有部门
 router.get('/', authMiddleware, async (req, res) => {
-  const depts = await query(`SELECT * FROM sys_department WHERE is_deleted = ? ORDER BY sort_order`, [IS_DELETED_FALSE]);
+  const depts = await query(`SELECT * FROM sys_department WHERE is_deleted = false ORDER BY sort_order`);
   return success(res, depts);
 });
 
