@@ -15,6 +15,7 @@
         >
           <el-button type="warning" :icon="Upload">导入用户</el-button>
         </el-upload>
+        <el-button type="danger" :icon="Delete" @click="clearUsers">一键清空</el-button>
       </div>
     </div>
 
@@ -117,7 +118,7 @@ import { ref, reactive, onMounted } from 'vue'
 import request from '../../utils/request'
 import { ROLES } from '../../utils/helper'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Download, Upload } from '@element-plus/icons-vue'
+import { Plus, Download, Upload, Delete } from '@element-plus/icons-vue'
 
 const list = ref([])
 const depts = ref([])
@@ -201,7 +202,26 @@ async function deleteUser(row) {
   loadData()
 }
 
-async function exportUsers() {
+async function clearUsers() {
+  await ElMessageBox.confirm('确定要一键清空所有【非管理员】用户吗？此操作将删除所有普通用户，且不可恢复！', '极度危险操作', {
+    confirmButtonText: '确定清空',
+    cancelButtonText: '取消',
+    type: 'error',
+  })
+  try {
+    loading.value = true
+    await request.delete('/users/clear/all')
+    ElMessage.success('已成功清空所有非管理员用户')
+    pagination.page = 1
+    loadData()
+  } catch (error) {
+    console.error('清空失败', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+function exportUsers() {
   try {
     const blob = await request.get('/users/export', { responseType: 'blob' })
     const url = window.URL.createObjectURL(blob)

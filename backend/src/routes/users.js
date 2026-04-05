@@ -68,6 +68,12 @@ router.put('/:id', authMiddleware, requireRole('ADMIN'), async (req, res) => {
   return success(res, null, '更新成功');
 });
 
+// DELETE /clear/all 一键清空所有非管理员用户
+router.delete('/clear/all', authMiddleware, requireRole('ADMIN'), async (req, res) => {
+  await execute(`UPDATE sys_user SET is_deleted=true, update_time=? WHERE id != 1 AND role != 'ADMIN'`, [now()]);
+  return success(res, null, '已清空所有非管理员用户');
+});
+
 // DELETE /:id 删除用户
 router.delete('/:id', authMiddleware, requireRole('ADMIN'), async (req, res) => {
   const { id } = req.params;
