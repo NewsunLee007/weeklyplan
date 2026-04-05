@@ -22,13 +22,15 @@ router.get('/', authMiddleware, requireRole('ADMIN'), async (req, res) => {
     params
   )?.cnt || 0;
 
-  const offset = (Number(page) - 1) * Number(pageSize);
+  const sizeNum = parseInt(pageSize, 10) || 10;
+  const offsetNum = (parseInt(page, 10) - 1) * sizeNum;
+
   const records = await query(
     `SELECT u.id, u.username, u.real_name, u.role, u.department_id, u.phone, u.status, u.create_time,
             d.name as dept_name
      FROM sys_user u LEFT JOIN sys_department d ON u.department_id = d.id
-     ${where} ORDER BY u.id LIMIT ? OFFSET ?`,
-    [...params, Number(pageSize), offset]
+     ${where} ORDER BY u.id LIMIT ${sizeNum} OFFSET ${offsetNum}`,
+    params
   );
 
   return successPage(res, records, total, page, pageSize);
@@ -148,7 +150,7 @@ router.post('/import', authMiddleware, requireRole('ADMIN'), async (req, res) =>
           }
 
           // 查找部门ID
-          let deptId = null;
+          let deptId = 1; // 默认分配给办公室(id=1)
           if (deptName) {
             const dept = await queryOne(`SELECT id FROM sys_department WHERE name = ? AND is_deleted = false`, [deptName]);
             if (dept) deptId = dept.id;
