@@ -331,7 +331,7 @@ async function query(sql, params = []) {
       // 添加查询超时
       const result = await Promise.race([
         pool.query(pgSql, params),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('查询超时')), 3000))
+        new Promise((_, reject) => setTimeout(() => reject(new Error('查询超时')), 10000))
       ]);
       console.log('✅ 查询成功，返回', result.rows.length, '行');
       return result.rows;
@@ -370,7 +370,7 @@ async function queryOne(sql, params = []) {
       // 添加查询超时
       const result = await Promise.race([
         pool.query(pgSql, params),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('查询超时')), 3000))
+        new Promise((_, reject) => setTimeout(() => reject(new Error('查询超时')), 10000))
       ]);
       console.log('✅ 查询单行成功');
       return result.rows[0] || null;

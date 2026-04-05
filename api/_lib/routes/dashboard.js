@@ -205,15 +205,23 @@ router.get('/ai-analysis', authMiddleware, async (req, res) => {
     };
     
     try {
+      const dbType = require('../db/adapter').getDatabaseType ? require('../db/adapter').getDatabaseType() : 'postgres';
+      let extractSql = '';
+      if (dbType === 'postgres') {
+        extractSql = 'EXTRACT(WEEK FROM start_date::date)';
+      } else {
+        extractSql = 'CAST(strftime(\'%W\', start_date) AS INTEGER)';
+      }
+
       const dbStats = await queryOne(`
         SELECT 
           (SELECT COUNT(*) FROM biz_semester_plan WHERE is_deleted=false) as semesterPlans,
           (SELECT COUNT(*) FROM sys_school_config WHERE is_deleted=false) as schoolInfo,
           (SELECT COUNT(*) FROM biz_calendar_event WHERE is_deleted=false) as calendarEvents,
           (SELECT COUNT(*) FROM biz_week_plan WHERE is_deleted=false) as weekPlans,
-          (SELECT COUNT(*) FROM biz_week_plan WHERE is_deleted=false AND EXTRACT(WEEK FROM start_date) = ?) as currentWeekTotal,
-          (SELECT COUNT(*) FROM biz_week_plan WHERE is_deleted=false AND EXTRACT(WEEK FROM start_date) = ? AND status='COMPLETED') as currentWeekCompleted,
-          (SELECT COUNT(*) FROM biz_week_plan WHERE is_deleted=false AND EXTRACT(WEEK FROM start_date) = ?) as nextWeekPlans
+          (SELECT COUNT(*) FROM biz_week_plan WHERE is_deleted=false AND ${extractSql} = ?) as currentWeekTotal,
+          (SELECT COUNT(*) FROM biz_week_plan WHERE is_deleted=false AND ${extractSql} = ? AND status='COMPLETED') as currentWeekCompleted,
+          (SELECT COUNT(*) FROM biz_week_plan WHERE is_deleted=false AND ${extractSql} = ?) as nextWeekPlans
       `, [currentWeekNum, currentWeekNum, currentWeekNum + 1]);
       
       if (dbStats) {
@@ -754,19 +762,41 @@ router.get('/chart-data', authMiddleware, async (req, res) => {
     }
 
     // 4. 部门工作效率
-    const efficiencyData = await query(`
-      SELECT 
-        d.name as departmentName,
-        COUNT(wp.id) as totalPlans,
-        SUM(CASE WHEN wp.status='COMPLETED' THEN 1 ELSE 0 END) as completedPlans,
-        AVG(EXTRACT(DAY FROM AGE(wp.update_time, wp.create_time))) as avgDays
-      FROM sys_department d
-      LEFT JOIN biz_week_plan wp ON d.id = wp.department_id AND wp.is_deleted=false
-      WHERE d.is_deleted=false
-      GROUP BY d.id, d.name
-      ORDER BY d.id
-      LIMIT 7
-    `);
+    let efficiencyData = [];
+    try {
+      // PostgreSQL 使用 EXTRACT(EPOCH FROM AGE(...)) 计算天数
+      // SQLite 使用 julianday
+      const dbType = require('../db/adapter').getDatabaseType ? require('../db/adapter').getDatabaseType() : 'postgres';
+      
+      let avgDaysSql = '';
+      if (dbType === 'postgres') {
+        avgDaysSql = 'AVG(EXTRACT(EPOCH FROM (wp.update_time - wp.create_time))/86400)';
+      } else {
+        avgDaysSql = 'AVG(julianday(wp.update_time) - julianday(wp.create_time))';
+      }
+      
+      efficiencyData = await query(`
+        SELECT 
+          d.name as departmentName,
+          COUNT(wp.id) as totalPlans,
+          SUM(CASE WHEN wp.status='COMPLETED' THEN 1 ELSE 0 END) as completedPlans,
+          ${avgDaysSql} as avgDays
+        FROM sys_department d
+        LEFT JOIN biz_week_plan wp ON d.id = wp.department_id AND wp.is_deleted=false
+        WHERE d.is_deleted=false
+        GROUP BY d.id, d.name
+        ORDER BY d.id
+        LIMIT 7
+      `);
+    } catch (e) {
+      console.log('获取效率数据失败，跳过');
+      efficiencyData = departmentPlanData.map(d => ({
+        departmentName: d.departmentName,
+        totalPlans: d.planCount,
+        completedPlans: 0,
+        avgDays: 0
+      }));
+    }
     
     const efficiencyDepartmentNames = efficiencyData.map(d => d.departmentName);
     const completionRates = efficiencyData.map(d => d.totalplans > 0 ? Math.round((d.completedplans / d.totalplans) * 100) : 0);
