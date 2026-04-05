@@ -101,6 +101,12 @@ router.post('/:planId/approve', authMiddleware, requireRole(...REVIEW_ROLES), as
     [planId, userId, step, 'APPROVED', comment, n]
   );
 
+  // 如果是办公室主任点击“交校长审核”(publish: false)，而计划本身已经是 OFFICE_APPROVED (step 3)，
+  // 则只保存条目，不进行状态流转（因为它已经在校长那里了）
+  if (role === 'OFFICE_HEAD' && publish === false && step === 3) {
+    return success(res, null, '保存成功，等待校长审核');
+  }
+
   // 更新状态
   let nextStep = step + 1;
   let flowTo = flow.to;
@@ -241,6 +247,11 @@ router.post('/consolidated/:weekNumber/:semester/approve', authMiddleware, requi
     const flow = STATUS_FLOW[step];
     if (!flow) continue;
     if (plan.status !== flow.from) continue;
+
+    // 如果是办公室主任，且点击的是“交校长审核”(publish: false)，则对于已经到达 OFFICE_APPROVED(step 3) 的计划跳过状态流转，仅保存记录
+    if (role === 'OFFICE_HEAD' && publish === false && step === 3) {
+      continue;
+    }
 
     // 记录审核日志
     await execute(

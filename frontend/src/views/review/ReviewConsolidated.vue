@@ -176,12 +176,31 @@ import { Check, Close, Plus, Delete, Download } from '@element-plus/icons-vue'
 const router = useRouter()
 const userStore = useUserStore()
 
-const semester = ref('2025-2')
-const weekNumber = ref(6)
+const semester = ref('')
+const weekNumber = ref(1)
 const data = reactive({ plans: [], items: [] })
 const loading = ref(false)
 const acting = ref(false)
 const comment = ref('')
+
+async function loadConfig() {
+  try {
+    const configs = await request.get('/configs')
+    const map = {}
+    configs.forEach(c => { map[c.config_key] = c.config_value })
+    if (map.current_semester) semester.value = map.current_semester
+    
+    // 如果有动态计算周次的逻辑，也可以加在这里
+    if (map.current_week_start) {
+      const { calcWeekNumber } = await import('../../utils/helper')
+      const weekFirstDay = parseInt(map.week_first_day) || 0
+      const currentWeek = calcWeekNumber(map.current_week_start, weekFirstDay)
+      weekNumber.value = Math.max(1, currentWeek)
+    }
+  } catch (e) {
+    console.warn('读取系统配置失败', e)
+  }
+}
 
 function formatDate(dateStr) {
   if (!dateStr) return ''
@@ -322,16 +341,18 @@ async function rejectAll() {
   await ElMessageBox.confirm(`确认整体退回？涉及 ${data.plans.length} 个计划`, '警告', { type: 'warning' })
   acting.value = true
   try {
-    // 批量退回（需要逐个调用 reject）
-    for (const plan of data.plans) {
-      await request.post(`/reviews/${plan.id}/reject`, { comment: comment.value })
-    }
+    await request.post(`/reviews/consolidated/${weekNumber.value}/${semester.value}/reject`, {
+      comment: comment.value
+    })
     ElMessage.success(`已退回 ${data.plans.length} 个计划`)
     router.push('/review/pending')
   } finally { acting.value = false }
 }
 
-onMounted(loadData)
+onMounted(async () => {
+  await loadConfig()
+  loadData()
+})
 </script>
 
 <style scoped>
