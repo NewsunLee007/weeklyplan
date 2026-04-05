@@ -221,7 +221,7 @@ async function clearUsers() {
   }
 }
 
-function exportUsers() {
+async function exportUsers() {
   try {
     const blob = await request.get('/users/export', { responseType: 'blob' })
     const url = window.URL.createObjectURL(blob)
