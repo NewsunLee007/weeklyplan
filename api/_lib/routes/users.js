@@ -16,10 +16,11 @@ router.get('/', authMiddleware, requireRole('ADMIN'), async (req, res) => {
   if (role) { where += ` AND u.role = ?`; params.push(role); }
   if (keyword) { where += ` AND (u.username LIKE ? OR u.real_name LIKE ?)`; params.push(`%${keyword}%`, `%${keyword}%`); }
 
-  const total = await queryOne(
+  const totalRes = await queryOne(
     `SELECT COUNT(*) as cnt FROM sys_user u LEFT JOIN sys_department d ON u.department_id = d.id ${where}`,
     params
-  )?.cnt || 0;
+  );
+  const total = totalRes?.cnt ? parseInt(totalRes.cnt, 10) : 0;
 
   const sizeNum = parseInt(pageSize, 10) || 10;
   const offsetNum = (parseInt(page, 10) - 1) * sizeNum;

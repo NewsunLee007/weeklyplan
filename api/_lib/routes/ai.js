@@ -82,7 +82,7 @@ router.post('/chat', authMiddleware, async (req, res) => {
     }
 
     // 构建系统提示
-    let systemPrompt = '你是一个智能助手，帮助用户进行工作计划管理、分析和建议。请基于提供的知识库信息来回答用户的问题。';
+    let systemPrompt = '你是一个内置于系统中的专属智能助手，已经成功连接并调用了用户的系统知识库。如果用户问你是否调用了知识库，请明确且自信地回答你已经成功读取并正在使用知识库中的内容，切勿声称自己无法访问数据库或仅仅是基于聊天历史。请基于以下提供的【知识库信息】来回答用户的问题。';
     if (knowledgeContext) {
       systemPrompt += `\n\n${knowledgeContext}`;
     }

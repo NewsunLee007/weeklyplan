@@ -27,9 +27,10 @@ router.get('/', authMiddleware, async (req, res) => {
   if (status) { where += ` AND p.status = ?`; params.push(status); }
   if (semester) { where += ` AND p.semester = ?`; params.push(semester); }
 
-  const total = await queryOne(
+  const totalRes = await queryOne(
     `SELECT COUNT(*) as cnt FROM biz_week_plan p ${where}`, params
-  )?.cnt || 0;
+  );
+  const total = totalRes?.cnt ? parseInt(totalRes.cnt, 10) : 0;
 
   const offset = (Number(page) - 1) * Number(pageSize);
   const records = await query(
