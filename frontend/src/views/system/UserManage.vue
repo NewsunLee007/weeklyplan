@@ -50,6 +50,12 @@
         <el-table-column label="角色" width="120">
           <template #default="{row}">{{ ROLES[row.role] || row.role }}</template>
         </el-table-column>
+        <el-table-column label="所属部门" width="150">
+          <template #default="{row}">
+            <el-tag v-if="row.department_name" type="info" size="small">{{ row.department_name }}</el-tag>
+            <el-tag v-else type="danger" size="small">未分配</el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="phone" label="手机号" width="130" />
         <el-table-column label="状态" width="80" align="center">
           <template #default="{row}">

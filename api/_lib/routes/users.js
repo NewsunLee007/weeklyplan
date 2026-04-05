@@ -27,7 +27,7 @@ router.get('/', authMiddleware, requireRole('ADMIN'), async (req, res) => {
 
   const records = await query(
     `SELECT u.id, u.username, u.real_name, u.role, u.department_id, u.phone, u.status, u.create_time,
-            d.name as dept_name
+            d.name as department_name
      FROM sys_user u LEFT JOIN sys_department d ON u.department_id = d.id
      ${where} ORDER BY u.id LIMIT ${sizeNum} OFFSET ${offsetNum}`,
     params
@@ -156,10 +156,13 @@ router.post('/import', authMiddleware, requireRole('ADMIN'), async (req, res) =>
           }
 
           // 查找部门ID
-          let deptId = 1; // 默认分配给办公室(id=1)
+          let deptId = null; 
           if (deptName) {
             const dept = await queryOne(`SELECT id FROM sys_department WHERE name = ? AND is_deleted = false`, [deptName]);
             if (dept) deptId = dept.id;
+          }
+          if (!deptId) {
+             return fail(res, `导入失败：用户【${realName}】没有匹配到有效的部门，请检查导入文件！`);
           }
 
           // 检查用户是否存在 (不管是否已经被软删除)

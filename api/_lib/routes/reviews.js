@@ -147,8 +147,8 @@ router.post('/:planId/reject', authMiddleware, requireRole(...REVIEW_ROLES), asy
 
   const n = now();
   await execute(
-    `INSERT INTO biz_review_record (plan_id, reviewer_id, step, result, comment, create_time) VALUES (?)`,
-    [planId, userId, step, comment, n]
+    `INSERT INTO biz_review_record (plan_id, reviewer_id, step, result, comment, create_time) VALUES (?, ?, ?, ?, ?, ?)`,
+    [planId, userId, step, 'REJECTED', comment, n]
   );
   await execute(`UPDATE biz_week_plan SET status='REJECTED', update_time=? WHERE id=?`, [n, planId]);
 
@@ -275,6 +275,42 @@ router.post('/consolidated/:weekNumber/:semester/approve', authMiddleware, requi
   }
 
   return success(res, null, `已成功操作 ${plans.length} 个计划`);
+});
+
+// POST /consolidated/:weekNumber/:semester/reject 整合审核（整体退回）
+router.post('/consolidated/:weekNumber/:semester/reject', authMiddleware, requireRole(...REVIEW_ROLES), async (req, res) => {
+  const { weekNumber, semester } = req.params;
+  const { comment } = req.body;
+  if (!comment || !comment.trim()) return fail(res, '退回意见不能为空');
+  
+  const { role, userId, departmentId } = req.user;
+  
+  let where = `WHERE is_deleted = false AND week_number = ${weekNumber} AND semester = '${semester}'`;
+
+  if (role === 'DEPT_HEAD' || role === 'ACADEMIC_HEAD') {
+    where += ` AND status = 'SUBMITTED' AND department_id = ${departmentId}`;
+  } else if (role === 'OFFICE_HEAD') {
+    where += ` AND status IN ('DEPT_APPROVED', 'OFFICE_APPROVED')`;
+  } else if (role === 'PRINCIPAL') {
+    where += ` AND status = 'OFFICE_APPROVED'`;
+  } else if (role === 'ADMIN') {
+    where += ` AND status IN ('SUBMITTED','DEPT_APPROVED','OFFICE_APPROVED')`;
+  }
+
+  const plans = await query(`SELECT * FROM biz_week_plan ${where}`);
+  if (!plans.length) return fail(res, '没有待退回的计划');
+
+  const n = now();
+  for (const plan of plans) {
+    const step = plan.current_step;
+    await execute(
+      `INSERT INTO biz_review_record (plan_id, reviewer_id, step, result, comment, create_time) VALUES (?, ?, ?, ?, ?, ?)`,
+      [plan.id, userId, step, 'REJECTED', comment, n]
+    );
+    await execute(`UPDATE biz_week_plan SET status='REJECTED', update_time=? WHERE id=?`, [n, plan.id]);
+  }
+
+  return success(res, null, `已退回 ${plans.length} 个计划`);
 });
 
 // GET /records/:planId 查看审核记录

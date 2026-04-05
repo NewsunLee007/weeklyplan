@@ -208,6 +208,9 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
   if (req.user.role === 'DEPT_HEAD' || req.user.role === 'ACADEMIC_HEAD') {
     targetStatus = 'DEPT_APPROVED';
     targetStep = 2;
+  } else if (req.user.role === 'OFFICE_HEAD') {
+    targetStatus = 'OFFICE_APPROVED';
+    targetStep = 3;
   }
   await execute(`UPDATE biz_week_plan SET status=?, current_step=?, update_time=? WHERE id=?`, [targetStatus, targetStep, now(), id]);
   return success(res, null, '已提交审核');
