@@ -181,7 +181,19 @@ router.delete('/:id', authMiddleware, async (req, res) => {
   return success(res, null, '删除成功');
 });
 
-// POST /:id/submit 提交审核
+// POST /:id/withdraw 撤回审核
+router.post('/:id/withdraw', authMiddleware, async (req, res) => {
+  const { id } = req.params;
+  const plan = await queryOne(`SELECT * FROM biz_week_plan WHERE id = ? AND is_deleted = false`, [id]);
+  if (!plan) return fail(res, '计划不存在', 404);
+  if (['PUBLISHED'].includes(plan.status)) return fail(res, '已发布计划不允许撤回');
+  if (plan.creator_id !== req.user.userId && req.user.role !== 'ADMIN') {
+    return fail(res, '无权操作', 403);
+  }
+  
+  await execute(`UPDATE biz_week_plan SET status='DRAFT', current_step=1, update_time=? WHERE id=?`, [now(), id]);
+  return success(res, null, '已撤回');
+});
 router.post('/:id/submit', authMiddleware, async (req, res) => {
   const { id } = req.params;
   const plan = await queryOne(`SELECT * FROM biz_week_plan WHERE id = ? AND is_deleted = false`, [id]);

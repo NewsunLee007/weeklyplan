@@ -122,6 +122,12 @@
                       <el-icon><Check /></el-icon> 提交
                     </el-button>
                     <span v-else class="submitted-text">已提交</span>
+                    <el-button link type="warning" v-if="canWithdraw(row)" @click="withdrawPlan(row)" class="action-btn withdraw-btn">
+                      <el-icon><RefreshLeft /></el-icon> 撤回
+                    </el-button>
+                    <el-button link type="warning" v-if="canWithdraw(row)" @click="withdrawPlan(row)" class="action-btn withdraw-btn">
+                      <el-icon><RefreshLeft /></el-icon> 撤回
+                    </el-button>
                     <el-button link type="danger" v-if="canDelete(row)" @click="deletePlan(row)" class="action-btn delete-btn">
                       <el-icon><Delete /></el-icon> 删除
                     </el-button>
@@ -215,7 +221,7 @@ import { useUserStore } from '../../stores/user'
 import request from '../../utils/request'
 import { STATUS_MAP } from '../../utils/helper'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Search, Refresh, View, Edit, Check, Delete, Document, Clock, Warning } from '@element-plus/icons-vue'
+import { Plus, Search, Refresh, View, Edit, Check, Delete, Document, Clock, Warning, RefreshLeft } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -248,6 +254,7 @@ function getTotal(deptId) {
 function canEdit(row) { return ['DRAFT','REJECTED'].includes(row.status) }
 function canSubmit(row) { return ['DRAFT','REJECTED'].includes(row.status) }
 function canDelete(row) { return row.status === 'DRAFT' }
+function canWithdraw(row) { return ['SUBMITTED','DEPT_APPROVED','OFFICE_APPROVED'].includes(row.status) }
 
 function formatDate(dateStr) {
   if (!dateStr) return ''
@@ -281,6 +288,13 @@ async function submitPlan(row) {
   await ElMessageBox.confirm('确认提交该计划进行审核？', '提示', { type: 'warning' })
   await request.post(`/plans/${row.id}/submit`)
   ElMessage.success('已提交审核')
+  loadData()
+}
+
+async function withdrawPlan(row) {
+  await ElMessageBox.confirm('确认撤回该计划？撤回后可再次编辑。', '提示', { type: 'warning' })
+  await request.post(`/plans/${row.id}/withdraw`)
+  ElMessage.success('已成功撤回')
   loadData()
 }
 

@@ -494,8 +494,8 @@ watch(() => route.path, () => {
 
 .review-badge {
   position: absolute;
-  top: -8px;
-  right: -12px;
+  top: -6px;
+  right: -16px;
   animation: pulse 2s infinite;
   box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
   z-index: 1;

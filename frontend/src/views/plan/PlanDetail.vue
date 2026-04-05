@@ -1,11 +1,17 @@
 <template>
   <div class="page-container">
+    <!-- 页面头部 -->
     <div class="page-header">
-      <h2>计划详情</h2>
+      <div class="header-content">
+        <h2 class="page-title">计划详情</h2>
+      </div>
       <div>
-        <el-button v-if="canEdit" @click="router.push(`/plan/edit/${plan.id}`)">编辑</el-button>
-        <el-button v-if="canSubmit" type="primary" @click="submitPlan">提交审核</el-button>
-        <el-button @click="router.back()">返回</el-button>
+        <el-button type="success" :icon="Download" @click="exportWord" class="action-btn" v-if="plan.status === 'PUBLISHED'">导出为 Word</el-button>
+        <el-button type="primary" :icon="Check" v-if="canSubmit" @click="submitPlan" class="action-btn">提交审核</el-button>
+        <el-button type="warning" :icon="RefreshLeft" v-if="canWithdraw" @click="withdrawPlan" class="action-btn">撤回</el-button>
+        <el-button @click="router.back()" class="action-btn back-btn">
+          <el-icon><ArrowLeft /></el-icon> 返回
+        </el-button>
       </div>
     </div>
 
@@ -35,7 +41,11 @@
           </template>
           <el-table :data="plan.items || []" border stripe>
             <el-table-column type="index" label="序" width="50" align="center" />
-            <el-table-column prop="plan_date" label="日期" width="120" />
+            <el-table-column label="日期" width="120">
+              <template #default="{row}">
+                {{ formatDate(row.plan_date) }}
+              </template>
+            </el-table-column>
             <el-table-column prop="weekday" label="星期" width="70" align="center" />
             <el-table-column prop="content" label="工作内容" />
             <el-table-column prop="responsible" label="负责人/部门" width="160" />
@@ -106,6 +116,13 @@ async function submitPlan() {
   await ElMessageBox.confirm('确认提交该计划进行审核？', '提示', { type: 'warning' })
   await request.post(`/plans/${plan.value.id}/submit`)
   ElMessage.success('已提交审核')
+  loadData()
+}
+
+async function withdrawPlan() {
+  await ElMessageBox.confirm('确认撤回该计划？撤回后可再次编辑。', '提示', { type: 'warning' })
+  await request.post(`/plans/${plan.value.id}/withdraw`)
+  ElMessage.success('已成功撤回')
   loadData()
 }
 
