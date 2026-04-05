@@ -8,7 +8,7 @@
           <el-input
             v-model="form.username"
             size="large"
-            placeholder="用户名"
+            placeholder="用户名 / 手机号 / 姓名"
             :prefix-icon="User"
             clearable
           />
@@ -53,7 +53,7 @@ const loading = ref(false)
 
 const form = reactive({ username: '', password: '' })
 const rules = {
-  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+  username: [{ required: true, message: '请输入账号/手机号/姓名', trigger: 'blur' }],
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
 }
 
