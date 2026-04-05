@@ -2,7 +2,10 @@
   <div class="page-container">
     <div class="page-header">
       <h2>整合审核</h2>
-      <el-button @click="router.back()">返回</el-button>
+      <div>
+        <el-button type="success" :icon="Download" @click="exportWord">导出全校整合 Word</el-button>
+        <el-button @click="router.back()">返回</el-button>
+      </div>
     </div>
 
     <el-card shadow="never" v-loading="loading">
@@ -168,7 +171,7 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '../../stores/user'
 import request from '../../utils/request'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Check, Close, Delete } from '@element-plus/icons-vue'
+import { Check, Close, Plus, Delete, Download } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -278,11 +281,40 @@ async function approveAll() {
   try {
     await request.post(`/reviews/consolidated/${weekNumber.value}/${semester.value}/approve`, {
       comment: comment.value,
-      updatedItems: data.items
+      updatedItems: data.items,
+      publish: false
     })
     ElMessage.success(`已审核通过 ${data.plans.length} 个计划`)
     router.push('/review/pending')
   } finally { acting.value = false }
+}
+
+async function approveAndPublishAll() {
+  await ElMessageBox.confirm(`确认批量一键发布？发布后全校可见。涉及 ${data.plans.length} 个计划`, '警告', { type: 'warning' })
+  acting.value = true
+  try {
+    await request.post(`/reviews/consolidated/${weekNumber.value}/${semester.value}/approve`, {
+      comment: comment.value,
+      updatedItems: data.items,
+      publish: true
+    })
+    ElMessage.success(`操作成功，已发布 ${data.plans.length} 个计划`)
+    router.push('/review/pending')
+  } finally { acting.value = false }
+}
+
+async function exportWord() {
+  try {
+    const res = await request.get(`/export/weekly-summary/${weekNumber.value}?semester=${semester.value}&status=REVIEW`, { responseType: 'blob' })
+    const url = URL.createObjectURL(res.data || res)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${semester.value}第${weekNumber.value}周整合计划.docx`
+    a.click()
+    URL.revokeObjectURL(url)
+  } catch (error) {
+    ElMessage.error('导出失败')
+  }
 }
 
 async function rejectAll() {

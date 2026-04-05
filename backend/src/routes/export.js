@@ -637,11 +637,17 @@ router.get('/plan/:planId', authMiddleware, async (req, res) => {
 // GET /weekly-summary/:weekNumber 导出某周所有部门汇总
 router.get('/weekly-summary/:weekNumber', authMiddleware, async (req, res) => {
   const { weekNumber } = req.params;
-  const { semester } = req.query;
+  const { semester, status } = req.query;
 
-  let where = `WHERE p.status='PUBLISHED' AND p.is_deleted=false AND p.week_number=?`;
+  let where = `WHERE p.is_deleted=false AND p.week_number=?`;
   const params = [weekNumber];
   if (semester) { where += ` AND p.semester=?`; params.push(semester); }
+
+  if (status === 'PUBLISHED') {
+    where += ` AND p.status='PUBLISHED'`;
+  } else if (status === 'REVIEW') {
+    where += ` AND p.status IN ('DEPT_APPROVED', 'OFFICE_APPROVED', 'PUBLISHED')`;
+  }
 
   const plans = await query(
     `SELECT p.*, d.name as dept_name FROM biz_week_plan p LEFT JOIN sys_department d ON p.department_id=d.id ${where} ORDER BY d.sort_order`,
@@ -807,11 +813,17 @@ router.get('/plan/:planId/pdf', authMiddleware, async (req, res) => {
 // GET /weekly-summary/:weekNumber/pdf 导出某周所有部门汇总为 PDF
 router.get('/weekly-summary/:weekNumber/pdf', authMiddleware, async (req, res) => {
   const { weekNumber } = req.params;
-  const { semester } = req.query;
+  const { semester, status } = req.query;
 
-  let where = `WHERE p.status='PUBLISHED' AND p.is_deleted=false AND p.week_number=?`;
+  let where = `WHERE p.is_deleted=false AND p.week_number=?`;
   const params = [weekNumber];
   if (semester) { where += ` AND p.semester=?`; params.push(semester); }
+
+  if (status === 'PUBLISHED') {
+    where += ` AND p.status='PUBLISHED'`;
+  } else if (status === 'REVIEW') {
+    where += ` AND p.status IN ('DEPT_APPROVED', 'OFFICE_APPROVED', 'PUBLISHED')`;
+  }
 
   const plans = await query(
     `SELECT p.*, d.name as dept_name FROM biz_week_plan p LEFT JOIN sys_department d ON p.department_id=d.id ${where} ORDER BY d.sort_order`,

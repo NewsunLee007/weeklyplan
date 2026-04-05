@@ -190,8 +190,56 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
   if (plan.creator_id !== req.user.userId && req.user.role !== 'ADMIN') {
     return fail(res, '无权操作', 403);
   }
-  await execute(`UPDATE biz_week_plan SET status='SUBMITTED', update_time=? WHERE id=?`, [now(), id]);
+  // 根据角色设置提交状态，部门主任免第一步审核
+  let targetStatus = 'SUBMITTED';
+  let targetStep = 1;
+  if (req.user.role === 'DEPT_HEAD') {
+    targetStatus = 'DEPT_APPROVED';
+    targetStep = 2;
+  }
+  await execute(`UPDATE biz_week_plan SET status=?, current_step=?, update_time=? WHERE id=?`, [targetStatus, targetStep, now(), id]);
   return success(res, null, '已提交审核');
+});
+
+// PUT /:id/published-items 修改已发布计划的条目
+router.put('/:id/published-items', authMiddleware, async (req, res) => {
+  const { id } = req.params;
+  const { updatedItems = [] } = req.body;
+  if (!['OFFICE_HEAD', 'ADMIN'].includes(req.user.role)) {
+    return fail(res, '无权修改已发布计划', 403);
+  }
+
+  const plan = await queryOne(`SELECT * FROM biz_week_plan WHERE id = ? AND is_deleted = false`, [id]);
+  if (!plan) return fail(res, '计划不存在', 404);
+  if (plan.status !== 'PUBLISHED') return fail(res, '计划不是已发布状态');
+
+  const n = now();
+  const currentItems = await query(`SELECT id FROM biz_plan_item WHERE plan_id = ? AND is_deleted = false`, [id]);
+  const currentIds = currentItems.map(i => i.id);
+  const updatedIds = updatedItems.map(i => i.id).filter(Boolean);
+  
+  // 删除被移除的条目
+  const toDelete = currentIds.filter(itemId => !updatedIds.includes(itemId));
+  if (toDelete.length > 0) {
+    await execute(`UPDATE biz_plan_item SET is_deleted = true, update_time = ? WHERE id IN (${toDelete.join(',')})`, [n]);
+  }
+
+  // 更新或插入条目
+  for (const item of updatedItems) {
+    if (item.id) {
+      await execute(
+        `UPDATE biz_plan_item SET content=?, responsible=?, plan_date=?, weekday=?, update_time=? WHERE id=?`,
+        [item.content || '', item.responsible || '', item.plan_date || '', item.weekday || '', n, item.id]
+      );
+    } else if (item._isNew) {
+      await execute(
+        `INSERT INTO biz_plan_item (plan_id, plan_date, weekday, content, responsible, create_time, update_time) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [id, item.plan_date || '', item.weekday || '', item.content || '', item.responsible || '', n, n]
+      );
+    }
+  }
+
+  return success(res, null, '二次修改保存成功');
 });
 
 module.exports = router;

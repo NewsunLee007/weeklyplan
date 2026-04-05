@@ -1,8 +1,11 @@
 <template>
-  <div class="page-container">
+  <div class="review-detail">
     <div class="page-header">
       <h2>审核操作</h2>
-      <el-button @click="router.back()">返回</el-button>
+      <div>
+        <el-button type="success" :icon="Download" v-if="['OFFICE_APPROVED', 'PUBLISHED'].includes(plan.status) && ['OFFICE_HEAD', 'ADMIN'].includes(role)" @click="exportWord">导出 Word</el-button>
+        <el-button @click="router.back()">返回</el-button>
+      </div>
     </div>
 
     <el-skeleton :loading="loading" animated>
@@ -27,7 +30,7 @@
           <template #header>
             <div class="card-header">
               <span>计划条目（审核时可编辑）</span>
-              <el-button type="primary" @click="addItem" class="add-item-btn">
+              <el-button v-if="canReview" type="primary" @click="addItem" class="add-item-btn">
                 <el-icon><Plus /></el-icon> 添加条目
               </el-button>
             </div>
@@ -48,17 +51,17 @@
             </el-table-column>
             <el-table-column label="工作内容">
               <template #default="{row}">
-                <el-input v-if="canReview" v-model="row.content" type="textarea" :rows="1" placeholder="工作内容" size="small" />
+                <el-input v-if="isEditable" v-model="row.content" type="textarea" :rows="1" placeholder="工作内容" size="small" />
                 <span v-else>{{ row.content }}</span>
               </template>
             </el-table-column>
             <el-table-column label="负责人/部门" width="140">
               <template #default="{row}">
-                <el-input v-if="canReview" v-model="row.responsible" placeholder="负责人" size="small" />
+                <el-input v-if="isEditable" v-model="row.responsible" placeholder="负责人" size="small" />
                 <span v-else>{{ row.responsible }}</span>
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="70" align="center" v-if="canReview">
+            <el-table-column label="操作" width="70" align="center" v-if="isEditable">
               <template #default="{$index}">
                 <el-button link type="danger" :icon="Delete" @click="removeItem($index)" />
               </template>
@@ -94,8 +97,23 @@
               <el-input v-model="comment" type="textarea" :rows="3" placeholder="请输入审核意见（退回时必填）" />
             </el-form-item>
             <el-form-item>
-              <el-button type="success" :icon="Check" @click="approve" :loading="acting">通过并保存修改</el-button>
+              <el-button type="success" :icon="Check" @click="approve" :loading="acting" v-if="role !== 'PRINCIPAL'">
+                {{ (role === 'OFFICE_HEAD' && plan.status === 'DEPT_APPROVED') ? '通过并交校长审核' : '通过并保存修改' }}
+              </el-button>
+              <el-button type="primary" :icon="Check" @click="approveAndPublish" :loading="acting" v-if="['OFFICE_HEAD', 'PRINCIPAL'].includes(role)">
+                一键发布
+              </el-button>
               <el-button type="danger" :icon="Close" @click="reject" :loading="acting">退 回</el-button>
+            </el-form-item>
+          </el-form>
+        </el-card>
+
+        <!-- 二次修改区 -->
+        <el-card shadow="never" class="action-card" v-if="canEditPublished">
+          <template #header>二次修改 (已发布状态)</template>
+          <el-form label-width="100px">
+            <el-form-item>
+              <el-button type="warning" :icon="Check" @click="savePublished" :loading="acting">保存二次修改</el-button>
             </el-form-item>
           </el-form>
         </el-card>
@@ -111,7 +129,7 @@ import { useUserStore } from '../../stores/user'
 import request from '../../utils/request'
 import { STATUS_MAP } from '../../utils/helper'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Check, Close, Plus, Delete } from '@element-plus/icons-vue'
+import { Check, Close, Plus, Delete, Download } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -143,10 +161,18 @@ const canReview = computed(() => {
   const r = role.value
   if (r === 'ADMIN') return ['SUBMITTED','DEPT_APPROVED','OFFICE_APPROVED'].includes(s)
   if (r === 'DEPT_HEAD') return s === 'SUBMITTED'
-  if (r === 'OFFICE_HEAD') return s === 'DEPT_APPROVED'
+  if (r === 'OFFICE_HEAD') return ['DEPT_APPROVED', 'OFFICE_APPROVED'].includes(s)
   if (r === 'PRINCIPAL') return s === 'OFFICE_APPROVED'
   return false
 })
+
+const canEditPublished = computed(() => {
+  const s = plan.value.status
+  const r = role.value
+  return s === 'PUBLISHED' && ['OFFICE_HEAD', 'ADMIN'].includes(r)
+})
+
+const isEditable = computed(() => canReview.value || canEditPublished.value)
 
 async function loadData() {
   loading.value = true
@@ -175,10 +201,61 @@ async function approve() {
   await ElMessageBox.confirm('确认审核通过并保存修改？', '提示', { type: 'success' })
   acting.value = true
   try {
-    await request.post(`/reviews/${route.params.id}/approve`, { comment: comment.value, updatedItems: plan.value.items })
+    await request.post(`/reviews/${route.params.id}/approve`, { comment: comment.value, updatedItems: plan.value.items, publish: false })
     ElMessage.success('审核通过')
     router.push('/review/pending')
   } finally { acting.value = false }
+}
+
+async function approveAndPublish() {
+  await ElMessageBox.confirm('确认一键发布并保存修改？发布后所有人可见。', '提示', { type: 'warning' })
+  acting.value = true
+  try {
+    await request.post(`/reviews/${route.params.id}/approve`, { comment: comment.value, updatedItems: plan.value.items, publish: true })
+    ElMessage.success('已发布')
+    router.push('/review/pending')
+  } finally { acting.value = false }
+}
+
+async function savePublished() {
+  await ElMessageBox.confirm('确认保存对已发布计划的二次修改？', '提示', { type: 'warning' })
+  acting.value = true
+  try {
+    await request.put(`/plans/${route.params.id}/published-items`, { updatedItems: plan.value.items })
+    ElMessage.success('修改已保存')
+    loadData()
+  } finally { acting.value = false }
+}
+
+function exportWord() {
+  const content = `
+    <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+    <head><meta charset="utf-8"><title>${plan.value.title}</title></head>
+    <body>
+      <h2 style="text-align:center">${plan.value.title}</h2>
+      <p><strong>部门：</strong>${plan.value.dept_name || ''} &nbsp;&nbsp; <strong>日期：</strong>${formatDate(plan.value.start_date)} ~ ${formatDate(plan.value.end_date)}</p>
+      <table border="1" cellspacing="0" cellpadding="5" style="width:100%;border-collapse:collapse;">
+        <tr><th>日期</th><th>星期</th><th>工作内容</th><th>负责人/部门</th></tr>
+        ${plan.value.items.map(i => `
+          <tr>
+            <td align="center">${formatDate(i.plan_date)}</td>
+            <td align="center">${i.weekday}</td>
+            <td>${i.content}</td>
+            <td align="center">${i.responsible}</td>
+          </tr>
+        `).join('')}
+      </table>
+    </body>
+    </html>
+  `
+  const blob = new Blob(['\ufeff', content], { type: 'application/msword' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${plan.value.title}.doc`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
 }
 
 async function reject() {

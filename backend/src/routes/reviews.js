@@ -32,7 +32,7 @@ router.get('/pending', authMiddleware, requireRole(...REVIEW_ROLES), async (req,
   if (role === 'DEPT_HEAD') {
     where += ` AND p.status = 'SUBMITTED' AND p.department_id = ${departmentId}`;
   } else if (role === 'OFFICE_HEAD') {
-    where += ` AND p.status = 'DEPT_APPROVED'`;
+    where += ` AND p.status IN ('DEPT_APPROVED', 'OFFICE_APPROVED')`;
   } else if (role === 'PRINCIPAL') {
     where += ` AND p.status = 'OFFICE_APPROVED'`;
   } else if (role === 'ADMIN') {
@@ -52,7 +52,7 @@ router.get('/pending', authMiddleware, requireRole(...REVIEW_ROLES), async (req,
 // POST /:planId/approve 审核通过（支持编辑条目后审核）
 router.post('/:planId/approve', authMiddleware, requireRole(...REVIEW_ROLES), async (req, res) => {
   const { planId } = req.params;
-  const { comment = '', updatedItems } = req.body; // updatedItems: 编辑后的计划条目 [{id, content, responsible, plan_date, weekday}]
+  const { comment = '', updatedItems, publish = false } = req.body; // updatedItems: 编辑后的计划条目
   const { role, userId, departmentId } = req.user;
 
   const plan = await queryOne(`SELECT * FROM biz_week_plan WHERE id = ? AND is_deleted = false`, [planId]);
@@ -67,10 +67,10 @@ router.post('/:planId/approve', authMiddleware, requireRole(...REVIEW_ROLES), as
   if (role === 'DEPT_HEAD') {
     if (step !== 1) return fail(res, '部门主任只能进行第一步审核');
     if (plan.department_id !== departmentId) return fail(res, '只能审核本部门计划');
-  } else if (role === 'OFFICE_HEAD' && step !== 2) {
-    return fail(res, '办公室主任只能进行第二步审核');
-  } else if (role === 'PRINCIPAL' && step !== 3) {
-    return fail(res, '校长只能进行最终审核');
+  } else if (role === 'OFFICE_HEAD') {
+    if (step !== 2 && step !== 3) return fail(res, '办公室主任只能进行第二步或最终发布');
+  } else if (role === 'PRINCIPAL') {
+    if (step !== 3) return fail(res, '校长只能进行最终审核');
   }
 
   const n = now();
@@ -85,9 +85,9 @@ router.post('/:planId/approve', authMiddleware, requireRole(...REVIEW_ROLES), as
           [item.content || '', item.responsible || '', item.plan_date || '', item.weekday || '', n, item.id]
         );
       } else if (item._isNew) {
-        // 新增条目（虽然审核时很少新增，但支持）
+        // 新增条目
         await execute(
-          `INSERT INTO biz_plan_item (plan_id, plan_date, weekday, content, responsible, create_time, update_time) VALUES (?)`,
+          `INSERT INTO biz_plan_item (plan_id, plan_date, weekday, content, responsible, create_time, update_time) VALUES (?, ?, ?, ?, ?, ?, ?)`,
           [planId, item.plan_date || '', item.weekday || '', item.content || '', item.responsible || '', n, n]
         );
       }
@@ -96,15 +96,23 @@ router.post('/:planId/approve', authMiddleware, requireRole(...REVIEW_ROLES), as
 
   // 记录审核日志
   await execute(
-    `INSERT INTO biz_review_record (plan_id, reviewer_id, step, result, comment, create_time) VALUES (?)`,
-    [planId, userId, step, comment, n]
+    `INSERT INTO biz_review_record (plan_id, reviewer_id, step, result, comment, create_time) VALUES (?, ?, ?, ?, ?, ?)`,
+    [planId, userId, step, 'APPROVED', comment, n]
   );
 
   // 更新状态
-  const nextStep = step + 1;
-  const updates = [flow.to, n];
-  let sql = `UPDATE biz_week_plan SET status=?, update_time=?, current_step=${nextStep}`;
-  if (flow.to === 'PUBLISHED') {
+  let nextStep = step + 1;
+  let flowTo = flow.to;
+
+  // 办公室主任一键发布，直接跳到 PUBLISHED
+  if (role === 'OFFICE_HEAD' && publish === true) {
+    nextStep = 4;
+    flowTo = 'PUBLISHED';
+  }
+
+  const updates = [flowTo, nextStep, n];
+  let sql = `UPDATE biz_week_plan SET status=?, current_step=?, update_time=?`;
+  if (flowTo === 'PUBLISHED') {
     sql += `, published_at=?`;
     updates.push(n);
   }
@@ -113,12 +121,12 @@ router.post('/:planId/approve', authMiddleware, requireRole(...REVIEW_ROLES), as
   await execute(sql, updates);
 
   // 发布后推送企微
-  if (flow.to === 'PUBLISHED') {
+  if (flowTo === 'PUBLISHED') {
     const updatedPlan = await queryOne(`SELECT * FROM biz_week_plan WHERE id=?`, [planId]);
     wechatService.notifyPublished(updatedPlan).catch(e => console.error('企微推送失败', e));
   }
 
-  return success(res, null, '审核通过');
+  return success(res, null, '审核操作成功');
 });
 
 // POST /:planId/reject 审核退回
@@ -157,7 +165,7 @@ router.get('/consolidated/:weekNumber/:semester', authMiddleware, requireRole(..
   if (role === 'DEPT_HEAD') {
     where += ` AND p.status = 'SUBMITTED' AND p.department_id = ${departmentId}`;
   } else if (role === 'OFFICE_HEAD') {
-    where += ` AND p.status = 'DEPT_APPROVED'`;
+    where += ` AND p.status IN ('DEPT_APPROVED', 'OFFICE_APPROVED')`;
   } else if (role === 'PRINCIPAL') {
     where += ` AND p.status = 'OFFICE_APPROVED'`;
   } else if (role === 'ADMIN') {
@@ -193,7 +201,7 @@ router.get('/consolidated/:weekNumber/:semester', authMiddleware, requireRole(..
 // POST /consolidated/:weekNumber/:semester/approve 整合审核（整体通过）
 router.post('/consolidated/:weekNumber/:semester/approve', authMiddleware, requireRole(...REVIEW_ROLES), async (req, res) => {
   const { weekNumber, semester } = req.params;
-  const { comment = '', updatedItems } = req.body; // updatedItems: 编辑后的所有条目 [{id, content, responsible, plan_date, weekday}]
+  const { comment = '', updatedItems, publish = false } = req.body; // updatedItems: 编辑后的所有条目
   const { role, userId, departmentId } = req.user;
 
   let where = `WHERE is_deleted = false AND week_number = ${weekNumber} AND semester = '${semester}'`;
@@ -202,7 +210,7 @@ router.post('/consolidated/:weekNumber/:semester/approve', authMiddleware, requi
   if (role === 'DEPT_HEAD') {
     where += ` AND status = 'SUBMITTED' AND department_id = ${departmentId}`;
   } else if (role === 'OFFICE_HEAD') {
-    where += ` AND status = 'DEPT_APPROVED'`;
+    where += ` AND status IN ('DEPT_APPROVED', 'OFFICE_APPROVED')`;
   } else if (role === 'PRINCIPAL') {
     where += ` AND status = 'OFFICE_APPROVED'`;
   } else if (role === 'ADMIN') {
@@ -235,15 +243,23 @@ router.post('/consolidated/:weekNumber/:semester/approve', authMiddleware, requi
 
     // 记录审核日志
     await execute(
-      `INSERT INTO biz_review_record (plan_id, reviewer_id, step, result, comment, create_time) VALUES (?)`,
-      [plan.id, userId, step, comment, n]
+      `INSERT INTO biz_review_record (plan_id, reviewer_id, step, result, comment, create_time) VALUES (?, ?, ?, ?, ?, ?)`,
+      [plan.id, userId, step, 'APPROVED', comment, n]
     );
 
     // 更新状态
-    const nextStep = step + 1;
-    const updates = [flow.to, n];
-    let sql = `UPDATE biz_week_plan SET status=?, update_time=?, current_step=${nextStep}`;
-    if (flow.to === 'PUBLISHED') {
+    let nextStep = step + 1;
+    let flowTo = flow.to;
+
+    // 办公室主任一键发布，直接跳到 PUBLISHED
+    if (role === 'OFFICE_HEAD' && publish === true) {
+      nextStep = 4;
+      flowTo = 'PUBLISHED';
+    }
+
+    const updates = [flowTo, nextStep, n];
+    let sql = `UPDATE biz_week_plan SET status=?, current_step=?, update_time=?`;
+    if (flowTo === 'PUBLISHED') {
       sql += `, published_at=?`;
       updates.push(n);
     }
@@ -252,12 +268,12 @@ router.post('/consolidated/:weekNumber/:semester/approve', authMiddleware, requi
     await execute(sql, updates);
 
     // 发布后推送企微
-    if (flow.to === 'PUBLISHED') {
+    if (flowTo === 'PUBLISHED') {
       wechatService.notifyPublished(plan).catch(e => console.error('企微推送失败', e));
     }
   }
 
-  return success(res, null, `已审核通过 ${plans.length} 个计划`);
+  return success(res, null, `已成功操作 ${plans.length} 个计划`);
 });
 
 // GET /records/:planId 查看审核记录
