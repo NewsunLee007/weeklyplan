@@ -203,10 +203,13 @@
                     </h4>
                     <div class="ai-insights">
                       <div class="insight-item" v-for="(insight, index) in aiInsights" :key="index">
-                        <el-icon class="insight-icon">
-                          <component :is="getInsightIcon(insight.icon)" />
-                        </el-icon>
-                        <div class="insight-text">{{ insight.text }}</div>
+                        <div class="insight-icon">
+                          <el-icon><component :is="getInsightIcon(insight.icon)" /></el-icon>
+                        </div>
+                        <div class="insight-content-wrapper">
+                          <div class="insight-text">{{ insight.text }}</div>
+                          <div class="insight-desc" v-if="insight.desc">{{ insight.desc }}</div>
+                        </div>
                         <el-tag v-if="insight.priority" :type="insight.priority === 'high' ? 'danger' : 'warning'" size="small" class="insight-priority">
                           {{ insight.priority === 'high' ? '重要' : '提醒' }}
                         </el-tag>
@@ -477,15 +480,15 @@ function initPlanStatusChart(data) {
       tooltip: {
         trigger: 'item',
         formatter: '{b}: {c} ({d}%)',
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        borderColor: '#e2e8f0',
+        backgroundColor: 'var(--color-bg-primary, rgba(255, 255, 255, 0.95))',
+        borderColor: 'var(--color-border-light, #e2e8f0)',
         borderWidth: 1,
-        textStyle: { color: '#334155' }
+        textStyle: { color: 'var(--color-text-primary, #334155)' }
       },
       legend: {
         top: '5%',
         left: 'center',
-        textStyle: { color: '#64748b' }
+        textStyle: { color: 'var(--color-text-secondary, #64748b)' }
       },
       series: [
         {
@@ -495,7 +498,7 @@ function initPlanStatusChart(data) {
           avoidLabelOverlap: false,
           itemStyle: {
             borderRadius: 10,
-            borderColor: '#fff',
+            borderColor: 'var(--color-bg-primary, #fff)',
             borderWidth: 2,
             shadowBlur: 10,
             shadowOffsetX: 0,
@@ -510,7 +513,7 @@ function initPlanStatusChart(data) {
               show: true,
               fontSize: 20,
               fontWeight: 'bold',
-              color: '#164E63'
+              color: 'var(--color-text-primary, #164E63)'
             },
             itemStyle: {
               shadowBlur: 20,
@@ -547,10 +550,10 @@ function initDepartmentPlanChart(data) {
           shadowOffsetX: 0,
           shadowColor: 'rgba(0, 0, 0, 0.1)'
         },
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        borderColor: '#e2e8f0',
+        backgroundColor: 'var(--color-bg-primary, rgba(255, 255, 255, 0.95))',
+        borderColor: 'var(--color-border-light, #e2e8f0)',
         borderWidth: 1,
-        textStyle: { color: '#334155' }
+        textStyle: { color: 'var(--color-text-primary, #334155)' }
       },
       grid: {
         left: '3%',
@@ -564,22 +567,22 @@ function initDepartmentPlanChart(data) {
         axisLabel: {
           interval: 0,
           rotate: 30,
-          color: '#64748b'
+          color: 'var(--color-text-secondary, #64748b)'
         },
         axisLine: {
-          lineStyle: { color: '#e2e8f0' }
+          lineStyle: { color: 'var(--color-border-light, #e2e8f0)' }
         }
       },
       yAxis: {
         type: 'value',
         axisLabel: {
-          color: '#64748b'
+          color: 'var(--color-text-secondary, #64748b)'
         },
         axisLine: {
-          lineStyle: { color: '#e2e8f0' }
+          lineStyle: { color: 'var(--color-border-light, #e2e8f0)' }
         },
         splitLine: {
-          lineStyle: { color: '#f1f5f9' }
+          lineStyle: { color: 'var(--color-border-subtle, #f1f5f9)' }
         }
       },
       series: [
@@ -616,15 +619,15 @@ function initPlanTrendChart(data) {
     const option = {
       tooltip: {
         trigger: 'axis',
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        borderColor: '#e2e8f0',
+        backgroundColor: 'var(--color-bg-primary, rgba(255, 255, 255, 0.95))',
+        borderColor: 'var(--color-border-light, #e2e8f0)',
         borderWidth: 1,
-        textStyle: { color: '#334155' }
+        textStyle: { color: 'var(--color-text-primary, #334155)' }
       },
       legend: {
         data: ['计划总数', '已完成', '进行中'],
         top: 0,
-        textStyle: { color: '#64748b' }
+        textStyle: { color: 'var(--color-text-secondary, #64748b)' }
       },
       grid: {
         left: '3%',
@@ -637,22 +640,22 @@ function initPlanTrendChart(data) {
         boundaryGap: false,
         data: data?.planTrend?.weeks || ['第1周', '第2周', '第3周', '第4周', '第5周', '第6周'],
         axisLabel: {
-          color: '#64748b'
+          color: 'var(--color-text-secondary, #64748b)'
         },
         axisLine: {
-          lineStyle: { color: '#e2e8f0' }
+          lineStyle: { color: 'var(--color-border-light, #e2e8f0)' }
         }
       },
       yAxis: {
         type: 'value',
         axisLabel: {
-          color: '#64748b'
+          color: 'var(--color-text-secondary, #64748b)'
         },
         axisLine: {
-          lineStyle: { color: '#e2e8f0' }
+          lineStyle: { color: 'var(--color-border-light, #e2e8f0)' }
         },
         splitLine: {
-          lineStyle: { color: '#f1f5f9' }
+          lineStyle: { color: 'var(--color-border-subtle, #f1f5f9)' }
         }
       },
       series: [
@@ -714,15 +717,15 @@ function initDepartmentEfficiencyChart(data) {
         axisPointer: {
           type: 'shadow'
         },
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        borderColor: '#e2e8f0',
+        backgroundColor: 'var(--color-bg-primary, rgba(255, 255, 255, 0.95))',
+        borderColor: 'var(--color-border-light, #e2e8f0)',
         borderWidth: 1,
-        textStyle: { color: '#334155' }
+        textStyle: { color: 'var(--color-text-primary, #334155)' }
       },
       legend: {
         data: ['完成率', '平均耗时(天)'],
         top: 0,
-        textStyle: { color: '#64748b' }
+        textStyle: { color: 'var(--color-text-secondary, #64748b)' }
       },
       grid: {
         left: '3%',
@@ -737,10 +740,10 @@ function initDepartmentEfficiencyChart(data) {
           axisLabel: {
             interval: 0,
             rotate: 30,
-            color: '#64748b'
+            color: 'var(--color-text-secondary, #64748b)'
           },
           axisLine: {
-            lineStyle: { color: '#e2e8f0' }
+            lineStyle: { color: 'var(--color-border-light, #e2e8f0)' }
           }
         }
       ],
@@ -751,14 +754,14 @@ function initDepartmentEfficiencyChart(data) {
           min: 0,
           max: 100,
           axisLabel: {
-            color: '#64748b',
+            color: 'var(--color-text-secondary, #64748b)',
             formatter: '{value}%'
           },
           axisLine: {
-            lineStyle: { color: '#e2e8f0' }
+            lineStyle: { color: 'var(--color-border-light, #e2e8f0)' }
           },
           splitLine: {
-            lineStyle: { color: '#f1f5f9' }
+            lineStyle: { color: 'var(--color-border-subtle, #f1f5f9)' }
           }
         },
         {
@@ -767,11 +770,11 @@ function initDepartmentEfficiencyChart(data) {
           min: 0,
           max: 10,
           axisLabel: {
-            color: '#64748b',
+            color: 'var(--color-text-secondary, #64748b)',
             formatter: '{value}天'
           },
           axisLine: {
-            lineStyle: { color: '#e2e8f0' }
+            lineStyle: { color: 'var(--color-border-light, #e2e8f0)' }
           },
           splitLine: {
             show: false
@@ -959,10 +962,10 @@ function initTrendChart() {
     const option = {
       tooltip: {
         trigger: 'axis',
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        borderColor: '#e2e8f0',
+        backgroundColor: 'var(--color-bg-primary, rgba(255, 255, 255, 0.95))',
+        borderColor: 'var(--color-border-light, #e2e8f0)',
         borderWidth: 1,
-        textStyle: { color: '#334155' },
+        textStyle: { color: 'var(--color-text-primary, #334155)' },
         formatter: (params) => {
           const data = params[0]
           return `${data.name}<br/>完成率: ${data.value}%`
@@ -979,10 +982,10 @@ function initTrendChart() {
         boundaryGap: false,
         data: aiAnalysis.value.historicalData.map(d => d.week),
         axisLabel: {
-          color: '#64748b'
+          color: 'var(--color-text-secondary, #64748b)'
         },
         axisLine: {
-          lineStyle: { color: '#e2e8f0' }
+          lineStyle: { color: 'var(--color-border-light, #e2e8f0)' }
         }
       },
       yAxis: {
@@ -990,14 +993,14 @@ function initTrendChart() {
         min: 0,
         max: 100,
         axisLabel: {
-          color: '#64748b',
+          color: 'var(--color-text-secondary, #64748b)',
           formatter: '{value}%'
         },
         axisLine: {
-          lineStyle: { color: '#e2e8f0' }
+          lineStyle: { color: 'var(--color-border-light, #e2e8f0)' }
         },
         splitLine: {
-          lineStyle: { color: '#f1f5f9' }
+          lineStyle: { color: 'var(--color-border-subtle, #f1f5f9)' }
         }
       },
       series: [
@@ -1014,7 +1017,7 @@ function initTrendChart() {
           itemStyle: { 
             color: '#3B82F6',
             borderWidth: 2,
-            borderColor: '#fff'
+            borderColor: 'var(--color-bg-primary, #fff)'
           },
           areaStyle: {
             color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
@@ -1621,7 +1624,7 @@ onUnmounted(() => {
 .tabs-header {
   display: flex;
   background: var(--color-bg-secondary, #F8FAFC);
-  border-bottom: 1px solid var(--color-border-default, #E2E8F0);
+  border-bottom: 1px solid var(--color-border-light, #E2E8F0);
 }
 
 .tab-item {
@@ -1648,23 +1651,23 @@ onUnmounted(() => {
 
 .tab-icon {
   font-size: 18px;
-  color: #64748B;
+  color: var(--color-text-secondary, #64748B);
   transition: all var(--transition-base);
 }
 
 .tab-item.active .tab-icon {
-  color: #0891B2;
+  color: var(--color-primary, #0891B2);
 }
 
 .tab-label {
   font-size: 14px;
   font-weight: 600;
-  color: #64748B;
+  color: var(--color-text-secondary, #64748B);
   transition: all var(--transition-base);
 }
 
 .tab-item.active .tab-label {
-  color: #164E63;
+  color: var(--color-text-primary, #164E63);
 }
 
 .tabs-content {
@@ -1705,7 +1708,7 @@ onUnmounted(() => {
   left: 0;
   width: 100%;
   height: 3px;
-  background: linear-gradient(90deg, #0891B2, #06B6D4);
+  background: var(--color-primary, #0891B2);
 }
 
 .chart-card:hover {
@@ -1724,7 +1727,7 @@ onUnmounted(() => {
 .chart-title {
   font-size: 14px;
   font-weight: 600;
-  color: #164E63;
+  color: var(--color-text-primary, #164E63);
   margin: 0;
   transition: all var(--transition-base);
 }
@@ -1754,7 +1757,7 @@ onUnmounted(() => {
 
 /* AI 分析区域 */
 .ai-card {
-  background: var(--color-bg-primary, linear-gradient(135deg, #F8FAFC 0%, #FFFFFF 100%));
+  background: var(--color-bg-primary, #FFFFFF);
   border-radius: 16px;
   padding: 24px;
   box-shadow: 0 2px 8px rgba(8, 145, 178, 0.08);
@@ -1771,7 +1774,7 @@ onUnmounted(() => {
   left: 0;
   width: 100%;
   height: 3px;
-  background: linear-gradient(90deg, #3B82F6, #8B5CF6);
+  background: var(--color-primary, #3B82F6);
 }
 
 .ai-card:hover {
@@ -1797,14 +1800,14 @@ onUnmounted(() => {
 .ai-title {
   font-size: 16px;
   font-weight: 600;
-  color: #164E63;
+  color: var(--color-text-primary, #164E63);
   margin: 0;
   transition: all var(--transition-base);
 }
 
 .ai-tag {
   margin-left: auto;
-  background: linear-gradient(90deg, #3B82F6, #60A5FA);
+  background: var(--color-primary, #3B82F6);
   border: none;
   color: white;
   animation: pulse 2s infinite;
@@ -1852,13 +1855,13 @@ onUnmounted(() => {
   gap: 8px;
   font-size: 14px;
   font-weight: 600;
-  color: #164E63;
+  color: var(--color-text-primary, #164E63);
   margin: 0 0 16px 0;
   transition: all var(--transition-base);
 }
 
 .ai-section-title el-icon {
-  color: #3B82F6;
+  color: var(--color-primary, #3B82F6);
   transition: all var(--transition-base);
 }
 
@@ -1866,13 +1869,14 @@ onUnmounted(() => {
 .ai-weekly-tips,
 .ai-next-stage {
   font-size: 14px;
-  color: #334155;
+  color: var(--color-text-primary, #334155);
   line-height: 1.6;
   transition: all var(--transition-base);
-  background: rgba(59, 130, 246, 0.05);
+  background: var(--color-bg-primary, #ffffff);
   padding: 16px;
   border-radius: 8px;
-  border-left: 4px solid #3B82F6;
+  border-left: 4px solid var(--color-primary, #3B82F6);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .ai-insights {
@@ -1885,12 +1889,12 @@ onUnmounted(() => {
 .insight-item {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  padding: 16px;
-  background: #FFFFFF;
+  gap: 16px;
+  padding: 16px 20px;
+  background: var(--color-bg-primary, #FFFFFF);
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  border: 1px solid #E0F2FE;
+  border: 1px solid var(--color-border-light, #E0F2FE);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
@@ -1903,15 +1907,16 @@ onUnmounted(() => {
   top: 0;
   width: 4px;
   height: 100%;
-  background: #3B82F6;
+  background: var(--color-primary, #3B82F6);
   transform: scaleY(0);
   transform-origin: top;
   transition: transform 0.3s var(--transition-base);
 }
 
 .insight-item:hover {
+  background: var(--color-primary-bg-subtle, rgba(59, 130, 246, 0.05));
   box-shadow: 0 4px 12px rgba(8, 145, 178, 0.08);
-  border-color: #BAE6FD;
+  border-color: var(--color-border-medium, #BAE6FD);
   transform: translateX(4px);
 }
 
@@ -1920,23 +1925,51 @@ onUnmounted(() => {
 }
 
 .insight-icon {
-  color: #3B82F6;
-  margin-top: 2px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-primary-bg-subtle, rgba(59, 130, 246, 0.1));
+  color: var(--color-primary, #3B82F6);
   flex-shrink: 0;
+  font-size: 20px;
   transition: all 0.3s var(--transition-base);
 }
 
-.insight-text {
+.insight-item:hover .insight-icon {
+  background: var(--color-primary, #3B82F6);
+  color: #fff;
+}
+
+.insight-content-wrapper {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.insight-text {
   font-size: 14px;
-  color: #334155;
-  line-height: 1.5;
+  color: var(--color-text-primary, #334155);
+  line-height: 1.6;
+  font-weight: 500;
   transition: all var(--transition-base);
+}
+
+.insight-desc {
+  font-size: 13px;
+  color: var(--color-text-secondary, #64748B);
+  line-height: 1.5;
 }
 
 .insight-priority {
   flex-shrink: 0;
   margin-left: 8px;
+  border-radius: 12px;
+  padding: 2px 10px;
+  font-weight: 600;
 }
 
 .ai-metrics {
@@ -1949,21 +1982,23 @@ onUnmounted(() => {
 .metric-item {
   text-align: center;
   padding: 16px;
-  background: rgba(59, 130, 246, 0.05);
+  background: var(--color-bg-primary, #ffffff);
   border-radius: 8px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid rgba(59, 130, 246, 0.1);
+  border: 1px solid var(--color-border-light, #E0F2FE);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .metric-item:hover {
-  background: rgba(59, 130, 246, 0.1);
+  background: var(--color-primary-bg-subtle, rgba(59, 130, 246, 0.05));
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+  border-color: var(--color-primary-bg, rgba(59, 130, 246, 0.1));
 }
 
 .metric-label {
   font-size: 12px;
-  color: #64748B;
+  color: var(--color-text-secondary, #64748B);
   margin-bottom: 8px;
   transition: all var(--transition-base);
 }
@@ -1971,17 +2006,17 @@ onUnmounted(() => {
 .metric-value {
   font-size: 20px;
   font-weight: 700;
-  color: #3B82F6;
+  color: var(--color-primary, #3B82F6);
   transition: all var(--transition-base);
 }
 
 .ai-role-suggestions-section {
   margin-bottom: 24px;
   padding: 20px;
-  background: #FFFFFF;
+  background: var(--color-bg-primary, #FFFFFF);
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  border: 1px solid #E0F2FE;
+  border: 1px solid var(--color-border-light, #E0F2FE);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
@@ -1989,7 +2024,7 @@ onUnmounted(() => {
 
 .ai-role-suggestions-section:hover {
   box-shadow: 0 4px 12px rgba(8, 145, 178, 0.08);
-  border-color: #BAE6FD;
+  border-color: var(--color-border-medium, #BAE6FD);
   transform: translateY(-2px);
 }
 
@@ -2005,20 +2040,21 @@ onUnmounted(() => {
   align-items: flex-start;
   gap: 12px;
   padding: 12px;
-  background: rgba(34, 197, 94, 0.05);
+  background: var(--color-bg-primary, #ffffff);
   border-radius: 8px;
-  border-left: 4px solid #22C55E;
+  border-left: 4px solid var(--color-success, #22C55E);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .role-suggestion-item:hover {
-  background: rgba(34, 197, 94, 0.1);
+  background: var(--color-success-light, rgba(34, 197, 94, 0.05));
   transform: translateX(4px);
   box-shadow: 0 4px 12px rgba(34, 197, 94, 0.15);
 }
 
 .suggestion-icon {
-  color: #22C55E;
+  color: var(--color-success, #22C55E);
   margin-top: 2px;
   flex-shrink: 0;
   transition: all 0.3s var(--transition-base);
@@ -2027,7 +2063,7 @@ onUnmounted(() => {
 .suggestion-text {
   flex: 1;
   font-size: 14px;
-  color: #334155;
+  color: var(--color-text-primary, #334155);
   line-height: 1.5;
   transition: all var(--transition-base);
 }
@@ -2064,7 +2100,7 @@ onUnmounted(() => {
 
 .trend-description {
   font-size: 14px;
-  color: #64748B;
+  color: var(--color-text-secondary, #64748B);
 }
 
 .trend-chart-container {
@@ -2105,14 +2141,16 @@ onUnmounted(() => {
   align-items: center;
   gap: 16px;
   padding: 12px;
-  background: var(--color-primary-bg-subtle, rgba(59, 130, 246, 0.03));
+  background: var(--color-bg-primary, #ffffff);
   border-radius: 8px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid var(--color-border-light, #f1f5f9);
 }
 
 .history-item:hover {
-  background: var(--color-primary-bg, rgba(59, 130, 246, 0.08));
+  background: var(--color-primary-bg-subtle, rgba(59, 130, 246, 0.05));
   transform: translateX(4px);
+  border-color: var(--color-primary-bg, rgba(59, 130, 246, 0.1));
 }
 
 .history-week {
@@ -2134,7 +2172,7 @@ onUnmounted(() => {
 .completed {
   font-size: 14px;
   font-weight: 600;
-  color: #22C55E;
+  color: var(--color-success, #22C55E);
 }
 
 .ai-footer {
@@ -2143,7 +2181,7 @@ onUnmounted(() => {
   justify-content: flex-end;
   transition: all var(--transition-base);
   padding-top: 20px;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid var(--color-border-light, #f1f5f9);
 }
 
 .refresh-btn, .export-btn, .detail-btn {
@@ -2236,18 +2274,18 @@ onUnmounted(() => {
 }
 
 .activity-status.success {
-  background: rgba(34, 197, 94, 0.1);
-  color: #22C55E;
+  background: var(--color-success-light, rgba(34, 197, 94, 0.1));
+  color: var(--color-success, #22C55E);
 }
 
 .activity-status.warning {
-  background: rgba(245, 158, 11, 0.1);
-  color: #F59E0B;
+  background: var(--color-warning-light, rgba(245, 158, 11, 0.1));
+  color: var(--color-warning, #F59E0B);
 }
 
 .activity-status.info {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3B82F6;
+  background: var(--color-primary-bg, rgba(59, 130, 246, 0.1));
+  color: var(--color-primary, #3B82F6);
 }
 
 @keyframes pulse {
