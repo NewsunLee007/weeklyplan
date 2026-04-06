@@ -46,7 +46,6 @@
       <el-table :data="list" v-loading="loading" stripe>
         <el-table-column prop="username" label="用户名" width="120" />
         <el-table-column prop="real_name" label="姓名" width="100" />
-        <el-table-column prop="dept_name" label="部门" width="100" />
         <el-table-column label="角色" width="120">
           <template #default="{row}">{{ ROLES[row.role] || row.role }}</template>
         </el-table-column>

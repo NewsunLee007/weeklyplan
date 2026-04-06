@@ -129,7 +129,8 @@ async function loadConfig() {
       const weekFirstDay = parseInt(map.week_first_day) || 0
       const currentWeek = calcWeekNumber(map.current_week_start, weekFirstDay)
       const semesterWeeks = parseInt(map.semester_weeks) || 20
-      filter.week_number = Math.min(Math.max(1, currentWeek + 1), semesterWeeks)
+      // 已发布计划：默认显示当前周次（不加 1）
+      filter.week_number = Math.min(Math.max(1, currentWeek), semesterWeeks)
     }
   } catch (e) {
     console.warn('读取系统配置失败', e)
