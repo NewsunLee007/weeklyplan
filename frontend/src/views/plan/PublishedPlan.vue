@@ -6,9 +6,11 @@
         <el-button type="primary" :icon="Download" @click="exportSummary" :disabled="!filter.week_number">
           导出 Word
         </el-button>
+        <!-- 因云端环境限制暂不支持直接导出PDF，如需PDF请导出Word后另存为
         <el-button type="success" :icon="Document" @click="exportSummaryPdf" :disabled="!filter.week_number">
           导出 PDF
         </el-button>
+        -->
       </div>
     </div>
 
@@ -301,18 +303,18 @@ async function exportSummary() {
   URL.revokeObjectURL(url)
 }
 
-async function exportSummaryPdf() {
-  if (!filter.week_number) return ElMessage.warning('请先选择周次')
-  const params = {}
-  if (filter.semester) params.semester = filter.semester
-  const blob = await request.get(`/export/weekly-summary/${filter.week_number}/pdf`, { params, responseType: 'blob' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `第${filter.week_number}周全校工作计划汇总.pdf`
-  a.click()
-  URL.revokeObjectURL(url)
-}
+// async function exportSummaryPdf() {
+//   if (!filter.week_number) return ElMessage.warning('请先选择周次')
+//   const params = {}
+//   if (filter.semester) params.semester = filter.semester
+//   const blob = await request.get(`/export/weekly-summary/${filter.week_number}/pdf`, { params, responseType: 'blob' })
+//   const url = URL.createObjectURL(blob)
+//   const a = document.createElement('a')
+//   a.href = url
+//   a.download = `第${filter.week_number}周全校工作计划汇总.pdf`
+//   a.click()
+//   URL.revokeObjectURL(url)
+// }
 
 onMounted(async () => {
   await loadConfig()

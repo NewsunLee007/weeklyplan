@@ -26,27 +26,32 @@ router.get('/', authMiddleware, async (req, res) => {
 
 // POST / 提交或更新反馈（UPSERT）
 router.post('/', authMiddleware, async (req, res) => {
-  const { plan_item_id, plan_id, status, content } = req.body;
-  if (!plan_item_id || !plan_id || !status) return fail(res, '必填字段不能为空');
+  try {
+    const { plan_item_id, plan_id, status, content } = req.body;
+    if (!plan_item_id || !plan_id || !status) return fail(res, '必填字段不能为空');
 
-  const n = now();
-  const userId = req.user.userId;
+    const n = now();
+    const userId = req.user.userId;
 
-  const existing = await queryOne(
-    `SELECT id FROM biz_feedback WHERE plan_item_id = ? AND feedback_user_id = $2`,
-    [plan_item_id, userId]
-  );
-
-  if (existing) {
-    await run(`UPDATE biz_feedback SET status=?, content=$2, update_time=$3 WHERE id=$4`,
-      [status, content || '', n, existing.id]);
-  } else {
-    await run(
-      `INSERT INTO biz_feedback (plan_item_id, plan_id, feedback_user_id, status, content, create_time, update_time) VALUES (?, $2, $3, $4, $5, $6, $7)`,
-      [plan_item_id, plan_id, userId, status, content || '', n, n]
+    const existing = await queryOne(
+      `SELECT id FROM biz_feedback WHERE plan_item_id = $1 AND feedback_user_id = $2`,
+      [plan_item_id, userId]
     );
+
+    if (existing) {
+      await run(`UPDATE biz_feedback SET status=$1, content=$2, update_time=$3 WHERE id=$4`,
+        [status, content || '', n, existing.id]);
+    } else {
+      await run(
+        `INSERT INTO biz_feedback (plan_item_id, plan_id, feedback_user_id, status, content, create_time, update_time) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [plan_item_id, plan_id, userId, status, content || '', n, n]
+      );
+    }
+    return success(res, null, '反馈已保存');
+  } catch (error) {
+    console.error('❌ 保存反馈时出错:', error);
+    return fail(res, '保存失败，系统异常，请稍后重试');
   }
-  return success(res, null, '反馈已保存');
 });
 
 // GET /plan/:planId 某计划的所有反馈汇总
