@@ -233,6 +233,8 @@ onMounted(async () => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
+}
+
 .page-header h2 {
   font-size: 24px;
   font-weight: 600;
@@ -387,9 +389,9 @@ onMounted(async () => {
 }
 
 :deep(.el-table__empty-text) {
-  color: var(--color-text-secondary, #64748B);
+  color: var(--color-text-secondary, #64748b);
 }
-</style>
+
 .action-area {
   padding: 24px;
   background: linear-gradient(135deg, var(--color-bg-tertiary) 0%, var(--color-bg-secondary) 100%);
