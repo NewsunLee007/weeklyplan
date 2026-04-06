@@ -203,6 +203,18 @@ async function handleLogin() {
   background-color: rgba(255, 255, 255, 0.9);
 }
 
+.custom-input :deep(.el-input__inner) {
+  color: #1e293b !important;
+}
+
+.custom-input :deep(.el-input__inner::placeholder) {
+  color: #94a3b8 !important;
+}
+
+.custom-input :deep(.el-input__prefix-inner) {
+  color: #64748b !important;
+}
+
 .custom-input :deep(.el-input__wrapper.is-focus) {
   box-shadow: 0 0 0 2px #3b82f6 !important;
   background-color: #fff;

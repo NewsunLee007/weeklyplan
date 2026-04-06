@@ -336,6 +336,10 @@
   border-bottom-color: var(--color-border-light);
 }
 
+:root.dark-mode .el-table--striped .el-table__body tr.el-table__row--striped td.el-table__cell {
+  background-color: var(--color-bg-secondary);
+}
+
 :root.dark-mode .el-table .el-table__row:hover td {
   background-color: var(--color-primary-bg);
 }

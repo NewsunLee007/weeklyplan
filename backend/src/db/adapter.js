@@ -227,6 +227,10 @@ async function initDatabase() {
 
     console.log('📦 检查并修复表结构（biz_feedback.content）...');
     await pool.query(`ALTER TABLE biz_feedback ADD COLUMN IF NOT EXISTS content TEXT`);
+
+    console.log('📦 检查并修复表结构（biz_feedback.create_time/update_time）...');
+    await pool.query(`ALTER TABLE biz_feedback ADD COLUMN IF NOT EXISTS create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP`);
+    await pool.query(`ALTER TABLE biz_feedback ADD COLUMN IF NOT EXISTS update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP`);
   } catch (error) {
     console.error('⚠️ 修复表结构失败:', error.message);
   }

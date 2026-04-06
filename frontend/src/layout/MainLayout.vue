@@ -243,8 +243,10 @@ function toggleTheme() {
   isDarkMode.value = !isDarkMode.value
   if (isDarkMode.value) {
     document.documentElement.classList.add('dark-mode')
+    document.documentElement.classList.add('dark') // 兼容 Element Plus 自带暗黑模式
   } else {
     document.documentElement.classList.remove('dark-mode')
+    document.documentElement.classList.remove('dark')
   }
 }
 
@@ -512,8 +514,8 @@ watch(() => route.path, () => {
 
 /* 顶部栏样式 */
 .header {
-  background: linear-gradient(90deg, #ffffff 0%, #f8fafc 100%);
-  border-bottom: 1px solid #e2e8f0;
+  background: var(--color-bg-primary, linear-gradient(90deg, #ffffff 0%, #f8fafc 100%));
+  border-bottom: 1px solid var(--color-border-light, #e2e8f0);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -663,8 +665,8 @@ watch(() => route.path, () => {
   border-radius: 12px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
-  background: rgba(59, 130, 246, 0.05);
-  border: 1px solid rgba(59, 130, 246, 0.1);
+  background: var(--color-bg-tertiary, rgba(59, 130, 246, 0.05));
+  border: 1px solid var(--color-border-light, rgba(59, 130, 246, 0.1));
   position: relative;
   overflow: hidden;
   z-index: 1;
@@ -754,7 +756,7 @@ watch(() => route.path, () => {
 
 .username {
   font-size: 14px;
-  color: #334155;
+  color: var(--color-text-primary, #334155);
   font-weight: 500;
   transition: all 0.3s var(--transition-base);
   min-width: 80px;
@@ -828,7 +830,7 @@ watch(() => route.path, () => {
 
 /* 内容区样式 */
 .main-content {
-  background: #f8fafc;
+  background-color: var(--color-bg-secondary, #f8fafc);
   flex: 1;
   overflow-y: auto;
   transition: all 0.3s var(--transition-base);
