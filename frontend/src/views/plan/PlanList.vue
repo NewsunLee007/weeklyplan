@@ -99,17 +99,13 @@
                   <div class="work-content">{{ row.workContent || '无内容' }}</div>
                 </template>
               </el-table-column>
-              <el-table-column label="日期范围" width="180" class="table-column">
-                <template #default="{row}">
-                  <div class="date-range">{{ formatDate(row.start_date) }} ~ {{ formatDate(row.end_date) }}</div>
-                </template>
-              </el-table-column>
+              <el-table-column prop="creator_name" label="提交人" width="120" class="table-column" />
               <el-table-column label="状态" width="130" align="center" class="table-column">
                 <template #default="{row}">
                   <el-tag :type="STATUS_MAP[row.status]?.type" class="status-tag">{{ STATUS_MAP[row.status]?.label }}</el-tag>
                 </template>
               </el-table-column>
-              <el-table-column label="操作" width="280" fixed="right" class="table-column">
+              <el-table-column label="操作" width="280" class="table-column">
                 <template #default="{row}">
                   <div class="table-actions">
                     <el-button link type="primary" @click="router.push(`/plan/detail/${row.id}`)" class="action-btn view-btn">
@@ -165,17 +161,13 @@
                   <div class="work-content">{{ row.workContent || '无内容' }}</div>
                 </template>
               </el-table-column>
-              <el-table-column label="日期范围" width="180" class="table-column">
-                <template #default="{row}">
-                  <div class="date-range">{{ formatDate(row.start_date) }} ~ {{ formatDate(row.end_date) }}</div>
-                </template>
-              </el-table-column>
+              <el-table-column prop="creator_name" label="提交人" width="120" class="table-column" />
               <el-table-column label="状态" width="130" align="center" class="table-column">
                 <template #default="{row}">
                   <el-tag :type="STATUS_MAP[row.status]?.type" class="status-tag">{{ STATUS_MAP[row.status]?.label }}</el-tag>
                 </template>
               </el-table-column>
-              <el-table-column label="操作" width="280" fixed="right" class="table-column">
+              <el-table-column label="操作" width="280" class="table-column">
                 <template #default="{row}">
                   <div class="table-actions">
                     <el-button link type="primary" @click="router.push(`/plan/detail/${row.id}`)" class="action-btn view-btn">
@@ -222,6 +214,7 @@ import request from '../../utils/request'
 import { STATUS_MAP } from '../../utils/helper'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Search, Refresh, View, Edit, Check, Delete, Document, Clock, Warning, RefreshLeft } from '@element-plus/icons-vue'
+import { calcWeekNumber } from '../../utils/helper'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -230,6 +223,22 @@ const loading = ref(false)
 const activeDeptTab = ref('all')
 const filter = reactive({ semester: '', week_number: '', status: '' })
 const pagination = reactive({ page: 1, pageSize: 10, total: 0 })
+
+async function loadConfig() {
+  try {
+    const configs = await request.get('/configs')
+    const map = {}
+    configs.forEach(c => { map[c.config_key] = c.config_value })
+    if (map.current_semester) filter.semester = map.current_semester
+    if (map.current_week_start) {
+      const weekFirstDay = parseInt(map.week_first_day) || 0
+      const currentWeek = calcWeekNumber(map.current_week_start, weekFirstDay)
+      filter.week_number = Math.max(1, currentWeek + 1) // 自动选到下一周
+    }
+  } catch (e) {
+    console.warn('读取系统配置失败', e)
+  }
+}
 
 // 用户所属部门
 const userDepts = computed(() => {
@@ -318,7 +327,10 @@ function handleCurrentChange(page) {
   loadData()
 }
 
-onMounted(loadData)
+onMounted(async () => {
+  await loadConfig()
+  loadData()
+})
 </script>
 
 <style scoped>

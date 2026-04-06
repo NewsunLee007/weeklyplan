@@ -77,7 +77,7 @@
 
           <el-table :data="form.items" border class="items-table">
             <el-table-column type="index" label="序号" width="60" align="center" />
-            <el-table-column label="日期" width="180">
+            <el-table-column label="日期" width="220">
               <template #default="{row}">
                 <el-date-picker
                   v-model="row.plan_date"
@@ -310,6 +310,10 @@ onMounted(async () => {
     const finalWeek = Math.max(1, nextWeek)
     form.week_number = finalWeek
     onWeekChange(finalWeek)
+    // 自动添加第一行空条目
+    if (form.items.length === 0) {
+      addItem()
+    }
   }
 })
 </script>

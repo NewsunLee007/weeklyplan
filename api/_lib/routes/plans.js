@@ -13,7 +13,7 @@ router.get('/', authMiddleware, async (req, res) => {
   const params = [];
 
   // 非管理员只能看自己部门的计划（已发布计划可见全部）
-  if (!['ADMIN', 'OFFICE_HEAD', 'PRINCIPAL', 'ACADEMIC_HEAD'].includes(req.user.role)) {
+  if (!['ADMIN', 'OFFICE_HEAD', 'PRINCIPAL'].includes(req.user.role)) {
     const deptId = req.user.departmentId || null;
     if (deptId) {
       where += ` AND (p.department_id = ? OR p.status = 'PUBLISHED')`;

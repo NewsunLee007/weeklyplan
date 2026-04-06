@@ -8,7 +8,7 @@
         <el-table-column prop="week_number" label="周次" width="70" align="center">
           <template #default="{row}">第{{ row.week_number }}周</template>
         </el-table-column>
-        <el-table-column prop="title" label="工作内容" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="content" label="工作内容" min-width="200" show-overflow-tooltip />
         <el-table-column prop="dept_name" label="部门" width="100" />
         <el-table-column prop="creator_name" label="提交人" width="100" />
         <el-table-column label="状态" width="130" align="center">

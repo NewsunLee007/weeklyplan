@@ -116,7 +116,24 @@ const activeTab = ref('0')
 const personalItems = ref([])
 const allItems = ref([])
 const departments = ref([]) // 部门列表
-const filter = reactive({ semester: '2025-2', week_number: 6 })
+const filter = reactive({ semester: '', week_number: 1 })
+
+async function loadConfig() {
+  try {
+    const configs = await request.get('/configs')
+    const map = {}
+    configs.forEach(c => { map[c.config_key] = c.config_value })
+    if (map.current_semester) filter.semester = map.current_semester
+    if (map.current_week_start) {
+      const { calcWeekNumber } = await import('../../utils/helper')
+      const weekFirstDay = parseInt(map.week_first_day) || 0
+      const currentWeek = calcWeekNumber(map.current_week_start, weekFirstDay)
+      filter.week_number = Math.max(1, currentWeek + 1)
+    }
+  } catch (e) {
+    console.warn('读取系统配置失败', e)
+  }
+}
 
 function formatDate(dateStr) {
   if (!dateStr) return ''
@@ -295,7 +312,10 @@ async function exportSummaryPdf() {
   URL.revokeObjectURL(url)
 }
 
-onMounted(loadData)
+onMounted(async () => {
+  await loadConfig()
+  loadData()
+})
 </script>
 
 <style scoped>

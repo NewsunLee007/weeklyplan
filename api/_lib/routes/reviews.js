@@ -47,6 +47,12 @@ router.get('/pending', authMiddleware, requireRole(...REVIEW_ROLES), async (req,
      LEFT JOIN sys_user u ON p.creator_id = u.id
      ${where} ORDER BY p.update_time DESC`
   );
+
+  for (const record of records) {
+    const items = await query(`SELECT content FROM biz_plan_item WHERE plan_id = ? AND is_deleted = false ORDER BY sort_order`, [record.id]);
+    record.content = items.map(i => i.content).join('；') || '无内容';
+  }
+
   return success(res, records);
 });
 
@@ -66,12 +72,12 @@ router.post('/:planId/approve', authMiddleware, requireRole(...REVIEW_ROLES), as
 
   // 验证审核人权限
   if (role === 'DEPT_HEAD' || role === 'ACADEMIC_HEAD') {
-    if (step !== 1) return fail(res, '部门/教务主任只能进行第一步审核');
+    if (Number(step) !== 1) return fail(res, '部门/教务主任只能进行第一步审核');
     if (plan.department_id !== departmentId) return fail(res, '只能审核本部门计划');
   } else if (role === 'OFFICE_HEAD') {
-    if (step !== 2 && step !== 3) return fail(res, '办公室主任只能进行第二步或最终发布');
+    if (Number(step) !== 2 && Number(step) !== 3) return fail(res, '办公室主任只能进行第二步或最终发布');
   } else if (role === 'PRINCIPAL') {
-    if (step !== 3) return fail(res, '校长只能进行最终审核');
+    if (Number(step) !== 3) return fail(res, '校长只能进行最终审核');
   }
 
   const n = now();
@@ -147,7 +153,13 @@ router.post('/:planId/reject', authMiddleware, requireRole(...REVIEW_ROLES), asy
   if (!plan) return fail(res, '计划不存在', 404);
 
   const step = plan.current_step;
-  if ((role === 'DEPT_HEAD' || role === 'ACADEMIC_HEAD') && (step !== 1 || plan.department_id !== departmentId)) {
+  if ((role === 'DEPT_HEAD' || role === 'ACADEMIC_HEAD') && (Number(step) !== 1 || plan.department_id !== departmentId)) {
+    return fail(res, '无权操作');
+  }
+  if (role === 'OFFICE_HEAD' && Number(step) !== 2 && Number(step) !== 3) {
+    return fail(res, '无权操作');
+  }
+  if (role === 'PRINCIPAL' && Number(step) !== 3) {
     return fail(res, '无权操作');
   }
 
