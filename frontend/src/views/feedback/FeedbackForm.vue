@@ -45,6 +45,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import request from '../../utils/request'
 import { ElMessage } from 'element-plus'
+import dayjs from 'dayjs'
 
 const router = useRouter()
 const route = useRoute()
@@ -53,6 +54,12 @@ const items = ref([])
 const feedbacks = reactive({})
 const loading = ref(false)
 const saving = ref(false)
+
+// 格式化日期，去掉多余的时区尾巴
+function formatDate(val) {
+  if (!val) return ''
+  return dayjs(val).format('YYYY-MM-DD')
+}
 
 async function loadData() {
   loading.value = true

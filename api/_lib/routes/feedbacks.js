@@ -39,11 +39,11 @@ router.post('/', authMiddleware, async (req, res) => {
     );
 
     if (existing) {
-      await run(`UPDATE biz_feedback SET status=$1, content=$2, update_time=$3 WHERE id=$4`,
+      await run(`UPDATE biz_feedback SET status=$1, feedback_content=$2, update_time=$3 WHERE id=$4`,
         [status, content || '', n, existing.id]);
     } else {
       await run(
-        `INSERT INTO biz_feedback (plan_item_id, plan_id, feedback_user_id, status, content, create_time, update_time) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        `INSERT INTO biz_feedback (plan_item_id, plan_id, feedback_user_id, status, feedback_content, create_time, update_time) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
         [plan_item_id, plan_id, userId, status, content || '', n, n]
       );
     }
