@@ -114,7 +114,7 @@ router.post('/:planId/approve', authMiddleware, requireRole(...REVIEW_ROLES), as
   }
 
   // 更新状态
-  let nextStep = step + 1;
+  let nextStep = Number(step) + 1;
   let flowTo = flow.to;
 
   // 办公室主任一键发布，直接跳到 PUBLISHED
@@ -272,7 +272,7 @@ router.post('/consolidated/:weekNumber/:semester/approve', authMiddleware, requi
     );
 
     // 更新状态
-    let nextStep = step + 1;
+    let nextStep = Number(step) + 1;
     let flowTo = flow.to;
 
     // 办公室主任一键发布，直接跳到 PUBLISHED

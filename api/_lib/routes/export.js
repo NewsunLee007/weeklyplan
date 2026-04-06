@@ -321,7 +321,7 @@ async function buildWeeklySummary(plans, weekNumber, schoolName, schoolSubName) 
   const itemsByDate = {};
 
   allItems.forEach(item => {
-    const dateKey = item.plan_date.split('T')[0];
+    const dateKey = (item.plan_date instanceof Date ? item.plan_date.toISOString() : String(item.plan_date)).split('T')[0];
     if (!itemsByDate[dateKey]) {
       itemsByDate[dateKey] = [];
     }

@@ -206,6 +206,17 @@ async function initDatabase() {
 
         console.log('✅ 核心表创建完成');
 
+        // 修复因字符串加法导致的 current_step 异常
+        try {
+          console.log('📦 修复异常的审核流程步骤数据...');
+          await pool.query(`UPDATE biz_week_plan SET current_step = '1' WHERE status = 'SUBMITTED' AND current_step != '1'`);
+          await pool.query(`UPDATE biz_week_plan SET current_step = '2' WHERE status = 'DEPT_APPROVED' AND current_step != '2'`);
+          await pool.query(`UPDATE biz_week_plan SET current_step = '3' WHERE status = 'OFFICE_APPROVED' AND current_step != '3'`);
+          await pool.query(`UPDATE biz_week_plan SET current_step = '4' WHERE status = 'PUBLISHED' AND current_step != '4'`);
+        } catch (error) {
+          console.error('⚠️ 修复异常的审核流程步骤数据失败:', error.message);
+        }
+
         // 快速插入默认数据（不等待）
         fastInsertDefaultData().catch(err => {
           console.log('⚠️ 默认数据插入失败，但继续运行:', err.message);
