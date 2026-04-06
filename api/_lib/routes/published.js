@@ -20,6 +20,16 @@ router.get('/', authMiddleware, async (req, res) => {
      ${where} ORDER BY p.semester DESC, p.week_number DESC, d.sort_order`,
     params
   );
+  
+  // 为每个计划添加工作内容条目拼接
+  for (const plan of records) {
+    const items = await query(
+      `SELECT content FROM biz_plan_item WHERE plan_id = ? AND is_deleted = false ORDER BY plan_date, sort_order`,
+      [plan.id]
+    );
+    plan.title = items.map(i => i.content).join('；') || '无内容';
+  }
+  
   return success(res, records);
 });
 
