@@ -329,7 +329,9 @@ function handleCurrentChange(page) {
 
 onMounted(async () => {
   await loadConfig()
-  loadData()
+  if (filter.week_number) {
+    await loadData()
+  }
 })
 </script>
 

@@ -237,6 +237,17 @@ async function generateTransparentLogo() {
   }
 }
 
+// 辅助函数：安全获取本地时区的 YYYY-MM-DD 字符串
+function getLocalDateString(dateObj) {
+  if (!(dateObj instanceof Date) || isNaN(dateObj)) {
+    dateObj = new Date(dateObj);
+  }
+  const year = dateObj.getFullYear();
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const day = String(dateObj.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 // 全校汇总导出（新格式：按周日到周六编排，每天一行，同一天多个部门合并）
 async function buildWeeklySummary(plans, weekNumber, schoolName, schoolSubName) {
   const plan0 = plans[0];
@@ -321,7 +332,7 @@ async function buildWeeklySummary(plans, weekNumber, schoolName, schoolSubName) 
   const itemsByDate = {};
 
   allItems.forEach(item => {
-    const dateKey = (item.plan_date instanceof Date ? item.plan_date.toISOString() : String(item.plan_date)).split('T')[0];
+    const dateKey = getLocalDateString(item.plan_date);
     if (!itemsByDate[dateKey]) {
       itemsByDate[dateKey] = [];
     }
@@ -338,7 +349,7 @@ async function buildWeeklySummary(plans, weekNumber, schoolName, schoolSubName) 
 
     const dateStr = `${currentDate.getMonth() + 1}月${currentDate.getDate()}日`;
     const weekday = weekdayNames[currentDate.getDay()];
-    const dateKey = currentDate.toISOString().split('T')[0];
+    const dateKey = getLocalDateString(currentDate);
 
     // 周六显示"休息"
     if (currentDate.getDay() === 6) {

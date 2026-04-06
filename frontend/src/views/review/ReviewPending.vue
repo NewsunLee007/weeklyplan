@@ -95,7 +95,9 @@ async function exportWord() {
 
 onMounted(async () => {
   await loadConfig()
-  loadData()
+  if (weekNumber.value) {
+    await loadData()
+  }
 })
 </script>
 

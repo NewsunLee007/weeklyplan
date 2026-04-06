@@ -314,7 +314,9 @@ async function exportSummaryPdf() {
 
 onMounted(async () => {
   await loadConfig()
-  loadData()
+  if (filter.week_number) {
+    await loadData()
+  }
 })
 </script>
 
