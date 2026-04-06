@@ -320,9 +320,7 @@ onMounted(async () => {
 
 <style scoped>
 .page-container {
-  padding: 32px;
-  max-width: 1400px;
-  margin: 0 auto;
+  padding: 24px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -344,7 +342,7 @@ onMounted(async () => {
 .page-title {
   font-size: 28px;
   font-weight: 700;
-  color: #164E63;
+  color: var(--color-text-primary, #164E63);
   margin: 0;
   letter-spacing: -0.5px;
   transition: all 0.3s var(--transition-base);
@@ -352,7 +350,7 @@ onMounted(async () => {
 
 .page-description {
   font-size: 14px;
-  color: #64748B;
+  color: var(--color-text-secondary, #64748B);
   margin: 0;
   transition: all 0.3s var(--transition-base);
 }
@@ -362,24 +360,24 @@ onMounted(async () => {
   padding: 0 24px;
   border-radius: 8px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  background: #FFFFFF;
-  border: 1px solid #E0F2FE;
-  color: #64748B;
+  background: var(--color-bg-primary, #FFFFFF);
+  border: 1px solid var(--color-border-light, #E0F2FE);
+  color: var(--color-text-secondary, #64748B);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
 }
 
 .back-btn:hover {
-  background: #F8FAFC;
-  border-color: #BAE6FD;
-  color: #3B82F6;
+  background: var(--color-bg-secondary, #F8FAFC);
+  border-color: var(--color-border-medium, #BAE6FD);
+  color: var(--color-primary, #3B82F6);
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
 }
 
 /* 表单卡片 */
 .form-card {
-  background: linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%);
-  border: 1px solid #E0F2FE;
+  background: linear-gradient(135deg, var(--color-bg-primary, #FFFFFF) 0%, var(--color-bg-secondary, #F8FAFC) 100%);
+  border: 1px solid var(--color-border-light, #E0F2FE);
   border-radius: 16px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -388,7 +386,7 @@ onMounted(async () => {
 
 .form-card:hover {
   box-shadow: 0 4px 12px rgba(8, 145, 178, 0.1);
-  border-color: #BAE6FD;
+  border-color: var(--color-border-medium, #BAE6FD);
   transform: translateY(-2px);
 }
 
@@ -417,15 +415,15 @@ onMounted(async () => {
   gap: 8px;
   font-size: 16px;
   font-weight: 600;
-  color: #164E63;
+  color: var(--color-text-primary, #164E63);
   margin: 0 0 16px 0;
   transition: all 0.3s var(--transition-base);
   padding-bottom: 8px;
-  border-bottom: 2px solid #E0F2FE;
+  border-bottom: 2px solid var(--color-border-light, #E0F2FE);
 }
 
 .section-icon {
-  color: #3B82F6;
+  color: var(--color-primary, #3B82F6);
   transition: all 0.3s var(--transition-base);
 }
 
@@ -441,14 +439,14 @@ onMounted(async () => {
 .form-input:focus,
 .form-select:focus,
 .form-textarea:focus {
-  border-color: #3B82F6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: var(--color-primary, #3B82F6);
+  box-shadow: 0 0 0 3px var(--color-primary-bg, rgba(59, 130, 246, 0.1));
 }
 
 .disabled-input {
-  background: #F8FAFC;
-  border-color: #E0F2FE;
-  color: #64748B;
+  background: var(--color-bg-secondary, #F8FAFC);
+  border-color: var(--color-border-light, #E0F2FE);
+  color: var(--color-text-secondary, #64748B);
 }
 
 /* 日期选择器 */
@@ -465,83 +463,76 @@ onMounted(async () => {
 
 .date-picker :deep(.el-input__wrapper) {
   border-radius: 8px;
-  border: 1px solid #E0F2FE !important;
+  border: 1px solid var(--color-border-light, #E0F2FE) !important;
   padding: 6px 12px;
   box-shadow: none !important;
   min-width: 120px;
+  background-color: var(--color-bg-primary, #ffffff);
 }
 
 .date-picker :deep(.el-input__inner) {
   height: 20px;
   line-height: 20px;
   min-width: 100px;
+  color: var(--color-text-primary, #1e293b);
 }
 
 .date-picker:focus-within :deep(.el-input__wrapper) {
-  border-color: #3B82F6 !important;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
-}
-
-/* 星期徽章 - 确保不遮挡日期选择器 */
-.weekday-badge {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3B82F6;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
-  transition: all 0.3s var(--transition-base);
-  z-index: 1;
-  position: relative;
+  border-color: var(--color-primary, #3B82F6) !important;
+  box-shadow: 0 0 0 3px var(--color-primary-bg, rgba(59, 130, 246, 0.1)) !important;
 }
 
 /* 工作内容输入框 */
 .content-input {
   border-radius: 8px;
-  border: 1px solid #E0F2FE;
+  border: 1px solid var(--color-border-light, #E0F2FE);
   transition: all 0.3s var(--transition-base);
   min-height: 64px;
 }
 
 .content-input .el-textarea__inner {
   border-radius: 8px;
-  border: 1px solid #E0F2FE;
+  border: 1px solid var(--color-border-light, #E0F2FE);
   min-height: 64px;
+  background-color: var(--color-bg-primary, #ffffff);
+  color: var(--color-text-primary, #1e293b);
 }
 
 .content-input:focus-within .el-textarea__inner {
-  border-color: #3B82F6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: var(--color-primary, #3B82F6);
+  box-shadow: 0 0 0 3px var(--color-primary-bg, rgba(59, 130, 246, 0.1));
 }
 
 /* 表单输入框 */
 .form-input {
   border-radius: 8px;
-  border: 1px solid #E0F2FE;
+  border: 1px solid var(--color-border-light, #E0F2FE);
   transition: all 0.3s var(--transition-base);
   height: 32px;
 }
 
 .form-input .el-input__wrapper {
   border-radius: 8px;
-  border: 1px solid #E0F2FE !important;
+  border: 1px solid var(--color-border-light, #E0F2FE) !important;
   height: 100%;
+  background-color: var(--color-bg-primary, #ffffff);
 }
 
 .form-input .el-input__inner {
   height: 100%;
   line-height: 32px;
+  color: var(--color-text-primary, #1e293b);
 }
 
 .form-input:focus-within .el-input__wrapper {
-  border-color: #3B82F6 !important;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+  border-color: var(--color-primary, #3B82F6) !important;
+  box-shadow: 0 0 0 3px var(--color-primary-bg, rgba(59, 130, 246, 0.1)) !important;
 }
 
 /* 星期徽章 */
 .weekday-badge {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3B82F6;
+  background: var(--color-primary-bg-subtle, rgba(59, 130, 246, 0.1));
+  color: var(--color-primary, #3B82F6);
   padding: 4px 8px;
   border-radius: 12px;
   font-size: 12px;
@@ -556,18 +547,44 @@ onMounted(async () => {
   overflow: hidden;
   transition: all 0.3s var(--transition-base);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  background: var(--color-bg-primary, #ffffff);
 }
 
 .items-table th {
-  background: linear-gradient(90deg, #F8FAFC 0%, #FFFFFF 100%);
-  color: #164E63;
+  background: var(--color-bg-secondary, #F8FAFC);
+  color: var(--color-text-primary, #164E63);
   font-weight: 600;
   padding: 12px;
-  border-bottom: 1px solid #E0F2FE;
+  border-bottom: 1px solid var(--color-border-light, #E0F2FE);
+}
+
+/* 表格样式修复 */
+:deep(.el-table) {
+  --el-table-border-color: var(--color-border-light, #E0F2FE);
+  --el-table-header-bg-color: var(--color-bg-secondary, #F8FAFC);
+  --el-table-header-text-color: var(--color-text-primary, #164E63);
+  --el-table-text-color: var(--color-text-secondary, #64748B);
+  --el-table-row-hover-bg-color: var(--color-primary-bg-subtle, rgba(59, 130, 246, 0.05));
+  --el-table-tr-bg-color: var(--color-bg-primary, #ffffff);
+  background-color: var(--color-bg-primary, #ffffff);
+  color: var(--color-text-primary, #334155);
+}
+
+:deep(.el-table__body) tr.el-table__row--striped td.el-table__cell {
+  background-color: var(--color-bg-secondary, #F8FAFC);
+}
+
+:deep(.el-table td.el-table__cell),
+:deep(.el-table th.el-table__cell.is-leaf) {
+  border-bottom: 1px solid var(--color-border-light, #E0F2FE);
+}
+
+:deep(.el-table__empty-text) {
+  color: var(--color-text-secondary, #64748B);
 }
 
 .items-table .el-table__row:hover td {
-  background: rgba(59, 130, 246, 0.05);
+  background: var(--color-primary-bg-subtle, rgba(59, 130, 246, 0.05));
 }
 
 .items-table .el-table__row {
@@ -587,8 +604,8 @@ onMounted(async () => {
 }
 
 .add-item-btn:hover {
-  color: #3B82F6;
-  background: rgba(59, 130, 246, 0.1);
+  color: var(--color-primary, #3B82F6);
+  background: var(--color-primary-bg-subtle, rgba(59, 130, 246, 0.1));
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(59, 130, 246, 0.15);
 }
@@ -601,7 +618,7 @@ onMounted(async () => {
 }
 
 .delete-btn:hover {
-  color: #EF4444;
+  color: var(--color-danger, #EF4444);
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(239, 68, 68, 0.15);
 }
@@ -613,7 +630,7 @@ onMounted(async () => {
   justify-content: flex-end;
   margin-top: 32px;
   padding-top: 24px;
-  border-top: 1px solid #E0F2FE;
+  border-top: 1px solid var(--color-border-light, #E0F2FE);
   transition: all 0.3s var(--transition-base);
 }
 
@@ -629,22 +646,22 @@ onMounted(async () => {
 }
 
 .draft-btn {
-  background: #FFFFFF;
-  border: 1px solid #E0F2FE;
-  color: #64748B;
+  background: var(--color-bg-primary, #FFFFFF);
+  border: 1px solid var(--color-border-light, #E0F2FE);
+  color: var(--color-text-secondary, #64748B);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .draft-btn:hover {
-  background: #F8FAFC;
-  border-color: #BAE6FD;
-  color: #3B82F6;
+  background: var(--color-bg-secondary, #F8FAFC);
+  border-color: var(--color-border-medium, #BAE6FD);
+  color: var(--color-primary, #3B82F6);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .submit-btn {
-  background: linear-gradient(135deg, #0891B2 0%, #06B6D4 100%);
+  background: var(--color-primary, #0891B2);
   border: none;
   box-shadow: 0 4px 12px rgba(8, 145, 178, 0.3);
 }
@@ -681,7 +698,7 @@ onMounted(async () => {
   border-radius: 8px;
   padding: 6px 12px;
   font-weight: 500;
-  background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
+  background: var(--color-primary, #3B82F6);
   color: white;
   border: none;
 }
@@ -693,8 +710,8 @@ onMounted(async () => {
 
 .ai-suggestions-section {
   margin-bottom: 16px;
-  background: linear-gradient(135deg, #F0F9FF 0%, #F5F3FF 100%);
-  border: 1px solid #BAE6FD;
+  background: var(--color-bg-primary, #ffffff);
+  border: 1px solid var(--color-border-light, #BAE6FD);
   border-radius: 12px;
   overflow: hidden;
   animation: slideDown 0.3s ease-out;
@@ -716,7 +733,7 @@ onMounted(async () => {
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  background: linear-gradient(90deg, #3B82F6 0%, #8B5CF6 100%);
+  background: var(--color-primary, #3B82F6);
   color: white;
 }
 
@@ -738,9 +755,35 @@ onMounted(async () => {
 }
 
 .ai-suggestions-text {
-  color: #1E293B;
+  color: var(--color-text-primary, #1E293B);
   line-height: 1.8;
   white-space: pre-wrap;
+}
+
+:deep(.el-input-number .el-input__wrapper) {
+  background-color: var(--color-bg-primary, #ffffff);
+  box-shadow: 0 0 0 1px var(--color-border-light, #E0F2FE) inset;
+}
+
+:deep(.el-input-number__decrease),
+:deep(.el-input-number__increase) {
+  background-color: var(--color-bg-secondary, #F8FAFC);
+  color: var(--color-text-secondary, #64748B);
+  border-color: var(--color-border-light, #E0F2FE);
+}
+
+:deep(.el-select__wrapper) {
+  background-color: var(--color-bg-primary, #ffffff);
+  box-shadow: 0 0 0 1px var(--color-border-light, #E0F2FE) inset;
+}
+
+:deep(.el-select-dropdown__item) {
+  color: var(--color-text-primary, #164E63);
+}
+
+:deep(.el-select-dropdown__item.hover),
+:deep(.el-select-dropdown__item:hover) {
+  background-color: var(--color-bg-secondary, #F8FAFC);
 }
 
 .apply-suggest-btn {

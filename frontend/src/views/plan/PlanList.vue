@@ -43,7 +43,7 @@
     <!-- 统计卡片 -->
     <div class="stats-cards">
       <div class="stat-card">
-        <div class="stat-icon" style="background: rgba(8, 145, 178, 0.15); color: #0891B2;">
+        <div class="stat-icon" style="background: var(--color-primary-bg-subtle, rgba(8, 145, 178, 0.15)); color: var(--color-primary, #0891B2);">
           <el-icon><Document /></el-icon>
         </div>
         <div class="stat-info">
@@ -52,7 +52,7 @@
         </div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon" style="background: rgba(34, 197, 94, 0.15); color: #22C55E;">
+        <div class="stat-icon" style="background: var(--color-success-light, rgba(34, 197, 94, 0.15)); color: var(--color-success, #22C55E);">
           <el-icon><Check /></el-icon>
         </div>
         <div class="stat-info">
@@ -61,7 +61,7 @@
         </div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon" style="background: rgba(245, 158, 11, 0.15); color: #F59E0B;">
+        <div class="stat-icon" style="background: var(--color-warning-light, rgba(245, 158, 11, 0.15)); color: var(--color-warning, #F59E0B);">
           <el-icon><Clock /></el-icon>
         </div>
         <div class="stat-info">
@@ -70,7 +70,7 @@
         </div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon" style="background: rgba(239, 68, 68, 0.15); color: #EF4444;">
+        <div class="stat-icon" style="background: var(--color-danger-light, rgba(239, 68, 68, 0.15)); color: var(--color-danger, #EF4444);">
           <el-icon><Warning /></el-icon>
         </div>
         <div class="stat-info">
@@ -338,9 +338,7 @@ onMounted(async () => {
 
 <style scoped>
 .page-container {
-  padding: 32px;
-  max-width: 1400px;
-  margin: 0 auto;
+  padding: 24px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -362,7 +360,7 @@ onMounted(async () => {
 .page-title {
   font-size: 28px;
   font-weight: 700;
-  color: #164E63;
+  color: var(--color-text-primary, #164E63);
   margin: 0;
   letter-spacing: -0.5px;
   transition: all 0.3s var(--transition-base);
@@ -370,7 +368,7 @@ onMounted(async () => {
 
 .page-description {
   font-size: 14px;
-  color: #64748B;
+  color: var(--color-text-secondary, #64748B);
   margin: 0;
   transition: all 0.3s var(--transition-base);
 }
@@ -381,7 +379,7 @@ onMounted(async () => {
   font-size: 16px;
   font-weight: 600;
   border-radius: 12px;
-  background: linear-gradient(135deg, #0891B2 0%, #06B6D4 100%);
+  background: var(--color-primary, #0891B2);
   border: none;
   box-shadow: 0 4px 12px rgba(8, 145, 178, 0.3);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -416,47 +414,73 @@ onMounted(async () => {
 }
 
 .filter-card {
-  background: linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%);
-  border: 1px solid #E0F2FE;
+  background: var(--color-bg-primary, #FFFFFF);
+  border: 1px solid var(--color-border-light, #E0F2FE);
   border-radius: 16px;
   padding: 24px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-bottom: 24px;
 }
 
 .filter-card:hover {
   box-shadow: 0 4px 12px rgba(8, 145, 178, 0.1);
-  border-color: #BAE6FD;
+  border-color: var(--color-border-medium, #BAE6FD);
   transform: translateY(-2px);
 }
 
 .filter-form {
   display: flex;
-  align-items: center;
-  gap: 16px;
   flex-wrap: wrap;
+  gap: 24px;
+  align-items: flex-end;
   transition: all 0.3s var(--transition-base);
 }
 
 .filter-item {
+  margin-bottom: 0 !important;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 8px;
   transition: all 0.3s var(--transition-base);
+}
+
+.filter-item :deep(.el-form-item__label) {
+  padding: 0;
+  line-height: 1;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary, #64748B);
+  justify-content: flex-start;
+}
+
+.filter-item :deep(.el-form-item__content) {
+  line-height: 1;
 }
 
 .filter-input,
 .filter-select {
   min-width: 120px;
   border-radius: 8px;
-  border: 1px solid #E0F2FE;
+  border: 1px solid var(--color-border-light, #E0F2FE);
   transition: all 0.3s var(--transition-base);
 }
 
 .filter-input:focus,
 .filter-select:focus {
-  border-color: #3B82F6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: var(--color-primary, #3B82F6);
+  box-shadow: 0 0 0 3px var(--color-primary-bg, rgba(59, 130, 246, 0.1));
+}
+
+:deep(.el-input__wrapper),
+:deep(.el-select__wrapper) {
+  background-color: var(--color-bg-primary, #FFFFFF);
+  box-shadow: 0 0 0 1px var(--color-border-light, #E0F2FE) inset;
+}
+
+:deep(.el-input__inner),
+:deep(.el-select__placeholder) {
+  color: var(--color-text-primary, #164E63);
 }
 
 .filter-actions {
@@ -464,6 +488,7 @@ onMounted(async () => {
   display: flex;
   gap: 12px;
   transition: all 0.3s var(--transition-base);
+  margin-bottom: 0;
 }
 
 .filter-btn {
@@ -473,7 +498,7 @@ onMounted(async () => {
 }
 
 .filter-search-btn {
-  background: linear-gradient(135deg, #0891B2 0%, #06B6D4 100%);
+  background: var(--color-primary, #0891B2);
   border: none;
   box-shadow: 0 2px 8px rgba(8, 145, 178, 0.2);
 }
@@ -484,15 +509,15 @@ onMounted(async () => {
 }
 
 .filter-reset-btn {
-  background: #FFFFFF;
-  border: 1px solid #E0F2FE;
-  color: #64748B;
+  background: var(--color-bg-primary, #FFFFFF);
+  border: 1px solid var(--color-border-light, #E0F2FE);
+  color: var(--color-text-secondary, #64748B);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
 }
 
 .filter-reset-btn:hover {
-  background: #F8FAFC;
-  border-color: #BAE6FD;
+  background: var(--color-bg-secondary, #F8FAFC);
+  border-color: var(--color-border-medium, #BAE6FD);
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
 }
@@ -507,8 +532,8 @@ onMounted(async () => {
 }
 
 .stat-card {
-  background: #FFFFFF;
-  border: 1px solid #E0F2FE;
+  background: var(--color-bg-primary, #FFFFFF);
+  border: 1px solid var(--color-border-light, #E0F2FE);
   border-radius: 16px;
   padding: 20px;
   display: flex;
@@ -527,13 +552,20 @@ onMounted(async () => {
   left: 0;
   width: 100%;
   height: 3px;
-  background: linear-gradient(90deg, #0891B2, #06B6D4);
+  background: var(--color-primary, #0891B2);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease;
 }
 
 .stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(8, 145, 178, 0.12);
-  border-color: #BAE6FD;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(8, 145, 178, 0.1);
+  border-color: var(--color-border-medium, #BAE6FD);
+}
+
+.stat-card:hover::before {
+  transform: scaleX(1);
 }
 
 .stat-icon {
@@ -556,7 +588,7 @@ onMounted(async () => {
 .stat-value {
   font-size: 24px;
   font-weight: 700;
-  color: #164E63;
+  color: var(--color-text-primary, #164E63);
   line-height: 1;
   margin-bottom: 4px;
   transition: all 0.3s var(--transition-base);
@@ -564,34 +596,35 @@ onMounted(async () => {
 
 .stat-label {
   font-size: 13px;
-  color: #64748B;
+  color: var(--color-text-secondary, #64748B);
   font-weight: 500;
   transition: all 0.3s var(--transition-base);
 }
 
 /* 主卡片 */
 .main-card {
-  border: 1px solid #E0F2FE;
+  border: 1px solid var(--color-border-light, #E0F2FE);
   border-radius: 16px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
+  background: var(--color-bg-primary, #FFFFFF);
 }
 
 .main-card:hover {
   box-shadow: 0 4px 12px rgba(8, 145, 178, 0.1);
-  border-color: #BAE6FD;
+  border-color: var(--color-border-medium, #BAE6FD);
 }
 
 /* 标签页 */
 .dept-tabs {
-  background: #F8FAFC;
+  background: var(--color-bg-secondary, #F8FAFC);
   border-radius: 16px 16px 0 0;
   transition: all 0.3s var(--transition-base);
 }
 
 .el-tabs__item {
-  color: #64748B;
+  color: var(--color-text-secondary, #64748B);
   font-weight: 500;
   transition: all 0.3s var(--transition-base);
   border-radius: 8px 8px 0 0;
@@ -599,15 +632,27 @@ onMounted(async () => {
 }
 
 .el-tabs__item:hover {
-  color: #3B82F6;
-  background: rgba(59, 130, 246, 0.05);
+  color: var(--color-primary, #3B82F6);
+  background: var(--color-primary-bg-subtle, rgba(59, 130, 246, 0.05));
 }
 
 .el-tabs__item.is-active {
-  color: #3B82F6;
+  color: var(--color-primary, #3B82F6);
   font-weight: 600;
-  background: #FFFFFF;
+  background: var(--color-bg-primary, #FFFFFF);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+:root.dark-mode .el-tabs__item.is-active {
+  border-bottom: 1px solid var(--color-bg-primary, #1e293b);
+}
+
+:deep(.el-tabs__nav-wrap::after) {
+  background-color: var(--color-border-light, #e2e8f0);
+}
+
+:deep(.el-tabs__active-bar) {
+  background-color: var(--color-primary, #3B82F6);
 }
 
 .tab-pane {
@@ -628,18 +673,19 @@ onMounted(async () => {
   border-radius: 12px;
   overflow: hidden;
   transition: all 0.3s var(--transition-base);
+  background: var(--color-bg-primary, #ffffff);
 }
 
 .plan-table th {
-  background: linear-gradient(90deg, #F8FAFC 0%, #FFFFFF 100%);
-  color: #164E63;
+  background: var(--color-bg-secondary, #F8FAFC);
+  color: var(--color-text-primary, #164E63);
   font-weight: 600;
   padding: 16px;
-  border-bottom: 1px solid #E0F2FE;
+  border-bottom: 1px solid var(--color-border-light, #E0F2FE);
 }
 
 .plan-table .el-table__row:hover td {
-  background: rgba(59, 130, 246, 0.05);
+  background: var(--color-primary-bg-subtle, rgba(59, 130, 246, 0.05));
 }
 
 .plan-table .el-table__row {
@@ -656,8 +702,8 @@ onMounted(async () => {
 
 /* 周次徽章 */
 .week-badge {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3B82F6;
+  background: var(--color-primary-bg-subtle, rgba(59, 130, 246, 0.1));
+  color: var(--color-primary, #3B82F6);
   padding: 4px 8px;
   border-radius: 12px;
   font-size: 12px;
@@ -667,16 +713,17 @@ onMounted(async () => {
 
 /* 计划标题 */
 .plan-title {
-  color: #164E63;
+  color: var(--color-text-primary, #164E63);
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s var(--transition-base);
   display: inline-block;
   position: relative;
+  text-decoration: none;
 }
 
 .plan-title:hover {
-  color: #3B82F6;
+  color: var(--color-primary, #3B82F6);
   transform: translateX(4px);
 }
 
@@ -687,7 +734,7 @@ onMounted(async () => {
   left: 0;
   width: 0;
   height: 2px;
-  background: #3B82F6;
+  background: var(--color-primary, #3B82F6);
   transition: width 0.3s var(--transition-base);
 }
 
@@ -698,7 +745,7 @@ onMounted(async () => {
 /* 日期范围 */
 .date-range {
   font-size: 13px;
-  color: #64748B;
+  color: var(--color-text-secondary, #64748B);
   transition: all 0.3s var(--transition-base);
 }
 
@@ -732,26 +779,70 @@ onMounted(async () => {
 }
 
 .view-btn:hover {
-  color: #3B82F6;
+  color: var(--color-primary, #3B82F6);
 }
 
 .edit-btn:hover {
-  color: #10B981;
+  color: var(--color-success, #10B981);
 }
 
 .submit-btn:hover {
-  color: #F59E0B;
+  color: var(--color-warning, #F59E0B);
 }
 
 .delete-btn:hover {
-  color: #EF4444;
+  color: var(--color-danger, #EF4444);
 }
 
 .submitted-text {
-  color: #64748B;
+  color: var(--color-text-secondary, #64748B);
   font-size: 12px;
   font-weight: 500;
   padding: 4px 8px;
+}
+
+/* 表格样式修复 */
+:deep(.el-table) {
+  --el-table-border-color: var(--color-border-light, #E0F2FE);
+  --el-table-header-bg-color: var(--color-bg-secondary, #F8FAFC);
+  --el-table-header-text-color: var(--color-text-primary, #164E63);
+  --el-table-text-color: var(--color-text-secondary, #64748B);
+  --el-table-row-hover-bg-color: var(--color-primary-bg-subtle, rgba(59, 130, 246, 0.05));
+  --el-table-tr-bg-color: var(--color-bg-primary, #ffffff);
+  background-color: var(--color-bg-primary, #ffffff);
+  color: var(--color-text-primary, #334155);
+}
+
+:deep(.el-table__body) tr.el-table__row--striped td.el-table__cell {
+  background-color: var(--color-bg-secondary, #F8FAFC);
+}
+
+:deep(.el-table td.el-table__cell),
+:deep(.el-table th.el-table__cell.is-leaf) {
+  border-bottom: 1px solid var(--color-border-light, #E0F2FE);
+}
+
+:deep(.el-pagination button) {
+  background-color: var(--color-bg-secondary, #F8FAFC) !important;
+  color: var(--color-text-secondary, #64748B);
+}
+
+:deep(.el-pagination.is-background .el-pager li) {
+  background-color: var(--color-bg-secondary, #F8FAFC) !important;
+  color: var(--color-text-secondary, #64748B);
+}
+
+:deep(.el-pagination.is-background .el-pager li.is-active) {
+  background-color: var(--color-primary, #3B82F6) !important;
+  color: #FFFFFF !important;
+}
+
+:deep(.el-table__empty-text) {
+  color: var(--color-text-secondary, #64748B);
+}
+
+:deep(.el-table__empty-text) {
+  color: var(--color-text-secondary, #64748B);
 }
 
 /* 分页 */
@@ -768,7 +859,7 @@ onMounted(async () => {
 }
 
 .el-pagination button:hover {
-  color: #3B82F6;
+  color: var(--color-primary, #3B82F6);
   transform: translateY(-2px);
 }
 
@@ -778,12 +869,12 @@ onMounted(async () => {
 }
 
 .el-pagination.is-background .el-pager li:hover {
-  color: #3B82F6;
+  color: var(--color-primary, #3B82F6);
   transform: translateY(-2px);
 }
 
 .el-pagination.is-background .el-pager li.is-active {
-  background: linear-gradient(135deg, #3B82F6 0%, #60A5FA 100%);
+  background: var(--color-primary, #3B82F6) !important;
   color: #FFFFFF;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);

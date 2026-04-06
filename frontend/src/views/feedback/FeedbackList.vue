@@ -50,9 +50,7 @@ onMounted(loadData)
 
 <style scoped>
 .page-container {
-  padding: 32px;
-  max-width: 1400px;
-  margin: 0 auto;
+  padding: 24px;
 }
 
 .page-header {
@@ -64,63 +62,72 @@ onMounted(loadData)
 
 .page-header h2 {
   font-size: 24px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  margin: 0;
-  letter-spacing: -0.5px;
-}
-
-.el-card {
-  border: 1px solid var(--color-border-light);
-  border-radius: 16px;
-  box-shadow: var(--shadow-sm);
-  transition: all var(--transition-base);
-}
-
-.el-card:hover {
-  box-shadow: var(--shadow-md);
-  border-color: var(--color-border-medium);
-}
-
-.el-table {
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.el-table th {
-  background-color: var(--color-bg-secondary);
-  color: var(--color-text-primary);
   font-weight: 600;
+  color: var(--color-text-primary, #164E63);
+  margin: 0;
 }
 
-.el-table .el-table__row:hover td {
-  background-color: var(--color-primary-bg);
+:deep(.el-card) {
+  border: 1px solid var(--color-border-light, #E0F2FE);
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all var(--transition-base);
+  background: var(--color-bg-primary, #ffffff);
+}
+
+:deep(.el-card:hover) {
+  box-shadow: 0 4px 12px rgba(8, 145, 178, 0.1);
+  border-color: var(--color-border-medium, #BAE6FD);
+}
+
+:deep(.el-table) {
+  --el-table-border-color: var(--color-border-light, #E0F2FE);
+  --el-table-header-bg-color: var(--color-bg-secondary, #F8FAFC);
+  --el-table-header-text-color: var(--color-text-primary, #164E63);
+  --el-table-text-color: var(--color-text-secondary, #64748B);
+  --el-table-row-hover-bg-color: var(--color-primary-bg-subtle, rgba(59, 130, 246, 0.05));
+  --el-table-tr-bg-color: var(--color-bg-primary, #ffffff);
+  background-color: var(--color-bg-primary, #ffffff);
+  color: var(--color-text-primary, #334155);
+}
+
+:deep(.el-table__body) tr.el-table__row--striped td.el-table__cell {
+  background-color: var(--color-bg-secondary, #F8FAFC);
+}
+
+:deep(.el-table td.el-table__cell),
+:deep(.el-table th.el-table__cell.is-leaf) {
+  border-bottom: 1px solid var(--color-border-light, #E0F2FE);
+}
+
+:deep(.el-table__empty-text) {
+  color: var(--color-text-secondary, #64748B);
 }
 
 .el-button--primary {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+  background: var(--color-primary, #3B82F6);
   border: none;
-  box-shadow: 0 4px 12px rgba(8, 145, 178, 0.3);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
   transition: all var(--transition-base);
   font-weight: 600;
 }
 
 .el-button--primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(8, 145, 178, 0.4);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
 }
 
 .el-button--success {
-  background: linear-gradient(135deg, var(--color-success) 0%, #34D399 100%);
+  background: var(--color-success, #10B981);
   border: none;
-  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
   transition: all var(--transition-base);
   font-weight: 600;
 }
 
 .el-button--success:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
 }
 
 @media (max-width: 768px) {

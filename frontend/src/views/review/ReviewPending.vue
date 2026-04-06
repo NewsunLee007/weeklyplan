@@ -104,6 +104,45 @@ onMounted(async () => {
 
 <style scoped>
 .page-container { padding: 24px; }
-.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-.page-header h2 { font-size: 20px; color: #1e293b; }
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+.page-header h2 { font-size: 24px; font-weight: 600; color: var(--color-text-primary, #164E63); margin: 0; }
+
+:deep(.el-card) {
+  background: var(--color-bg-primary, #ffffff);
+  border-color: var(--color-border-light, #e2e8f0);
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+:deep(.el-card__header) {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary, #164E63);
+  border-bottom: 1px solid var(--color-border-light, #e2e8f0);
+}
+
+/* 表格样式修复 */
+:deep(.el-table) {
+  --el-table-border-color: var(--color-border-light, #E0F2FE);
+  --el-table-header-bg-color: var(--color-bg-secondary, #F8FAFC);
+  --el-table-header-text-color: var(--color-text-primary, #164E63);
+  --el-table-text-color: var(--color-text-secondary, #64748B);
+  --el-table-row-hover-bg-color: var(--color-primary-bg-subtle, rgba(59, 130, 246, 0.05));
+  --el-table-tr-bg-color: var(--color-bg-primary, #ffffff);
+  background-color: var(--color-bg-primary, #ffffff);
+  color: var(--color-text-primary, #334155);
+}
+
+:deep(.el-table__body) tr.el-table__row--striped td.el-table__cell {
+  background-color: var(--color-bg-secondary, #F8FAFC);
+}
+
+:deep(.el-table td.el-table__cell),
+:deep(.el-table th.el-table__cell.is-leaf) {
+  border-bottom: 1px solid var(--color-border-light, #E0F2FE);
+}
+
+:deep(.el-table__empty-text) {
+  color: var(--color-text-secondary, #64748B);
+}
 </style>

@@ -282,30 +282,20 @@ onMounted(loadData)
 
 <style scoped>
 .page-container { padding: 24px; }
-.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-.page-header h2 { font-size: 20px; color: #1e293b; }
-.info-card, .items-card, .review-history, .action-card { margin-bottom: 16px; }
-.card-header { display: flex; justify-content: space-between; align-items: center; }
-.remark { margin-top: 10px; color: #64748b; font-size: 13px; }
-.reviewer { font-weight: 500; margin: 0 8px; }
-.comment { color: #64748b; font-size: 13px; margin-top: 4px; }
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+.page-header h2 { font-size: 24px; font-weight: 600; color: var(--color-text-primary, #164E63); margin: 0; }
+.info-card, .items-card, .review-history, .action-card { margin-bottom: 20px; background: var(--color-bg-primary, #ffffff); border-color: var(--color-border-light, #E0F2FE); border-radius: 12px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+.info-card:hover, .items-card:hover, .review-history:hover, .action-card:hover { box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04); }
+.card-header { display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: var(--color-text-primary, #164E63); }
+.remark { margin-top: 16px; font-size: 14px; color: var(--color-text-secondary, #64748B); padding: 12px; background: var(--color-bg-secondary, #F8FAFC); border-radius: 8px; }
+.reviewer { font-weight: 500; margin: 0 8px; color: var(--color-text-primary, #334155); }
+.comment { color: var(--color-text-secondary, #64748B); font-size: 13px; margin-top: 4px; padding-left: 8px; border-left: 2px solid var(--color-border-medium, #CBD5E1); }
 
 /* 深色模式支持 */
-:global(.dark-mode) .page-header h2 {
-  color: #f8fafc;
-}
-
-:global(.dark-mode) .remark {
-  color: #94a3b8;
-}
-
-:global(.dark-mode) .comment {
-  color: #94a3b8;
-}
-
-:global(.dark-mode) .reviewer {
-  color: #cbd5e1;
-}
+:root.dark-mode .page-header h2 { color: var(--color-text-primary, #f8fafc); }
+:root.dark-mode .remark { color: var(--color-text-secondary, #94a3b8); }
+:root.dark-mode .comment { color: var(--color-text-secondary, #94a3b8); }
+:root.dark-mode .reviewer { color: var(--color-text-primary, #cbd5e1); }
 
 /* 添加条目按钮样式 */
 .add-item-btn {
@@ -319,4 +309,11 @@ onMounted(loadData)
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(8, 145, 178, 0.3);
 }
+
+:deep(.el-descriptions__label) { background-color: var(--color-bg-secondary, #F8FAFC) !important; color: var(--color-text-secondary, #64748B); font-weight: 500; }
+:deep(.el-descriptions__content) { color: var(--color-text-primary, #164E63); font-weight: 500; }
+:deep(.el-table) { --el-table-border-color: var(--color-border-light, #E0F2FE); --el-table-header-bg-color: var(--color-bg-secondary, #F8FAFC); --el-table-header-text-color: var(--color-text-primary, #164E63); --el-table-text-color: var(--color-text-secondary, #64748B); --el-table-row-hover-bg-color: var(--color-primary-bg-subtle, rgba(59, 130, 246, 0.05)); --el-table-tr-bg-color: var(--color-bg-primary, #ffffff); background-color: var(--color-bg-primary, #ffffff); color: var(--color-text-primary, #334155); }
+:deep(.el-table__body) tr.el-table__row--striped td.el-table__cell { background-color: var(--color-bg-secondary, #F8FAFC); }
+:deep(.el-table td.el-table__cell), :deep(.el-table th.el-table__cell.is-leaf) { border-bottom: 1px solid var(--color-border-light, #E0F2FE); }
+:deep(.el-table__empty-text) { color: var(--color-text-secondary, #64748B); }
 </style>

@@ -105,8 +105,58 @@ onMounted(loadData)
 
 <style scoped>
 .page-container { padding: 24px; }
-.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-.page-header h2 { font-size: 20px; color: #1e293b; }
-.plan-title { font-size: 15px; font-weight: 600; color: #334155; margin-bottom: 16px; }
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+.page-header h2 { font-size: 24px; font-weight: 600; color: var(--color-text-primary, #164E63); margin: 0; }
+.plan-title { font-size: 15px; font-weight: 600; color: var(--color-text-primary, #334155); margin-bottom: 16px; }
 .footer-actions { margin-top: 20px; display: flex; justify-content: flex-end; }
+
+:deep(.el-card) {
+  border: 1px solid var(--color-border-light, #E0F2FE);
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all var(--transition-base);
+  background: var(--color-bg-primary, #ffffff);
+}
+
+:deep(.el-card:hover) {
+  box-shadow: 0 4px 12px rgba(8, 145, 178, 0.1);
+  border-color: var(--color-border-medium, #BAE6FD);
+}
+
+:deep(.el-table) {
+  --el-table-border-color: var(--color-border-light, #E0F2FE);
+  --el-table-header-bg-color: var(--color-bg-secondary, #F8FAFC);
+  --el-table-header-text-color: var(--color-text-primary, #164E63);
+  --el-table-text-color: var(--color-text-secondary, #64748B);
+  --el-table-row-hover-bg-color: var(--color-primary-bg-subtle, rgba(59, 130, 246, 0.05));
+  --el-table-tr-bg-color: var(--color-bg-primary, #ffffff);
+  background-color: var(--color-bg-primary, #ffffff);
+  color: var(--color-text-primary, #334155);
+}
+
+:deep(.el-table__body) tr.el-table__row--striped td.el-table__cell {
+  background-color: var(--color-bg-secondary, #F8FAFC);
+}
+
+:deep(.el-table td.el-table__cell),
+:deep(.el-table th.el-table__cell.is-leaf) {
+  border-bottom: 1px solid var(--color-border-light, #E0F2FE);
+}
+
+:deep(.el-table__empty-text) {
+  color: var(--color-text-secondary, #64748B);
+}
+
+:deep(.el-button--primary) {
+  background: var(--color-primary, #3B82F6);
+  border: none;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  transition: all var(--transition-base);
+  font-weight: 600;
+}
+
+:deep(.el-button--primary:hover) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
 </style>

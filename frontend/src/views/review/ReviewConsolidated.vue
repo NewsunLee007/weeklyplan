@@ -233,14 +233,11 @@ onMounted(async () => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
-}
-
 .page-header h2 {
   font-size: 24px;
-  font-weight: 700;
-  color: var(--color-text-primary);
+  font-weight: 600;
+  color: var(--color-text-primary, #164E63);
   margin: 0;
-  letter-spacing: -0.5px;
 }
 
 .plan-summary {
@@ -258,15 +255,16 @@ onMounted(async () => {
   font-weight: 600;
 }
 
-.el-card {
+:deep(.el-card) {
   border: 1px solid var(--color-border-light);
   border-radius: 16px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   transition: all var(--transition-base);
+  background: var(--color-bg-primary, #ffffff);
 }
 
-.el-card:hover {
-  box-shadow: var(--shadow-md);
+:deep(.el-card:hover) {
+  box-shadow: 0 4px 12px rgba(8, 145, 178, 0.1);
   border-color: var(--color-border-medium);
 }
 
@@ -286,21 +284,21 @@ onMounted(async () => {
 }
 
 .el-button--success {
-  background: linear-gradient(135deg, var(--color-success) 0%, #34D399 100%);
+  background: var(--color-success) !important;
   border: none;
   box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
   font-weight: 600;
 }
 
 .el-button--danger {
-  background: linear-gradient(135deg, var(--color-danger) 0%, #F87171 100%);
+  background: var(--color-danger) !important;
   border: none;
   box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
   font-weight: 600;
 }
 
 .el-button--primary {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+  background: var(--color-primary) !important;
   border: none;
   box-shadow: 0 4px 12px rgba(8, 145, 178, 0.3);
   transition: all var(--transition-base);
@@ -347,6 +345,51 @@ onMounted(async () => {
   color: var(--color-primary);
 }
 
+/* 表格样式修复 */
+:deep(.el-table) {
+  --el-table-border-color: var(--color-border-light, #E0F2FE);
+  --el-table-header-bg-color: var(--color-bg-secondary, #F8FAFC);
+  --el-table-header-text-color: var(--color-text-primary, #164E63);
+  --el-table-text-color: var(--color-text-secondary, #64748B);
+  --el-table-row-hover-bg-color: var(--color-primary-bg-subtle, rgba(59, 130, 246, 0.05));
+  --el-table-tr-bg-color: var(--color-bg-primary, #ffffff);
+  background-color: var(--color-bg-primary, #ffffff);
+  color: var(--color-text-primary, #334155);
+}
+
+:deep(.el-table__body) tr.el-table__row--striped td.el-table__cell {
+  background-color: var(--color-bg-secondary, #F8FAFC);
+}
+
+:deep(.el-table td.el-table__cell),
+:deep(.el-table th.el-table__cell.is-leaf) {
+  border-bottom: 1px solid var(--color-border-light, #E0F2FE);
+}
+
+:deep(.el-tabs--border-card > .el-tabs__header) {
+  background-color: var(--color-bg-secondary, #F8FAFC);
+  border-bottom: 1px solid var(--color-border-light, #e2e8f0);
+}
+
+:deep(.el-tabs--border-card > .el-tabs__header .el-tabs__item.is-active) {
+  color: var(--color-primary, #3B82F6);
+  background-color: var(--color-bg-primary, #ffffff);
+  border-right-color: var(--color-border-light, #e2e8f0);
+  border-left-color: var(--color-border-light, #e2e8f0);
+}
+
+:root.dark-mode :deep(.el-tabs--border-card > .el-tabs__header .el-tabs__item.is-active) {
+  background-color: var(--color-bg-primary, #ffffff);
+}
+
+:deep(.el-tabs--border-card) {
+  border: 1px solid var(--color-border-light, #e2e8f0);
+}
+
+:deep(.el-table__empty-text) {
+  color: var(--color-text-secondary, #64748B);
+}
+</style>
 .action-area {
   padding: 24px;
   background: linear-gradient(135deg, var(--color-bg-tertiary) 0%, var(--color-bg-secondary) 100%);

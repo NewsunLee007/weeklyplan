@@ -178,11 +178,11 @@ async function handleLogin() {
 .system-name {
   font-size: 26px;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--color-text-primary, #0f172a);
   text-align: center;
   margin-bottom: 40px;
   letter-spacing: -0.5px;
-  background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+  background: linear-gradient(135deg, var(--color-primary-dark, #1e3a8a), var(--color-primary, #3b82f6));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -200,24 +200,24 @@ async function handleLogin() {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02) !important;
   padding: 8px 15px;
   transition: all 0.3s ease;
-  background-color: rgba(255, 255, 255, 0.9);
+  background-color: var(--color-bg-primary, rgba(255, 255, 255, 0.9));
 }
 
 .custom-input :deep(.el-input__inner) {
-  color: #1e293b !important;
+  color: var(--color-text-primary, #1e293b) !important;
 }
 
 .custom-input :deep(.el-input__inner::placeholder) {
-  color: #94a3b8 !important;
+  color: var(--color-text-tertiary, #94a3b8) !important;
 }
 
 .custom-input :deep(.el-input__prefix-inner) {
-  color: #64748b !important;
+  color: var(--color-text-secondary, #64748b) !important;
 }
 
 .custom-input :deep(.el-input__wrapper.is-focus) {
-  box-shadow: 0 0 0 2px #3b82f6 !important;
-  background-color: #fff;
+  box-shadow: 0 0 0 2px var(--color-primary, #3b82f6) !important;
+  background-color: var(--color-bg-primary, #fff);
 }
 
 .login-btn {
@@ -228,10 +228,11 @@ async function handleLogin() {
   font-weight: 600;
   letter-spacing: 1px;
   margin-top: 10px;
-  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  background: var(--color-primary, #3b82f6);
   border: none;
   box-shadow: 0 10px 20px -10px rgba(59, 130, 246, 0.5);
   transition: all 0.3s ease;
+  color: white;
 }
 
 .login-btn:hover {

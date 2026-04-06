@@ -16,23 +16,23 @@
 
     <!-- 筛选 -->
     <el-card shadow="never" class="filter-card">
-      <el-form :model="filter" inline>
-        <el-form-item label="视图模式">
+      <el-form :model="filter" inline class="filter-form">
+        <el-form-item label="视图模式" class="filter-item">
           <el-radio-group v-model="viewMode" @change="loadData">
             <el-radio value="personal">个人视图</el-radio>
             <el-radio value="department">部门视图</el-radio>
             <el-radio value="school">全校视图</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="学期">
-          <el-input v-model="filter.semester" placeholder="如 2025-2" clearable style="width:120px" />
+        <el-form-item label="学期" class="filter-item">
+          <el-input v-model="filter.semester" placeholder="如 2025-2" clearable class="filter-input" style="width:120px" />
         </el-form-item>
-        <el-form-item label="周次">
-          <el-select v-model="filter.week_number" placeholder="全部" clearable style="width:100px">
+        <el-form-item label="周次" class="filter-item">
+          <el-select v-model="filter.week_number" placeholder="全部" clearable class="filter-select" style="width:100px" popper-class="custom-dropdown">
             <el-option v-for="w in 20" :key="w" :label="`第${w}周`" :value="w" />
           </el-select>
         </el-form-item>
-        <el-form-item>
+        <el-form-item class="filter-item filter-actions">
           <el-button type="primary" @click="loadData">查询</el-button>
         </el-form-item>
       </el-form>
@@ -326,11 +326,113 @@ onMounted(async () => {
 
 <style scoped>
 .page-container { padding: 24px; }
-.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-.page-header h2 { font-size: 20px; color: #1e293b; }
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+.page-header h2 { font-size: 24px; font-weight: 600; color: var(--color-text-primary, #164E63); margin: 0; }
 .header-actions { display: flex; gap: 12px; }
-.filter-card { margin-bottom: 16px; }
-.dept-plan-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 14px; padding: 10px; background: #f8fafc; border-radius: 6px; }
-.dept-plan-info .plan-count { color: #64748b; font-size: 13px; }
-.remark { margin-top: 10px; color: #64748b; font-size: 13px; }
+.filter-card { margin-bottom: 24px; background: var(--color-bg-primary, #ffffff); border-color: var(--color-border-light, #e2e8f0); border-radius: 16px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+.filter-card:hover { box-shadow: 0 4px 12px rgba(8, 145, 178, 0.1); border-color: var(--color-border-medium, #BAE6FD); }
+.dept-plan-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; font-size: 14px; padding: 12px 16px; background: var(--color-bg-secondary, #f8fafc); border-radius: 8px; border: 1px solid var(--color-border-light, #E0F2FE); }
+.dept-plan-info strong { color: var(--color-text-primary, #1e293b); font-size: 15px; }
+.dept-plan-info .plan-count { color: var(--color-text-secondary, #64748b); font-size: 13px; }
+.remark { margin-top: 10px; color: var(--color-text-secondary, #64748b); font-size: 13px; }
+
+:deep(.el-card) {
+  background: var(--color-bg-primary, #ffffff);
+  border-color: var(--color-border-light, #e2e8f0);
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+:deep(.el-card__header) {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary, #164E63);
+  border-bottom: 1px solid var(--color-border-light, #e2e8f0);
+}
+
+/* 表格样式修复 */
+:deep(.el-table) {
+  --el-table-border-color: var(--color-border-light, #E0F2FE);
+  --el-table-header-bg-color: var(--color-bg-secondary, #F8FAFC);
+  --el-table-header-text-color: var(--color-text-primary, #164E63);
+  --el-table-text-color: var(--color-text-secondary, #64748B);
+  --el-table-row-hover-bg-color: var(--color-primary-bg-subtle, rgba(59, 130, 246, 0.05));
+  --el-table-tr-bg-color: var(--color-bg-primary, #ffffff);
+  background-color: var(--color-bg-primary, #ffffff);
+  color: var(--color-text-primary, #334155);
+}
+
+:deep(.el-table__body) tr.el-table__row--striped td.el-table__cell {
+  background-color: var(--color-bg-secondary, #F8FAFC);
+}
+
+:deep(.el-table td.el-table__cell),
+:deep(.el-table th.el-table__cell.is-leaf) {
+  border-bottom: 1px solid var(--color-border-light, #E0F2FE);
+}
+
+:deep(.el-table__empty-text) {
+  color: var(--color-text-secondary, #64748B);
+}
+
+/* 标签页 */
+:deep(.el-tabs--card > .el-tabs__header .el-tabs__item.is-active) {
+  background-color: var(--color-bg-primary, #ffffff);
+  border-bottom-color: var(--color-bg-primary, #ffffff);
+  color: var(--color-primary, #3B82F6);
+}
+
+:root.dark-mode :deep(.el-tabs--card > .el-tabs__header .el-tabs__item.is-active) {
+  border-bottom-color: var(--color-bg-primary, #ffffff);
+}
+
+:deep(.el-tabs--card > .el-tabs__header) {
+  border-bottom: 1px solid var(--color-border-light, #e2e8f0);
+}
+
+:deep(.el-tabs--card > .el-tabs__header .el-tabs__nav) {
+  border: 1px solid var(--color-border-light, #e2e8f0);
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+}
+
+:deep(.el-tabs--card > .el-tabs__header .el-tabs__item) {
+  border-left: 1px solid var(--color-border-light, #e2e8f0);
+  color: var(--color-text-secondary, #64748b);
+}
+
+:deep(.el-pagination button) {
+  background-color: var(--color-bg-secondary, #F8FAFC) !important;
+  color: var(--color-text-secondary, #64748B);
+}
+
+:deep(.el-pagination.is-background .el-pager li) {
+  background-color: var(--color-bg-secondary, #F8FAFC) !important;
+  color: var(--color-text-secondary, #64748B);
+}
+
+:deep(.el-pagination.is-background .el-pager li.is-active) {
+  background-color: var(--color-primary, #3B82F6) !important;
+  color: #FFFFFF !important;
+}
+
+:deep(.el-input__wrapper),
+:deep(.el-select__wrapper) {
+  background-color: var(--color-bg-secondary, #F8FAFC);
+  box-shadow: 0 0 0 1px var(--color-border-light, #E0F2FE) inset;
+}
+
+:deep(.el-input__inner),
+:deep(.el-select__placeholder) {
+  color: var(--color-text-primary, #164E63);
+}
+
+:deep(.el-select-dropdown__item) {
+  color: var(--color-text-primary, #164E63);
+}
+
+:deep(.el-select-dropdown__item.hover),
+:deep(.el-select-dropdown__item:hover) {
+  background-color: var(--color-bg-secondary, #F8FAFC);
+}
 </style>

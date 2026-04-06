@@ -205,6 +205,53 @@ onMounted(loadData)
 
 <style scoped>
 .page-container { padding: 24px; }
-.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-.page-header h2 { font-size: 20px; color: #1e293b; }
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+.page-header h2 { font-size: 24px; font-weight: 600; color: var(--color-text-primary, #164E63); margin: 0; }
+
+:deep(.el-card) {
+  background: var(--color-bg-primary, #ffffff);
+  border-color: var(--color-border-light, #e2e8f0);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+:deep(.el-card:hover) {
+  box-shadow: 0 4px 12px rgba(8, 145, 178, 0.1);
+  border-color: var(--color-border-medium, #BAE6FD);
+}
+
+:deep(.el-tabs__item) {
+  color: var(--color-text-secondary, #64748B);
+}
+
+:deep(.el-tabs__item.is-active) {
+  color: var(--color-primary, #3B82F6);
+  font-weight: 600;
+}
+
+:deep(.el-tabs__active-bar) {
+  background-color: var(--color-primary, #3B82F6);
+}
+
+:deep(.el-form-item__label) {
+  color: var(--color-text-primary, #1E293B);
+  font-weight: 500;
+}
+
+:deep(.el-input__wrapper),
+:deep(.el-select__wrapper) {
+  background-color: var(--color-bg-primary, #ffffff);
+  box-shadow: 0 0 0 1px var(--color-border-light, #E0F2FE) inset;
+}
+
+:deep(.el-input__inner) {
+  color: var(--color-text-primary, #164E63);
+}
+
+:deep(.el-divider__text) {
+  background-color: var(--color-bg-primary, #ffffff);
+  color: var(--color-text-primary, #1E293B);
+  font-weight: 600;
+}
 </style>

@@ -463,6 +463,7 @@ onMounted(() => {
 .main-card {
   border: none;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  background: var(--color-bg-primary, white);
 }
 
 .card-header {
@@ -474,7 +475,7 @@ onMounted(() => {
 .card-title {
   font-size: 18px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--color-text-primary, #1e293b);
 }
 
 .content-wrapper {
@@ -488,17 +489,17 @@ onMounted(() => {
 }
 
 .base-card {
-  background: white;
-  border: 1px solid #e2e8f0;
+  background: var(--color-bg-primary, white);
+  border: 1px solid var(--color-border-light, #e2e8f0);
   border-radius: 12px;
   padding: 20px;
   transition: all 0.3s;
 }
 
 .base-card:hover {
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   transform: translateY(-2px);
-  border-color: #3b82f6;
+  border-color: var(--color-primary, #3b82f6);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.1);
 }
 
 .base-header {
@@ -527,19 +528,19 @@ onMounted(() => {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--color-text-primary, #1e293b);
 }
 
 .base-type {
   margin: 4px 0 0 0;
   font-size: 12px;
-  color: #64748b;
+  color: var(--color-text-secondary, #64748b);
 }
 
 .base-description {
   margin: 0 0 16px 0;
   font-size: 14px;
-  color: #64748b;
+  color: var(--color-text-secondary, #64748b);
   line-height: 1.6;
 }
 
@@ -547,7 +548,7 @@ onMounted(() => {
   display: flex;
   gap: 8px;
   padding-top: 12px;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid var(--color-border-light, #f1f5f9);
 }
 
 .items-dialog :deep(.el-dialog__body) {
@@ -559,7 +560,7 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 20px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--color-border-light, #e2e8f0);
 }
 
 .items-list {
@@ -575,15 +576,15 @@ onMounted(() => {
 }
 
 .item-card {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--color-bg-secondary, #f8fafc);
+  border: 1px solid var(--color-border-light, #e2e8f0);
   border-radius: 8px;
   padding: 16px;
   transition: all 0.2s;
 }
 
 .item-card:hover {
-  background: white;
+  background: var(--color-bg-primary, white);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
@@ -598,14 +599,14 @@ onMounted(() => {
   margin: 0;
   font-size: 14px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--color-text-primary, #1e293b);
   flex: 1;
 }
 
 .item-content {
   margin: 0 0 12px 0;
   font-size: 13px;
-  color: #64748b;
+  color: var(--color-text-secondary, #64748b);
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -619,14 +620,14 @@ onMounted(() => {
   gap: 4px;
   margin-bottom: 12px;
   font-size: 12px;
-  color: #3b82f6;
+  color: var(--color-primary, #3b82f6);
 }
 
 .item-actions {
   display: flex;
   gap: 4px;
   padding-top: 8px;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--color-border-light, #e2e8f0);
 }
 
 /* 对话框样式 */
@@ -637,7 +638,7 @@ onMounted(() => {
 }
 
 .knowledge-dialog :deep(.el-dialog__header) {
-  background: linear-gradient(135deg, #3b82f6, #60a5fa);
+  background: var(--color-primary, #3b82f6);
   color: white;
   padding: 20px 24px;
   border-radius: 16px 16px 0 0;
@@ -651,18 +652,18 @@ onMounted(() => {
 
 .knowledge-dialog :deep(.el-dialog__body) {
   padding: 24px;
-  background: #f8fafc;
+  background: var(--color-bg-secondary, #f8fafc);
 }
 
 .knowledge-dialog :deep(.el-dialog__footer) {
   padding: 16px 24px;
-  background: white;
-  border-top: 1px solid #e2e8f0;
+  background: var(--color-bg-primary, white);
+  border-top: 1px solid var(--color-border-light, #e2e8f0);
   border-radius: 0 0 16px 16px;
 }
 
 .dialog-form {
-  background: white;
+  background: var(--color-bg-primary, white);
   padding: 20px;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -671,26 +672,26 @@ onMounted(() => {
 .form-input,
 .form-select {
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--color-border-light, #e2e8f0);
   transition: all 0.3s ease;
 }
 
 .form-input:focus,
 .form-select:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: var(--color-primary, #3b82f6);
+  box-shadow: 0 0 0 3px var(--color-primary-bg-subtle, rgba(59, 130, 246, 0.1));
 }
 
 .form-textarea {
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--color-border-light, #e2e8f0);
   resize: vertical;
   transition: all 0.3s ease;
 }
 
 .form-textarea:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: var(--color-primary, #3b82f6);
+  box-shadow: 0 0 0 3px var(--color-primary-bg-subtle, rgba(59, 130, 246, 0.1));
 }
 
 .dialog-button {
@@ -701,14 +702,14 @@ onMounted(() => {
 }
 
 .primary-button {
-  background: linear-gradient(135deg, #3b82f6, #60a5fa);
+  background: var(--color-primary, #3b82f6);
   border: none;
   color: white;
   transition: all 0.3s ease;
 }
 
 .primary-button:hover {
-  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  background: var(--color-primary-dark, #2563eb);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }

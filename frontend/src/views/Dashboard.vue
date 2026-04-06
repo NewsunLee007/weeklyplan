@@ -41,7 +41,7 @@
     <div class="stats-section">
       <div class="section-header">
         <h2 class="section-title">概览</h2>
-        <el-select v-model="statsPeriod" size="small" class="stats-period-select">
+        <el-select v-model="statsPeriod" size="small" class="stats-period-select" popper-class="custom-dropdown">
           <el-option label="本周" value="week" />
           <el-option label="本月" value="month" />
           <el-option label="本季度" value="quarter" />
@@ -2071,7 +2071,7 @@ onUnmounted(() => {
 .ai-trend-section {
   margin-bottom: 24px;
   padding: 20px;
-  background: var(--color-bg-secondary, #FFFFFF);
+  background: var(--color-bg-primary, #FFFFFF);
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   border: 1px solid var(--color-border-light, #E0F2FE);
@@ -2082,7 +2082,7 @@ onUnmounted(() => {
 
 .ai-trend-section:hover {
   box-shadow: 0 4px 12px rgba(8, 145, 178, 0.08);
-  border-color: #BAE6FD;
+  border-color: var(--color-border-medium, #BAE6FD);
   transform: translateY(-2px);
 }
 
@@ -2115,7 +2115,7 @@ onUnmounted(() => {
 .ai-history-section {
   margin-bottom: 24px;
   padding: 20px;
-  background: var(--color-bg-secondary, #FFFFFF);
+  background: var(--color-bg-primary, #FFFFFF);
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   border: 1px solid var(--color-border-light, #E0F2FE);
@@ -2126,7 +2126,7 @@ onUnmounted(() => {
 
 .ai-history-section:hover {
   box-shadow: 0 4px 12px rgba(8, 145, 178, 0.08);
-  border-color: #BAE6FD;
+  border-color: var(--color-border-medium, #BAE6FD);
   transform: translateY(-2px);
 }
 
@@ -2167,6 +2167,7 @@ onUnmounted(() => {
 .history-counts {
   min-width: 60px;
   text-align: right;
+  color: var(--color-text-secondary, #64748B);
 }
 
 .completed {
@@ -2274,18 +2275,37 @@ onUnmounted(() => {
 }
 
 .activity-status.success {
-  background: var(--color-success-light, rgba(34, 197, 94, 0.1));
+  background: var(--color-success-light, rgba(34, 197, 94, 0.15));
   color: var(--color-success, #22C55E);
+  border: 1px solid var(--color-success-light, rgba(34, 197, 94, 0.3));
 }
 
 .activity-status.warning {
-  background: var(--color-warning-light, rgba(245, 158, 11, 0.1));
+  background: var(--color-warning-light, rgba(245, 158, 11, 0.15));
   color: var(--color-warning, #F59E0B);
+  border: 1px solid var(--color-warning-light, rgba(245, 158, 11, 0.3));
 }
 
 .activity-status.info {
-  background: var(--color-primary-bg, rgba(59, 130, 246, 0.1));
+  background: var(--color-primary-bg, rgba(59, 130, 246, 0.15));
   color: var(--color-primary, #3B82F6);
+  border: 1px solid var(--color-primary-bg, rgba(59, 130, 246, 0.3));
+}
+
+:root.dark-mode .activity-status.success {
+  background: rgba(16, 185, 129, 0.25);
+  color: #6EE7B7;
+  border-color: rgba(16, 185, 129, 0.5);
+}
+:root.dark-mode .activity-status.warning {
+  background: rgba(245, 158, 11, 0.25);
+  color: #FCD34D;
+  border-color: rgba(245, 158, 11, 0.5);
+}
+:root.dark-mode .activity-status.info {
+  background: rgba(59, 130, 246, 0.25);
+  color: #93C5FD;
+  border-color: rgba(59, 130, 246, 0.5);
 }
 
 @keyframes pulse {
@@ -2456,5 +2476,14 @@ onUnmounted(() => {
     font-size: 13px;
     padding: 12px;
   }
+}
+
+:deep(.el-select-dropdown__item) {
+  color: var(--color-text-primary, #164E63);
+}
+
+:deep(.el-select-dropdown__item.hover),
+:deep(.el-select-dropdown__item:hover) {
+  background-color: var(--color-bg-secondary, #F8FAFC);
 }
 </style>

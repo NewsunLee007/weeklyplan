@@ -419,7 +419,7 @@ watch(() => route.path, () => {
   top: 0;
   width: 3px;
   height: 100%;
-  background: #60a5fa;
+  background: var(--color-primary, #60a5fa);
   transform: scaleY(0);
   transform-origin: top;
   transition: transform 0.3s var(--transition-base);
@@ -430,13 +430,13 @@ watch(() => route.path, () => {
 }
 
 .menu-item:hover {
-  background-color: rgba(96, 165, 250, 0.1) !important;
+  background-color: var(--color-primary-bg-subtle, rgba(96, 165, 250, 0.1)) !important;
   transform: translateX(4px);
   box-shadow: 0 4px 12px rgba(96, 165, 250, 0.15);
 }
 
 .menu-item.is-active {
-  background-color: rgba(96, 165, 250, 0.2) !important;
+  background-color: var(--color-primary-bg, rgba(96, 165, 250, 0.2)) !important;
   box-shadow: 0 4px 16px rgba(96, 165, 250, 0.25);
 }
 
@@ -454,7 +454,7 @@ watch(() => route.path, () => {
 
 .menu-item:hover .menu-icon {
   transform: scale(1.1);
-  color: #60a5fa;
+  color: var(--color-primary, #60a5fa);
   filter: drop-shadow(0 0 8px rgba(96, 165, 250, 0.5));
 }
 
@@ -465,7 +465,7 @@ watch(() => route.path, () => {
 }
 
 .menu-item:hover .menu-title {
-  color: #60a5fa;
+  color: var(--color-primary, #60a5fa);
   transform: translateX(2px);
 }
 
@@ -477,7 +477,7 @@ watch(() => route.path, () => {
 }
 
 .menu-sub:hover {
-  background-color: rgba(96, 165, 250, 0.05) !important;
+  background-color: var(--color-primary-bg-subtle, rgba(96, 165, 250, 0.05)) !important;
 }
 
 .menu-title-with-badge {
@@ -561,7 +561,7 @@ watch(() => route.path, () => {
   width: 0;
   height: 0;
   border-radius: 50%;
-  background: rgba(59, 130, 246, 0.1);
+  background: var(--color-primary-bg-subtle, rgba(59, 130, 246, 0.1));
   transform: translate(-50%, -50%);
   transition: width 0.6s, height 0.6s;
 }
@@ -572,8 +572,8 @@ watch(() => route.path, () => {
 }
 
 .collapse-btn:hover {
-  color: #3b82f6;
-  background-color: rgba(59, 130, 246, 0.1);
+  color: var(--color-primary, #3b82f6);
+  background-color: var(--color-primary-bg-subtle, rgba(59, 130, 246, 0.1));
   transform: scale(1.05);
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
 }
@@ -600,7 +600,7 @@ watch(() => route.path, () => {
   width: 0;
   height: 0;
   border-radius: 50%;
-  background: rgba(59, 130, 246, 0.1);
+  background: var(--color-primary-bg-subtle, rgba(59, 130, 246, 0.1));
   transform: translate(-50%, -50%);
   transition: width 0.6s, height 0.6s;
 }
@@ -611,8 +611,8 @@ watch(() => route.path, () => {
 }
 
 .header-btn:hover {
-  color: #3b82f6;
-  background-color: rgba(59, 130, 246, 0.1);
+  color: var(--color-primary, #3b82f6);
+  background-color: var(--color-primary-bg-subtle, rgba(59, 130, 246, 0.1));
   transform: scale(1.05);
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
 }
@@ -640,14 +640,14 @@ watch(() => route.path, () => {
 
 .breadcrumb-item {
   font-size: 14px;
-  color: #64748b;
+  color: var(--color-text-secondary, #64748b);
   transition: all 0.2s var(--transition-base);
   position: relative;
   z-index: 1;
 }
 
 .breadcrumb-item:hover {
-  color: #3b82f6;
+  color: var(--color-primary, #3b82f6);
   transform: translateY(-1px);
   text-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
 }
@@ -680,7 +680,7 @@ watch(() => route.path, () => {
   width: 0;
   height: 0;
   border-radius: 50%;
-  background: rgba(59, 130, 246, 0.1);
+  background: var(--color-primary-bg-subtle, rgba(59, 130, 246, 0.1));
   transform: translate(-50%, -50%);
   transition: width 0.6s, height 0.6s;
   z-index: -1;
@@ -692,7 +692,7 @@ watch(() => route.path, () => {
 }
 
 .user-info:hover {
-  background: rgba(59, 130, 246, 0.1);
+  background: var(--color-primary-bg-subtle, rgba(59, 130, 246, 0.1));
   border-color: rgba(59, 130, 246, 0.2);
   transform: translateY(-2px);
   box-shadow: 0 4px 16px rgba(59, 130, 246, 0.2);
@@ -765,7 +765,7 @@ watch(() => route.path, () => {
 }
 
 .user-info:hover .username {
-  color: #3b82f6;
+  color: var(--color-primary, #3b82f6);
   text-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
 }
 
@@ -778,7 +778,7 @@ watch(() => route.path, () => {
 
 .user-info:hover .user-arrow {
   transform: rotate(180deg) scale(1.1);
-  color: #3b82f6;
+  color: var(--color-primary, #3b82f6);
 }
 
 /* 用户下拉菜单 */
@@ -811,7 +811,7 @@ watch(() => route.path, () => {
   top: 0;
   width: 3px;
   height: 100%;
-  background: #3b82f6;
+  background: var(--color-primary, #3b82f6);
   transform: scaleY(0);
   transform-origin: top;
   transition: transform 0.3s var(--transition-base);
@@ -822,8 +822,8 @@ watch(() => route.path, () => {
 }
 
 .dropdown-item:hover {
-  background-color: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
+  background-color: var(--color-primary-bg-subtle, rgba(59, 130, 246, 0.1));
+  color: var(--color-primary, #3b82f6);
   transform: translateX(4px);
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
 }
@@ -837,6 +837,11 @@ watch(() => route.path, () => {
   padding: 32px;
   background-image: radial-gradient(circle at 10% 20%, rgba(96, 165, 250, 0.05) 0%, transparent 20%),
                     radial-gradient(circle at 90% 80%, rgba(8, 145, 178, 0.05) 0%, transparent 20%);
+}
+
+:root.dark-mode .main-content {
+  background-image: radial-gradient(circle at 10% 20%, rgba(96, 165, 250, 0.02) 0%, transparent 20%),
+                    radial-gradient(circle at 90% 80%, rgba(8, 145, 178, 0.02) 0%, transparent 20%);
 }
 
 /* 页面过渡动画 */
