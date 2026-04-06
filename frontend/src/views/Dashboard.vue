@@ -1611,17 +1611,17 @@ onUnmounted(() => {
 }
 
 .tabs-container {
-  background: #ffffff;
+  background: var(--color-bg-primary, #ffffff);
   border-radius: 16px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  border: 1px solid #E0F2FE;
+  border: 1px solid var(--color-border-light, #E0F2FE);
   overflow: hidden;
 }
 
 .tabs-header {
   display: flex;
-  background: #F8FAFC;
-  border-bottom: 1px solid #E2E8F0;
+  background: var(--color-bg-secondary, #F8FAFC);
+  border-bottom: 1px solid var(--color-border-default, #E2E8F0);
 }
 
 .tab-item {
@@ -1638,12 +1638,12 @@ onUnmounted(() => {
 }
 
 .tab-item:hover {
-  background: rgba(8, 145, 178, 0.05);
+  background: var(--color-primary-bg-subtle, rgba(8, 145, 178, 0.05));
 }
 
 .tab-item.active {
-  background: #ffffff;
-  border-bottom-color: #0891B2;
+  background: var(--color-bg-primary, #ffffff);
+  border-bottom-color: var(--color-primary, #0891B2);
 }
 
 .tab-icon {
@@ -1688,11 +1688,11 @@ onUnmounted(() => {
 
 /* 数据可视化区域 */
 .chart-card {
-  background: #ffffff;
+  background: var(--color-bg-primary, #ffffff);
   border-radius: 16px;
   padding: 24px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  border: 1px solid #E0F2FE;
+  border: 1px solid var(--color-border-light, #E0F2FE);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
@@ -1754,11 +1754,11 @@ onUnmounted(() => {
 
 /* AI 分析区域 */
 .ai-card {
-  background: linear-gradient(135deg, #F8FAFC 0%, #FFFFFF 100%);
+  background: var(--color-bg-primary, linear-gradient(135deg, #F8FAFC 0%, #FFFFFF 100%));
   border-radius: 16px;
   padding: 24px;
   box-shadow: 0 2px 8px rgba(8, 145, 178, 0.08);
-  border: 1px solid #E0F2FE;
+  border: 1px solid var(--color-border-light, #E0F2FE);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
@@ -1827,10 +1827,10 @@ onUnmounted(() => {
 .ai-metrics-section {
   margin-bottom: 24px;
   padding: 20px;
-  background: #FFFFFF;
+  background: var(--color-bg-secondary, #FFFFFF);
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  border: 1px solid #E0F2FE;
+  border: 1px solid var(--color-border-light, #E0F2FE);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
@@ -2035,10 +2035,10 @@ onUnmounted(() => {
 .ai-trend-section {
   margin-bottom: 24px;
   padding: 20px;
-  background: #FFFFFF;
+  background: var(--color-bg-secondary, #FFFFFF);
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  border: 1px solid #E0F2FE;
+  border: 1px solid var(--color-border-light, #E0F2FE);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
@@ -2079,10 +2079,10 @@ onUnmounted(() => {
 .ai-history-section {
   margin-bottom: 24px;
   padding: 20px;
-  background: #FFFFFF;
+  background: var(--color-bg-secondary, #FFFFFF);
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  border: 1px solid #E0F2FE;
+  border: 1px solid var(--color-border-light, #E0F2FE);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
@@ -2105,13 +2105,13 @@ onUnmounted(() => {
   align-items: center;
   gap: 16px;
   padding: 12px;
-  background: rgba(59, 130, 246, 0.03);
+  background: var(--color-primary-bg-subtle, rgba(59, 130, 246, 0.03));
   border-radius: 8px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .history-item:hover {
-  background: rgba(59, 130, 246, 0.08);
+  background: var(--color-primary-bg, rgba(59, 130, 246, 0.08));
   transform: translateX(4px);
 }
 
@@ -2119,7 +2119,7 @@ onUnmounted(() => {
   min-width: 80px;
   font-size: 14px;
   font-weight: 600;
-  color: #164E63;
+  color: var(--color-text-primary, #164E63);
 }
 
 .history-completion {
@@ -2158,17 +2158,17 @@ onUnmounted(() => {
 
 /* 最近活动区域 */
 .activity-card {
-  background: #ffffff;
+  background: var(--color-bg-primary, #ffffff);
   border-radius: 16px;
   padding: 24px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  border: 1px solid #E0F2FE;
+  border: 1px solid var(--color-border-light, #E0F2FE);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .activity-card:hover {
   box-shadow: 0 4px 12px rgba(8, 145, 178, 0.1);
-  border-color: #BAE6FD;
+  border-color: var(--color-border-medium, #BAE6FD);
 }
 
 .activity-item {
@@ -2176,7 +2176,7 @@ onUnmounted(() => {
   align-items: flex-start;
   gap: 16px;
   padding: 16px 0;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--color-border-light, #f1f5f9);
   transition: all 0.3s var(--transition-base);
 }
 
@@ -2208,21 +2208,21 @@ onUnmounted(() => {
 .activity-title {
   font-size: 14px;
   font-weight: 600;
-  color: #164E63;
+  color: var(--color-text-primary, #164E63);
   margin-bottom: 4px;
   transition: all var(--transition-base);
 }
 
 .activity-description {
   font-size: 13px;
-  color: #64748B;
+  color: var(--color-text-secondary, #64748B);
   margin-bottom: 8px;
   transition: all var(--transition-base);
 }
 
 .activity-time {
   font-size: 12px;
-  color: #94A3B8;
+  color: var(--color-text-tertiary, #94A3B8);
   transition: all var(--transition-base);
 }
 

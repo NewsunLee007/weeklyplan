@@ -264,7 +264,7 @@ router.get('/ai-analysis', authMiddleware, async (req, res) => {
     // 获取部门历史数据
     let departmentHistory = [];
     try {
-      departmentHistory = await query(
+      const deptData = await query(
         `SELECT 
           d.name as departmentName,
           COUNT(wp.id) as totalPlans,
@@ -276,6 +276,12 @@ router.get('/ai-analysis', authMiddleware, async (req, res) => {
          ORDER BY d.id
          LIMIT 5`
       );
+      
+      departmentHistory = deptData.map(d => ({
+        departmentName: d.departmentName || d.departmentname,
+        totalPlans: parseInt(d.totalplans || d.totalPlans) || 0,
+        completedPlans: parseInt(d.completedplans || d.completedPlans) || 0
+      }));
     } catch (error) {
       console.log('获取部门数据失败，使用默认数据:', error.message);
     }
@@ -703,7 +709,7 @@ router.get('/chart-data', authMiddleware, async (req, res) => {
     };
     
     const statusChartData = planStatusData.map(item => ({
-      value: item.count,
+      value: parseInt(item.count) || 0,
       name: statusMap[item.status]?.name || item.status,
       itemStyle: { color: statusMap[item.status]?.color || '#94A3B8' }
     }));
@@ -731,8 +737,8 @@ router.get('/chart-data', authMiddleware, async (req, res) => {
       LIMIT 7
     `);
     
-    const departmentNames = departmentPlanData.map(d => d.departmentName);
-    const departmentCounts = departmentPlanData.map(d => d.planCount);
+    const departmentNames = departmentPlanData.map(d => d.departmentName || d.departmentname);
+    const departmentCounts = departmentPlanData.map(d => parseInt(d.planCount || d.plancount) || 0);
 
     // 3. 计划完成趋势（从第1周到当前周，不超过学期总周数）
     const trendData = await query(`
@@ -754,11 +760,11 @@ router.get('/chart-data', authMiddleware, async (req, res) => {
     const inProgressPlans = [];
     
     for (let i = 1; i <= displayWeeks; i++) {
-      const weekData = trendData.find(w => w.week === i);
+      const weekData = trendData.find(w => parseInt(w.week) === i);
       weeks.push(`第${i}周`);
-      totalPlans.push(weekData?.total || 0);
-      completedPlans.push(weekData?.completed || 0);
-      inProgressPlans.push(weekData?.inProgress || 0);
+      totalPlans.push(parseInt(weekData?.total || 0));
+      completedPlans.push(parseInt(weekData?.completed || 0));
+      inProgressPlans.push(parseInt(weekData?.inprogress || weekData?.inProgress || 0));
     }
 
     // 4. 部门工作效率
@@ -798,9 +804,13 @@ router.get('/chart-data', authMiddleware, async (req, res) => {
       }));
     }
     
-    const efficiencyDepartmentNames = efficiencyData.map(d => d.departmentName);
-    const completionRates = efficiencyData.map(d => d.totalplans > 0 ? Math.round((d.completedplans / d.totalplans) * 100) : 0);
-    const avgDays = efficiencyData.map(d => Math.round(d.avgdays || 0));
+    const efficiencyDepartmentNames = efficiencyData.map(d => d.departmentName || d.departmentname);
+    const completionRates = efficiencyData.map(d => {
+      const total = parseInt(d.totalplans || d.totalPlans) || 0;
+      const completed = parseInt(d.completedplans || d.completedPlans) || 0;
+      return total > 0 ? Math.round((completed / total) * 100) : 0;
+    });
+    const avgDays = efficiencyData.map(d => Math.round(d.avgdays || d.avgDays || 0));
 
     return success(res, {
       planStatus: statusChartData,
