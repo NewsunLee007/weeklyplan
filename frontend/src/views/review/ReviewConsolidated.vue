@@ -28,105 +28,14 @@
           共 <strong>{{ data.plans.length }}</strong> 个计划，<strong>{{ data.items.length }}</strong> 条待审核条目
         </div>
 
-        <!-- 部门主任：按部门Tab展示 -->
-        <el-tabs v-if="role === 'DEPT_HEAD' && deptGroups.length > 0" v-model="activeDeptTab" type="border-card" style="margin-top: 16px">
-          <el-tab-pane v-for="dept in deptGroups" :key="dept.deptId || 'unknown'" :label="dept.deptName" :name="(dept.deptId || 0).toString()">
-            <div class="dept-info">
-              <strong>{{ dept.deptName }}</strong> - 共 <strong>{{ dept.items?.length || 0 }}</strong> 条计划
-            </div>
-            <el-table :data="dept.items" border stripe size="small" style="margin-top: 12px">
-              <el-table-column type="index" label="序" width="50" align="center" />
-              <el-table-column prop="creator_name" label="提交人" width="100" />
-              <el-table-column label="日期" width="110">
-                <template #default="{row}">
-                  {{ formatDate(row.plan_date) }}
-                </template>
-              </el-table-column>
-              <el-table-column prop="weekday" label="星期" width="70" align="center" />
-              <el-table-column prop="content" label="工作内容">
-                <template #default="{row}">
-                  <el-input v-model="row.content" type="textarea" :rows="1" placeholder="工作内容" size="small" />
-                </template>
-              </el-table-column>
-              <el-table-column prop="responsible" label="负责人" width="120">
-                <template #default="{row}">
-                  <el-input v-model="row.responsible" placeholder="负责人" size="small" />
-                </template>
-              </el-table-column>
-              <el-table-column label="操作" width="70" align="center">
-                <template #default="{$index}">
-                  <el-button link type="danger" :icon="Delete" @click="removeItemInDept(dept.deptId, $index)" />
-                </template>
-              </el-table-column>
-            </el-table>
-          </el-tab-pane>
-        </el-tabs>
-
-        <!-- 办公室主任：按部门Tab展示 -->
-        <el-tabs v-else-if="role === 'OFFICE_HEAD' && officeGroups.length > 0" v-model="activeOfficeTab" type="border-card" style="margin-top: 16px">
-          <el-tab-pane v-for="dept in officeGroups" :key="dept.deptId || 'unknown'" :label="dept.deptName" :name="(dept.deptId || 0).toString()">
-            <div class="dept-info">
-              <strong>{{ dept.deptName }}</strong> - 共 <strong>{{ dept.items?.length || 0 }}</strong> 条计划
-            </div>
-            <el-table :data="dept.items" border stripe size="small" style="margin-top: 12px">
-              <el-table-column type="index" label="序" width="50" align="center" />
-              <el-table-column prop="creator_name" label="提交人" width="100" />
-              <el-table-column label="日期" width="110">
-                <template #default="{row}">
-                  {{ formatDate(row.plan_date) }}
-                </template>
-              </el-table-column>
-              <el-table-column prop="weekday" label="星期" width="70" align="center" />
-              <el-table-column prop="content" label="工作内容">
-                <template #default="{row}">
-                  <el-input v-model="row.content" type="textarea" :rows="1" placeholder="工作内容" size="small" />
-                </template>
-              </el-table-column>
-              <el-table-column prop="responsible" label="负责人/部门" width="130">
-                <template #default="{row}">
-                  <el-input v-model="row.responsible" placeholder="负责人" size="small" />
-                </template>
-              </el-table-column>
-              <el-table-column label="操作" width="70" align="center">
-                <template #default="{$index}">
-                  <el-button link type="danger" :icon="Delete" @click="removeItemInOffice(dept.deptId, $index)" />
-                </template>
-              </el-table-column>
-            </el-table>
-          </el-tab-pane>
-        </el-tabs>
-
-        <!-- 校长：按星期时间先后罗列 -->
-        <div v-else-if="role === 'PRINCIPAL'">
+        <div v-if="['DEPT_HEAD', 'ACADEMIC_HEAD', 'OFFICE_HEAD', 'PRINCIPAL', 'ADMIN'].includes(role)">
           <el-table :data="groupedByDate" border stripe size="small" style="margin-top: 16px">
             <el-table-column type="index" label="序" width="50" align="center" />
-            <el-table-column prop="plan_date" label="日期" width="110" />
-            <el-table-column prop="weekday" label="星期" width="70" align="center" />
-            <el-table-column prop="dept_name" label="部门" width="110" />
-            <el-table-column prop="creator_name" label="提交人" width="100" />
-            <el-table-column prop="content" label="工作内容">
+            <el-table-column label="日期" width="110">
               <template #default="{row}">
-                <el-input v-model="row.content" type="textarea" :rows="1" placeholder="工作内容" size="small" />
+                {{ formatDate(row.plan_date) }}
               </template>
             </el-table-column>
-            <el-table-column prop="responsible" label="负责人/部门" width="130">
-              <template #default="{row}">
-                <el-input v-model="row.responsible" placeholder="负责人" size="small" />
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" width="70" align="center">
-              <template #default="{$index}">
-                <el-button link type="danger" :icon="Delete" @click="removeItem($index)" />
-              </template>
-            </el-table-column>
-          </el-table>
-        </div>
-
-        <!-- 管理员：按星期时间先后罗列 -->
-        <div v-else>
-          <el-table :data="groupedByDate" border stripe size="small" style="margin-top: 16px">
-            <el-table-column type="index" label="序" width="50" align="center" />
-            <el-table-column prop="plan_date" label="日期" width="110" />
             <el-table-column prop="weekday" label="星期" width="70" align="center" />
             <el-table-column prop="dept_name" label="部门" width="110" />
             <el-table-column prop="creator_name" label="提交人" width="100" />
@@ -155,8 +64,13 @@
               <el-input v-model="comment" type="textarea" :rows="3" placeholder="请输入审核意见（退回时必填）" style="max-width: 600px" />
             </el-form-item>
             <el-form-item>
-              <el-button type="success" :icon="Check" @click="approveAll" :loading="acting">整体审核通过并保存修改</el-button>
-              <el-button type="danger" :icon="Close" @click="rejectAll" :loading="acting">整体退回</el-button>
+              <el-button type="success" :icon="Check" @click="approveAll" :loading="acting" v-if="role !== 'PRINCIPAL'">
+                {{ role === 'OFFICE_HEAD' ? '批量通过并交校长审核' : '批量审核通过' }}
+              </el-button>
+              <el-button type="primary" :icon="Check" @click="approveAndPublishAll" :loading="acting" v-if="['OFFICE_HEAD', 'PRINCIPAL'].includes(role)">
+                批量一键发布
+              </el-button>
+              <el-button type="danger" :icon="Close" @click="rejectAll" :loading="acting">批量退回</el-button>
             </el-form-item>
           </el-form>
         </div>
@@ -215,35 +129,7 @@ const role = computed(() => userStore.userInfo?.role)
 const activeDeptTab = ref('')
 const activeOfficeTab = ref('')
 
-// 部门主任：按部门分组（只显示本部门）
-const deptGroups = computed(() => {
-  const map = {}
-  data.items.forEach(item => {
-    // 过滤掉没有dept_id的条目
-    if (item.dept_id == null) return
-    if (!map[item.dept_id]) {
-      map[item.dept_id] = { deptId: item.dept_id, deptName: item.dept_name || '未知部门', items: [] }
-    }
-    map[item.dept_id].items.push(item)
-  })
-  return Object.values(map).sort((a, b) => a.deptId - b.deptId)
-})
-
-// 办公室主任：按部门分组（显示所有部门）
-const officeGroups = computed(() => {
-  const map = {}
-  data.items.forEach(item => {
-    // 过滤掉没有dept_id的条目
-    if (item.dept_id == null) return
-    if (!map[item.dept_id]) {
-      map[item.dept_id] = { deptId: item.dept_id, deptName: item.dept_name || '未知部门', items: [] }
-    }
-    map[item.dept_id].items.push(item)
-  })
-  return Object.values(map).sort((a, b) => a.deptId - b.deptId)
-})
-
-// 校长/管理员：按日期排序
+// 所有角色：按日期排序
 const groupedByDate = computed(() => {
   return [...data.items].sort((a, b) => {
     if (a.plan_date !== b.plan_date) {
@@ -259,12 +145,6 @@ async function loadData() {
     const res = await request.get(`/reviews/consolidated/${weekNumber.value}/${semester.value}`)
     data.plans = res.plans || []
     data.items = res.items || []
-    // 默认选中第一个Tab
-    if (role.value === 'DEPT_HEAD' && deptGroups.value.length > 0 && deptGroups.value[0].deptId !== undefined) {
-      activeDeptTab.value = deptGroups.value[0].deptId.toString()
-    } else if (role.value === 'OFFICE_HEAD' && officeGroups.value.length > 0 && officeGroups.value[0].deptId !== undefined) {
-      activeOfficeTab.value = officeGroups.value[0].deptId.toString()
-    }
   } finally { loading.value = false }
 }
 
@@ -272,38 +152,18 @@ function removeItem(index) {
   data.items.splice(index, 1)
 }
 
-function removeItemInDept(deptId, index) {
-  const group = deptGroups.value.find(g => g.deptId == deptId)
-  if (group) {
-    const item = group.items[index]
-    const globalIndex = data.items.findIndex(i => i.id === item.id)
-    if (globalIndex !== -1) {
-      data.items.splice(globalIndex, 1)
-    }
-  }
-}
-
-function removeItemInOffice(deptId, index) {
-  const group = officeGroups.value.find(g => g.deptId == deptId)
-  if (group) {
-    const item = group.items[index]
-    const globalIndex = data.items.findIndex(i => i.id === item.id)
-    if (globalIndex !== -1) {
-      data.items.splice(globalIndex, 1)
-    }
-  }
-}
-
 async function approveAll() {
   await ElMessageBox.confirm(`确认审核通过并保存所有修改？涉及 ${data.plans.length} 个计划`, '提示', { type: 'success' })
   acting.value = true
   try {
+    const updatedItems = []
+    data.items.forEach(i => { if(i.id || i._isNew) updatedItems.push(i) })
     await request.post(`/reviews/consolidated/${weekNumber.value}/${semester.value}/approve`, {
       comment: comment.value,
-      updatedItems: data.items,
+      updatedItems: updatedItems,
       publish: false
     })
-    ElMessage.success(`已审核通过 ${data.plans.length} 个计划`)
+    ElMessage.success(`操作成功`)
     router.push('/review/pending')
   } finally { acting.value = false }
 }
@@ -312,9 +172,11 @@ async function approveAndPublishAll() {
   await ElMessageBox.confirm(`确认批量一键发布？发布后全校可见。涉及 ${data.plans.length} 个计划`, '警告', { type: 'warning' })
   acting.value = true
   try {
+    const updatedItems = []
+    data.items.forEach(i => { if(i.id || i._isNew) updatedItems.push(i) })
     await request.post(`/reviews/consolidated/${weekNumber.value}/${semester.value}/approve`, {
       comment: comment.value,
-      updatedItems: data.items,
+      updatedItems: updatedItems,
       publish: true
     })
     ElMessage.success(`操作成功，已发布 ${data.plans.length} 个计划`)

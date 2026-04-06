@@ -159,8 +159,16 @@ function formatInputDate(row) {
 const canReview = computed(() => {
   const s = plan.value.status
   const r = role.value
+  const creatorId = plan.value.creator_id
+  const userId = userStore.userInfo?.userId
+  
   if (r === 'ADMIN') return ['SUBMITTED','DEPT_APPROVED','OFFICE_APPROVED'].includes(s)
-  if (r === 'DEPT_HEAD') return s === 'SUBMITTED'
+  
+  // 部门主任或教务处主任审核本部门提交的计划，但不能审核自己提交的（因为自己提交的免审，会自动跳到下一步）
+  if (r === 'DEPT_HEAD' || r === 'ACADEMIC_HEAD') {
+    return s === 'SUBMITTED' && creatorId !== userId
+  }
+  
   if (r === 'OFFICE_HEAD') return ['DEPT_APPROVED', 'OFFICE_APPROVED'].includes(s)
   if (r === 'PRINCIPAL') return s === 'OFFICE_APPROVED'
   return false
