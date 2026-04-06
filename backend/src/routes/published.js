@@ -27,13 +27,20 @@ router.get('/', authMiddleware, async (req, res) => {
     params
   );
   
-  // 为每个计划添加工作内容条目拼接
+  // 为每个计划添加工作内容条目拼接以及检查是否已反馈
   for (const plan of records) {
     const items = await query(
       `SELECT content FROM biz_plan_item WHERE plan_id = ? AND is_deleted = false ORDER BY plan_date, sort_order`,
       [plan.id]
     );
     plan.title = items.map(i => i.content).join('；') || '无内容';
+    
+    // 检查当前用户是否已对该计划提交过反馈
+    const feedbackCount = await queryOne(
+      `SELECT COUNT(*) as count FROM biz_feedback WHERE plan_id = $1 AND feedback_user_id = $2`,
+      [plan.id, req.user.userId]
+    );
+    plan.has_feedback = feedbackCount && parseInt(feedbackCount.count) > 0;
   }
 
   return success(res, records);

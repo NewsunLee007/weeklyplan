@@ -15,7 +15,13 @@
         <el-table-column prop="published_at" label="发布时间" width="160" />
         <el-table-column label="操作" width="120" fixed="right">
           <template #default="{row}">
-            <el-button type="primary" size="small" @click="router.push(`/feedback/plan/${row.id}`)">填写反馈</el-button>
+            <el-button 
+              :type="row.has_feedback ? 'success' : 'primary'" 
+              size="small" 
+              @click="router.push(`/feedback/plan/${row.id}`)"
+            >
+              {{ row.has_feedback ? '已反馈 (编辑)' : '填写反馈' }}
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -102,6 +108,19 @@ onMounted(loadData)
 .el-button--primary:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(8, 145, 178, 0.4);
+}
+
+.el-button--success {
+  background: linear-gradient(135deg, var(--color-success) 0%, #34D399 100%);
+  border: none;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+  transition: all var(--transition-base);
+  font-weight: 600;
+}
+
+.el-button--success:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
 }
 
 @media (max-width: 768px) {
