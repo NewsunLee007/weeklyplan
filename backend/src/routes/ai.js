@@ -33,6 +33,89 @@ async function getKnowledgeContext() {
   }
 }
 
+// 辅助函数：计算当前周次
+function calcCurrentWeek(weekStartConfig, weekFirstDayConfig) {
+  if (!weekStartConfig) return 1;
+  const start = new Date(weekStartConfig);
+  const now = new Date();
+  const diffTime = now.getTime() - start.getTime();
+  const diffDays = diffTime / (1000 * 3600 * 24);
+  const weekNum = Math.floor(diffDays / 7) + 1;
+  return Math.max(1, weekNum);
+}
+
+// 获取当前周次的计划上下文
+async function getPlansContext(user) {
+  try {
+    // 1. 获取当前学期和周次配置
+    const configs = await query(`SELECT config_key, config_value FROM sys_config WHERE config_key IN ('current_semester', 'current_week_start', 'week_first_day')`);
+    const configMap = {};
+    configs.forEach(c => { configMap[c.config_key] = c.config_value });
+    
+    const semester = configMap.current_semester;
+    const currentWeek = calcCurrentWeek(configMap.current_week_start, configMap.week_first_day);
+    
+    if (!semester) return '';
+
+    let context = `【本周（${semester} 第${currentWeek}周）工作计划行事历】\n`;
+
+    // 2. 查询全校已发布的计划
+    const publishedPlans = await query(
+      `SELECT p.id, p.title, d.name as dept_name 
+       FROM biz_week_plan p 
+       LEFT JOIN sys_department d ON p.department_id = d.id 
+       WHERE p.semester = $1 AND p.week_number = $2 AND p.status = 'PUBLISHED' AND p.is_deleted = false`,
+      [semester, currentWeek]
+    );
+
+    if (publishedPlans.length > 0) {
+      context += `\n--- 已发布的各部门工作安排 ---\n`;
+      for (const plan of publishedPlans) {
+        const items = await query(`SELECT weekday, content, responsible FROM biz_plan_item WHERE plan_id = $1 AND is_deleted = false ORDER BY plan_date`, [plan.id]);
+        if (items.length > 0) {
+          context += `[${plan.dept_name}] ${plan.title || ''}：\n`;
+          items.forEach(item => {
+            context += `  - ${item.weekday || '未知'}：${item.content} (负责: ${item.responsible || '未指定'})\n`;
+          });
+        }
+      }
+    } else {
+      context += `\n--- 全校暂无已发布的工作安排 ---\n`;
+    }
+
+    // 3. 查询当前用户正在起草或待审核的计划
+    const myPlans = await query(
+      `SELECT p.id, p.title, p.status 
+       FROM biz_week_plan p 
+       WHERE p.semester = $1 AND p.week_number = $2 AND p.creator_id = $3 AND p.status != 'PUBLISHED' AND p.is_deleted = false`,
+      [semester, currentWeek, user.id]
+    );
+
+    if (myPlans.length > 0) {
+      context += `\n--- 您当前正在进行中的计划 ---\n`;
+      for (const plan of myPlans) {
+        const statusMap = { 'DRAFT': '草稿', 'SUBMITTED': '待审核', 'DEPT_APPROVED': '部门已审核', 'OFFICE_APPROVED': '办公室已审核', 'REJECTED': '已退回' };
+        const statusText = statusMap[plan.status] || plan.status;
+        const items = await query(`SELECT weekday, content, responsible FROM biz_plan_item WHERE plan_id = $1 AND is_deleted = false ORDER BY plan_date`, [plan.id]);
+        
+        context += `您的计划 [状态: ${statusText}] ${plan.title || ''}：\n`;
+        if (items.length > 0) {
+          items.forEach(item => {
+            context += `  - ${item.weekday || '未知'}：${item.content} (负责: ${item.responsible || '未指定'})\n`;
+          });
+        } else {
+          context += `  - 暂未填写具体工作条目\n`;
+        }
+      }
+    }
+
+    return context;
+  } catch (error) {
+    console.error('获取计划上下文失败:', error);
+    return '';
+  }
+}
+
 async function getAIConfig() {
   const configs = await query('SELECT config_key, config_value FROM sys_config WHERE config_key LIKE $1', ['ai_%']);
   const config = {
@@ -64,8 +147,12 @@ router.get('/config', authMiddleware, async (req, res) => {
 // AI 聊天接口
 router.post('/chat', authMiddleware, async (req, res) => {
   const { messages, context } = req.body;
+  const user = req.user;
+  const { role, real_name, department_name } = user;
+  
   const config = await getAIConfig();
   const knowledgeContext = await getKnowledgeContext();
+  const plansContext = await getPlansContext(user);
   
   if (config.ai_chat_enabled !== 'true' && config.ai_chat_enabled !== true) {
     return fail(res, 'AI对话功能未启用', 400);
@@ -82,9 +169,19 @@ router.post('/chat', authMiddleware, async (req, res) => {
     }
 
     // 构建系统提示
-    let systemPrompt = '你是一个内置于系统中的专属智能助手，已经成功连接并调用了用户的系统知识库。如果用户问你是否调用了知识库，请明确且自信地回答你已经成功读取并正在使用知识库中的内容，切勿声称自己无法访问数据库或仅仅是基于聊天历史。请基于以下提供的【知识库信息】来回答用户的问题。';
+    const roleName = { 'ADMIN': '系统管理员', 'PRINCIPAL': '校长', 'OFFICE_HEAD': '办公室主任', 'ACADEMIC_HEAD': '教务处主任', 'DEPT_HEAD': '部门主任', 'STAFF': '普通教师/职员' }[role] || '用户';
+    const deptNameStr = department_name ? `【${department_name}】的` : '';
+    
+    let systemPrompt = `你是一个内置于系统中的专属智能教务助手。
+当前与你对话的是${deptNameStr}【${real_name}】，系统职务为【${roleName}】。请根据他/她的职务和部门给出针对性的建议和回答。
+你已经成功接入了学校的真实数据库。当用户询问工作安排、规章制度等学校相关问题时，请务必优先参考下方的【知识库信息】和【本周工作计划行事历】进行精准回答，切勿编造。
+`;
+
     if (knowledgeContext) {
       systemPrompt += `\n\n${knowledgeContext}`;
+    }
+    if (plansContext) {
+      systemPrompt += `\n\n${plansContext}`;
     }
     if (context) {
       systemPrompt += `\n\n额外上下文信息：\n${context}`;
