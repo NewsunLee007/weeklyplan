@@ -14,6 +14,12 @@ router.get('/', authMiddleware, async (req, res) => {
   if (semester) { where += ` AND p.semester = ?`; params.push(semester); }
   if (week_number) { where += ` AND p.week_number = ?`; params.push(week_number); }
 
+  // 如果不是管理员/校长，只能看到自己部门的反馈计划
+  if (req.user && !['ADMIN', 'PRINCIPAL'].includes(req.user.role) && req.user.departmentId) {
+    where += " AND p.department_id = $1";
+    params.push(req.user.departmentId);
+  }
+
   const records = await query(
     `SELECT p.*, d.name as dept_name
      FROM biz_week_plan p LEFT JOIN sys_department d ON p.department_id = d.id

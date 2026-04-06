@@ -221,8 +221,11 @@ async function initDatabase() {
   try {
     console.log('📦 检查并修复表结构（published_at）...');
     await pool.query(`ALTER TABLE biz_week_plan ADD COLUMN IF NOT EXISTS published_at TIMESTAMP`);
+    
+    console.log('📦 检查并修复表结构（biz_feedback.plan_id）...');
+    await pool.query(`ALTER TABLE biz_feedback ADD COLUMN IF NOT EXISTS plan_id INTEGER DEFAULT 0`);
   } catch (error) {
-    console.error('⚠️ 添加 published_at 列失败（可能已存在）:', error.message);
+    console.error('⚠️ 修复表结构失败:', error.message);
   }
 
   // 快速插入默认数据（不等待）

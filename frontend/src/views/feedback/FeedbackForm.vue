@@ -9,7 +9,11 @@
       <div v-if="plan.title" class="plan-title">{{ plan.title }}</div>
 
       <el-table :data="items" border stripe>
-        <el-table-column prop="plan_date" label="日期" width="110" />
+        <el-table-column label="日期" width="120">
+          <template #default="{row}">
+            {{ formatDate(row.plan_date) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="weekday" label="星期" width="60" align="center" />
         <el-table-column prop="content" label="工作内容" min-width="200" />
         <el-table-column prop="responsible" label="负责人" width="130" />
