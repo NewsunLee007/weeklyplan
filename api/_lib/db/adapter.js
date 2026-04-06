@@ -224,6 +224,9 @@ async function initDatabase() {
     
     console.log('📦 检查并修复表结构（biz_feedback.plan_id）...');
     await pool.query(`ALTER TABLE biz_feedback ADD COLUMN IF NOT EXISTS plan_id INTEGER DEFAULT 0`);
+
+    console.log('📦 检查并修复表结构（biz_feedback.content）...');
+    await pool.query(`ALTER TABLE biz_feedback ADD COLUMN IF NOT EXISTS content TEXT`);
   } catch (error) {
     console.error('⚠️ 修复表结构失败:', error.message);
   }

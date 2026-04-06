@@ -19,7 +19,7 @@
         <el-table-column prop="responsible" label="负责人" width="130" />
         <el-table-column label="完成状态" width="150">
           <template #default="{row}">
-            <el-select v-model="feedbacks[row.id].status" size="small" style="width:120px">
+            <el-select v-if="feedbacks[row.id]" v-model="feedbacks[row.id].status" size="small" style="width:120px">
               <el-option label="已完成" value="COMPLETED" />
               <el-option label="部分完成" value="PARTIALLY" />
               <el-option label="未完成" value="NOT_COMPLETED" />
@@ -28,7 +28,7 @@
         </el-table-column>
         <el-table-column label="反馈说明" min-width="200">
           <template #default="{row}">
-            <el-input v-model="feedbacks[row.id].content" type="textarea" :rows="2" size="small" placeholder="可选" />
+            <el-input v-if="feedbacks[row.id]" v-model="feedbacks[row.id].content" type="textarea" :rows="2" size="small" placeholder="可选" />
           </template>
         </el-table-column>
       </el-table>
