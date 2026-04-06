@@ -329,14 +329,16 @@ async function buildWeeklySummary(plans, weekNumber, schoolName, schoolSubName) 
 
   // 按日期分组（周日到周六）
   const weekdayNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-  const itemsByDate = {};
+  const itemsByWeekday = {};
 
   allItems.forEach(item => {
-    const dateKey = getLocalDateString(item.plan_date);
-    if (!itemsByDate[dateKey]) {
-      itemsByDate[dateKey] = [];
+    // 提取星期几（0-6）
+    const dateObj = new Date(item.plan_date);
+    const dayOfWeek = isNaN(dateObj) ? 0 : dateObj.getDay();
+    if (!itemsByWeekday[dayOfWeek]) {
+      itemsByWeekday[dayOfWeek] = [];
     }
-    itemsByDate[dateKey].push(item);
+    itemsByWeekday[dayOfWeek].push(item);
   });
 
   // 生成数据行（每一天一行，同一天多个部门内容在同一单元格内）
@@ -348,11 +350,11 @@ async function buildWeeklySummary(plans, weekNumber, schoolName, schoolSubName) 
     currentDate.setDate(currentDate.getDate() + i);
 
     const dateStr = `${currentDate.getMonth() + 1}月${currentDate.getDate()}日`;
-    const weekday = weekdayNames[currentDate.getDay()];
-    const dateKey = getLocalDateString(currentDate);
+    const dayOfWeek = currentDate.getDay();
+    const weekday = weekdayNames[dayOfWeek];
 
     // 周六显示"休息"
-    if (currentDate.getDay() === 6) {
+    if (dayOfWeek === 6) {
       dataRows.push(new TableRow({
         children: [
           new TableCell({
@@ -405,7 +407,7 @@ async function buildWeeklySummary(plans, weekNumber, schoolName, schoolSubName) 
       continue;
     }
 
-    const dayItems = itemsByDate[dateKey] || [];
+    const dayItems = itemsByWeekday[dayOfWeek] || [];
 
     // 如果当天无任务，显示"无任务"
     if (dayItems.length === 0) {
@@ -629,8 +631,11 @@ router.get('/plan/:planId', authMiddleware, async (req, res) => {
     [planId]
   );
 
-  const schoolName = await queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_name'`)?.config_value || '';
-  const schoolSubName = await queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_sub_name'`)?.config_value || '';
+  const schoolNameResult = await queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_name'`);
+  const schoolName = schoolNameResult?.config_value || '';
+  
+  const schoolSubNameResult = await queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_sub_name'`);
+  const schoolSubName = schoolSubNameResult?.config_value || '';
 
   try {
     const doc = buildDocxFromPlan(plan, items, schoolName, schoolSubName);
@@ -665,8 +670,11 @@ router.get('/weekly-summary/:weekNumber', authMiddleware, async (req, res) => {
     params
   );
 
-  const schoolName = await queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_name'`)?.config_value || '';
-  const schoolSubName = await queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_sub_name'`)?.config_value || '';
+  const schoolNameResult = await queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_name'`);
+  const schoolName = schoolNameResult?.config_value || '';
+  
+  const schoolSubNameResult = await queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_sub_name'`);
+  const schoolSubName = schoolSubNameResult?.config_value || '';
 
   // 如果没有计划，生成默认计划（仅包含空表格）
   let doc;
@@ -796,8 +804,8 @@ router.get('/plan/:planId/pdf', authMiddleware, async (req, res) => {
     [planId]
   );
 
-  const schoolName = await queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_name'`)?.config_value || '';
-  const schoolSubName = await queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_sub_name'`)?.config_value || '';
+  const schoolName = (await queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_name'`))?.config_value || '';
+  const schoolSubName = (await queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_sub_name'`))?.config_value || '';
 
   try {
     const doc = buildDocxFromPlan(plan, items, schoolName, schoolSubName);
@@ -841,8 +849,8 @@ router.get('/weekly-summary/:weekNumber/pdf', authMiddleware, async (req, res) =
     params
   );
 
-  const schoolName = await queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_name'`)?.config_value || '';
-  const schoolSubName = await queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_sub_name'`)?.config_value || '';
+  const schoolName = (await queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_name'`))?.config_value || '';
+  const schoolSubName = (await queryOne(`SELECT config_value FROM sys_config WHERE config_key='school_sub_name'`))?.config_value || '';
 
   // 如果没有计划，生成默认计划（仅包含空表格）
   let doc;

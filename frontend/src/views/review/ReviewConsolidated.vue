@@ -109,7 +109,8 @@ async function loadConfig() {
       const { calcWeekNumber } = await import('../../utils/helper')
       const weekFirstDay = parseInt(map.week_first_day) || 0
       const currentWeek = calcWeekNumber(map.current_week_start, weekFirstDay)
-      weekNumber.value = Math.max(1, currentWeek + 1)
+      const semesterWeeks = parseInt(map.semester_weeks) || 20
+      weekNumber.value = Math.min(Math.max(1, currentWeek + 1), semesterWeeks)
     }
   } catch (e) {
     console.warn('读取系统配置失败', e)

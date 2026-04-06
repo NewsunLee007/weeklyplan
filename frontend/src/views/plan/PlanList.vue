@@ -233,7 +233,8 @@ async function loadConfig() {
     if (map.current_week_start) {
       const weekFirstDay = parseInt(map.week_first_day) || 0
       const currentWeek = calcWeekNumber(map.current_week_start, weekFirstDay)
-      filter.week_number = Math.max(1, currentWeek + 1) // 自动选到下一周
+      const semesterWeeks = parseInt(map.semester_weeks) || 20
+      filter.week_number = Math.min(Math.max(1, currentWeek + 1), semesterWeeks) // 自动选到下一周，并加入上限保护
     }
   } catch (e) {
     console.warn('读取系统配置失败', e)
