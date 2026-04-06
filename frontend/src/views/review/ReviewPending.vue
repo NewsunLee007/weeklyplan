@@ -1,6 +1,11 @@
 <template>
   <div class="page-container">
-    <div class="page-header"><h2>待我审核</h2></div>
+    <div class="page-header">
+      <h2>待我审核</h2>
+      <div>
+        <el-button type="success" :icon="Download" @click="exportWord">导出 Word</el-button>
+      </div>
+    </div>
 
     <el-card shadow="never">
       <el-table :data="list" v-loading="loading" stripe>
@@ -35,12 +40,32 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import request from '../../utils/request'
-import { STATUS_MAP } from '../../utils/helper'
+import { STATUS_MAP, calcWeekNumber } from '../../utils/helper'
 import dayjs from 'dayjs'
+import { Download } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 
 const router = useRouter()
 const list = ref([])
 const loading = ref(false)
+const semester = ref('')
+const weekNumber = ref(1)
+
+async function loadConfig() {
+  try {
+    const configs = await request.get('/configs')
+    const map = {}
+    configs.forEach(c => { map[c.config_key] = c.config_value })
+    if (map.current_semester) semester.value = map.current_semester
+    if (map.current_week_start) {
+      const weekFirstDay = parseInt(map.week_first_day) || 0
+      const currentWeek = calcWeekNumber(map.current_week_start, weekFirstDay)
+      weekNumber.value = Math.max(1, currentWeek + 1)
+    }
+  } catch (e) {
+    console.warn('读取系统配置失败', e)
+  }
+}
 
 function formatDateTime(val) {
   if (!val) return ''
@@ -52,7 +77,26 @@ async function loadData() {
   try { list.value = await request.get('/reviews/pending') }
   finally { loading.value = false }
 }
-onMounted(loadData)
+
+async function exportWord() {
+  if (!semester.value || !weekNumber.value) return ElMessage.warning('未能获取当周配置')
+  try {
+    const res = await request.get(`/export/weekly-summary/${weekNumber.value}?semester=${semester.value}&status=REVIEW`, { responseType: 'blob' })
+    const url = URL.createObjectURL(res.data || res)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${semester.value}第${weekNumber.value}周整合计划.docx`
+    a.click()
+    URL.revokeObjectURL(url)
+  } catch (error) {
+    ElMessage.error('导出失败')
+  }
+}
+
+onMounted(async () => {
+  await loadConfig()
+  loadData()
+})
 </script>
 
 <style scoped>

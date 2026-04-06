@@ -214,10 +214,18 @@ async function initDatabase() {
           await pool.query(`UPDATE biz_week_plan SET current_step = '3' WHERE status = 'OFFICE_APPROVED' AND current_step != '3'`);
           await pool.query(`UPDATE biz_week_plan SET current_step = '4' WHERE status = 'PUBLISHED' AND current_step != '4'`);
         } catch (error) {
-          console.error('⚠️ 修复异常的审核流程步骤数据失败:', error.message);
-        }
+    console.error('⚠️ 修复异常的审核流程步骤数据失败:', error.message);
+  }
 
-        // 快速插入默认数据（不等待）
+  // 修复缺失的 published_at 字段
+  try {
+    console.log('📦 检查并修复表结构（published_at）...');
+    await pool.query(`ALTER TABLE biz_week_plan ADD COLUMN IF NOT EXISTS published_at TIMESTAMP`);
+  } catch (error) {
+    console.error('⚠️ 添加 published_at 列失败（可能已存在）:', error.message);
+  }
+
+  // 快速插入默认数据（不等待）
         fastInsertDefaultData().catch(err => {
           console.log('⚠️ 默认数据插入失败，但继续运行:', err.message);
         });

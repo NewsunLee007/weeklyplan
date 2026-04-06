@@ -3,7 +3,7 @@
     <div class="page-header">
       <h2>整合审核</h2>
       <div>
-        <el-button type="success" :icon="Download" @click="exportWord">导出全校整合 Word</el-button>
+        <el-button type="success" :icon="Download" @click="exportWord">导出 Word</el-button>
         <el-button @click="router.back()">返回</el-button>
       </div>
     </div>
@@ -140,6 +140,7 @@ const groupedByDate = computed(() => {
 })
 
 async function loadData() {
+  if (!semester.value || !weekNumber.value) return
   loading.value = true
   try {
     const res = await request.get(`/reviews/consolidated/${weekNumber.value}/${semester.value}`)
@@ -213,7 +214,9 @@ async function rejectAll() {
 
 onMounted(async () => {
   await loadConfig()
-  loadData()
+  if (semester.value && weekNumber.value) {
+    await loadData()
+  }
 })
 </script>
 
