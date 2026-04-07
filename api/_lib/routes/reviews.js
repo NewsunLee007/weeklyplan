@@ -142,6 +142,49 @@ router.post('/:planId/approve', authMiddleware, requireRole(...REVIEW_ROLES), as
   return success(res, null, '审核操作成功');
 });
 
+// POST /:planId/save 仅保存修改（不推进状态，不记录审核日志）
+router.post('/:planId/save', authMiddleware, requireRole(...REVIEW_ROLES), async (req, res) => {
+  const { planId } = req.params;
+  const { updatedItems } = req.body;
+  const { role, departmentId } = req.user;
+
+  const plan = await queryOne(`SELECT * FROM biz_week_plan WHERE id = ? AND is_deleted = false`, [planId]);
+  if (!plan) return fail(res, '计划不存在', 404);
+
+  const step = plan.current_step;
+
+  // 验证审核人权限
+  if (role === 'DEPT_HEAD' || role === 'ACADEMIC_HEAD') {
+    if (Number(step) !== 1) return fail(res, '部门/教务主任只能进行第一步审核');
+    if (plan.department_id !== departmentId) return fail(res, '只能审核本部门计划');
+  } else if (role === 'OFFICE_HEAD') {
+    if (Number(step) !== 2 && Number(step) !== 3) return fail(res, '办公室主任只能进行第二步或最终发布');
+  } else if (role === 'PRINCIPAL') {
+    if (Number(step) !== 3) return fail(res, '校长只能进行最终审核');
+  }
+
+  const n = now();
+
+  // 仅保存更新的条目，不改变流程状态
+  if (updatedItems && Array.isArray(updatedItems)) {
+    for (const item of updatedItems) {
+      if (item.id) {
+        await execute(
+          `UPDATE biz_plan_item SET content=?, responsible=?, plan_date=?, weekday=?, update_time=? WHERE id=?`,
+          [item.content || '', item.responsible || '', item.plan_date || '', item.weekday || '', n, item.id]
+        );
+      } else if (item._isNew) {
+        await execute(
+          `INSERT INTO biz_plan_item (plan_id, plan_date, weekday, content, responsible, create_time, update_time) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [planId, item.plan_date || '', item.weekday || '', item.content || '', item.responsible || '', n, n]
+        );
+      }
+    }
+  }
+
+  return success(res, null, '暂存修改成功');
+});
+
 // POST /:planId/reject 审核退回
 router.post('/:planId/reject', authMiddleware, requireRole(...REVIEW_ROLES), async (req, res) => {
   const { planId } = req.params;
@@ -298,6 +341,49 @@ router.post('/consolidated/:weekNumber/:semester/approve', authMiddleware, requi
   }
 
   return success(res, null, `已成功操作 ${plans.length} 个计划`);
+});
+
+// POST /consolidated/:weekNumber/:semester/save 整合审核仅保存修改
+router.post('/consolidated/:weekNumber/:semester/save', authMiddleware, requireRole(...REVIEW_ROLES), async (req, res) => {
+  const { weekNumber, semester } = req.params;
+  const { updatedItems } = req.body;
+  const { role, departmentId } = req.user;
+
+  let where = `WHERE is_deleted = false AND week_number = ${weekNumber} AND semester = '${semester}'`;
+
+  if (role === 'DEPT_HEAD' || role === 'ACADEMIC_HEAD') {
+    where += ` AND status = 'SUBMITTED' AND department_id = ${departmentId}`;
+  } else if (role === 'OFFICE_HEAD') {
+    where += ` AND status IN ('DEPT_APPROVED', 'OFFICE_APPROVED')`;
+  } else if (role === 'PRINCIPAL') {
+    where += ` AND status = 'OFFICE_APPROVED'`;
+  } else if (role === 'ADMIN') {
+    where += ` AND status IN ('SUBMITTED','DEPT_APPROVED','OFFICE_APPROVED')`;
+  }
+
+  const plans = await query(`SELECT id FROM biz_week_plan ${where}`);
+  if (!plans.length) return fail(res, '没有可修改的计划');
+
+  const validPlanIds = plans.map(p => p.id);
+  const n = now();
+
+  if (updatedItems && Array.isArray(updatedItems)) {
+    for (const item of updatedItems) {
+      if (item.id && validPlanIds.includes(item.plan_id)) {
+        await execute(
+          `UPDATE biz_plan_item SET content=?, responsible=?, plan_date=?, weekday=?, update_time=? WHERE id=?`,
+          [item.content || '', item.responsible || '', item.plan_date || '', item.weekday || '', n, item.id]
+        );
+      } else if (item._isNew && item.plan_id && validPlanIds.includes(item.plan_id)) {
+        await execute(
+          `INSERT INTO biz_plan_item (plan_id, plan_date, weekday, content, responsible, create_time, update_time) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [item.plan_id, item.plan_date || '', item.weekday || '', item.content || '', item.responsible || '', n, n]
+        );
+      }
+    }
+  }
+
+  return success(res, null, '暂存修改成功');
 });
 
 // POST /consolidated/:weekNumber/:semester/reject 整合审核（整体退回）

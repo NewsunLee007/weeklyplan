@@ -49,8 +49,16 @@
           </template>
         </el-table-column>
         <el-table-column prop="weekday" label="星期" width="60" align="center" />
-        <el-table-column prop="content" label="工作内容" />
-        <el-table-column prop="responsible" label="负责人/部门" width="150" />
+        <el-table-column prop="content" label="工作内容" min-width="250">
+          <template #default="{row}">
+            <span style="white-space: pre-wrap;">{{ row.content }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="responsible" label="负责人/部门" width="140">
+          <template #default="{row}">
+            <span style="white-space: pre-wrap;">{{ row.responsible }}</span>
+          </template>
+        </el-table-column>
       </el-table>
     </el-card>
 
@@ -75,8 +83,16 @@
               </template>
             </el-table-column>
             <el-table-column prop="weekday" label="星期" width="60" align="center" />
-            <el-table-column prop="content" label="工作内容" />
-            <el-table-column prop="responsible" label="负责人/部门" width="150" />
+            <el-table-column prop="content" label="工作内容" min-width="250">
+              <template #default="{row}">
+                <span style="white-space: pre-wrap;">{{ row.content }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="responsible" label="负责人/部门" width="140">
+              <template #default="{row}">
+                <span style="white-space: pre-wrap;">{{ row.responsible }}</span>
+              </template>
+            </el-table-column>
           </el-table>
         </el-tab-pane>
       </el-tabs>
@@ -94,8 +110,16 @@
         </el-table-column>
         <el-table-column prop="weekday" label="星期" width="60" align="center" />
         <el-table-column prop="dept_name" label="部门" width="110" />
-        <el-table-column prop="content" label="工作内容" />
-        <el-table-column prop="responsible" label="负责人/部门" width="150" />
+        <el-table-column prop="content" label="工作内容" min-width="250">
+          <template #default="{row}">
+            <span style="white-space: pre-wrap;">{{ row.content }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="responsible" label="负责人/部门" width="140">
+          <template #default="{row}">
+            <span style="white-space: pre-wrap;">{{ row.responsible }}</span>
+          </template>
+        </el-table-column>
       </el-table>
     </el-card>
 

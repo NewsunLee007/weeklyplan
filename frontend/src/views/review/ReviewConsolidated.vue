@@ -41,12 +41,12 @@
             <el-table-column prop="creator_name" label="提交人" width="100" />
             <el-table-column prop="content" label="工作内容">
               <template #default="{row}">
-                <el-input v-model="row.content" type="textarea" :rows="1" placeholder="工作内容" size="small" />
+                <el-input v-model="row.content" type="textarea" :autosize="{ minRows: 1, maxRows: 6 }" placeholder="工作内容" size="small" />
               </template>
             </el-table-column>
             <el-table-column prop="responsible" label="负责人/部门" width="130">
               <template #default="{row}">
-                <el-input v-model="row.responsible" placeholder="负责人" size="small" />
+                <el-input v-model="row.responsible" type="textarea" :autosize="{ minRows: 1, maxRows: 6 }" placeholder="负责人" size="small" />
               </template>
             </el-table-column>
             <el-table-column label="操作" width="70" align="center">
@@ -64,6 +64,9 @@
               <el-input v-model="comment" type="textarea" :rows="3" placeholder="请输入审核意见（退回时必填）" style="max-width: 600px" />
             </el-form-item>
             <el-form-item>
+              <el-button type="warning" plain :icon="Check" @click="saveAllChanges" :loading="acting">
+                批量仅保存修改
+              </el-button>
               <el-button type="success" :icon="Check" @click="approveAll" :loading="acting" v-if="role !== 'PRINCIPAL'">
                 {{ role === 'OFFICE_HEAD' ? '批量通过并交校长审核' : '批量审核通过' }}
               </el-button>
@@ -183,6 +186,18 @@ async function approveAndPublishAll() {
     })
     ElMessage.success(`操作成功，已发布 ${data.plans.length} 个计划`)
     router.push('/review/pending')
+  } finally { acting.value = false }
+}
+
+async function saveAllChanges() {
+  acting.value = true
+  try {
+    const updatedItems = []
+    data.items.forEach(i => { if(i.id || i._isNew) updatedItems.push(i) })
+    await request.post(`/reviews/consolidated/${weekNumber.value}/${semester.value}/save`, {
+      updatedItems: updatedItems
+    })
+    ElMessage.success(`暂存修改成功`)
   } finally { acting.value = false }
 }
 

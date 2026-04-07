@@ -45,6 +45,22 @@
           </el-row>
         </div>
 
+        <!-- 学校预发工作指导 -->
+        <div class="form-section" v-if="guidelineContent || isOfficeHeadOrAdmin">
+          <div class="section-header">
+            <h3 class="section-title" style="margin-bottom: 0; border-bottom: none;">
+              <el-icon class="section-icon"><Reading /></el-icon> 本周学校工作指导
+            </h3>
+            <el-button v-if="isOfficeHeadOrAdmin" type="primary" plain :icon="Edit" size="small" @click="editGuideline">
+              编辑预发工作
+            </el-button>
+          </div>
+          <div class="guideline-content-box">
+            <div v-if="guidelineContent" style="white-space: pre-wrap; line-height: 1.6; color: var(--color-text-primary);">{{ guidelineContent }}</div>
+            <div v-else style="color: var(--color-text-secondary); font-style: italic;">暂无本周预发工作内容</div>
+          </div>
+        </div>
+
         <!-- 计划条目表格 -->
         <div class="form-section">
           <div class="section-header">
@@ -95,16 +111,16 @@
                 <div class="weekday-badge">{{ row.weekday || '-' }}</div>
               </template>
             </el-table-column>
-            <el-table-column label="工作内容">
+            <el-table-column label="工作内容" min-width="300">
               <template #default="{row}">
-                <el-input v-model="row.content" type="textarea" :rows="2" placeholder="请输入工作内容" size="small" class="content-input" />
+                <el-input v-model="row.content" type="textarea" :autosize="{ minRows: 1, maxRows: 6 }" placeholder="工作内容" size="small" class="form-input" />
               </template>
             </el-table-column>
             <el-table-column label="负责人/部门" width="160">
-              <template #default="{row}">
-                <el-input v-model="row.responsible" placeholder="负责人或部门" size="small" class="form-input" />
-              </template>
-            </el-table-column>
+            <template #default="{row}">
+              <el-input v-model="row.responsible" type="textarea" :autosize="{ minRows: 1, maxRows: 6 }" placeholder="负责人或部门" size="small" class="form-input" />
+            </template>
+          </el-table-column>
             <el-table-column label="操作" width="70" align="center">
               <template #default="{$index}">
                 <el-button link type="danger" :icon="Delete" @click="removeItem($index)" class="delete-btn" />
@@ -135,18 +151,31 @@
       </el-form>
     </el-card>
   </div>
+
+    <!-- 编辑预发工作弹窗 -->
+    <el-dialog v-model="showGuidelineDialog" title="编辑本周学校工作指导" width="600px">
+      <el-input v-model="editingGuideline" type="textarea" :autosize="{ minRows: 4, maxRows: 10 }" placeholder="请输入本周大致工作内容，全员可见..." />
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="showGuidelineDialog = false">取消</el-button>
+          <el-button type="primary" @click="saveGuideline">保存发布</el-button>
+        </span>
+      </template>
+    </el-dialog>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed, nextTick } from 'vue'
+import { ref, reactive, onMounted, computed, nextTick, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useUserStore } from '../../stores/user'
 import request from '../../utils/request'
 import { getWeekday, calcWeekRange, alignToWeekStart, calcWeekNumber } from '../../utils/helper'
 import { ElMessage } from 'element-plus'
-import { Plus, Delete, ArrowLeft, Document, List, ChatDotRound, Check, MagicStick, Close } from '@element-plus/icons-vue'
+import { Plus, Delete, ArrowLeft, Document, List, ChatDotRound, Check, MagicStick, Close, Reading, Edit } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const route = useRoute()
+const userStore = useUserStore()
 const formRef = ref()
 const saving = ref(false)
 const aiLoading = ref(false)
@@ -214,6 +243,43 @@ function onWeekChange(w) {
   const sd = new Date(start_date)
   const ed = new Date(end_date)
   form.title = `第${w}周工作行事历（${sd.getMonth()+1}.${sd.getDate()}-${ed.getMonth()+1}.${ed.getDate()}）`
+  fetchGuideline()
+}
+
+// 预发计划相关逻辑
+const isOfficeHeadOrAdmin = computed(() => ['OFFICE_HEAD', 'ADMIN'].includes(userStore.userInfo?.role))
+const guidelineContent = ref('')
+const showGuidelineDialog = ref(false)
+const editingGuideline = ref('')
+
+async function fetchGuideline() {
+  if (!form.semester || !form.week_number) return
+  try {
+    const res = await request.get(`/guidelines/current?semester=${form.semester}&weekNumber=${form.week_number}`)
+    guidelineContent.value = res ? res.content : ''
+  } catch (e) {
+    console.warn('获取预发计划失败', e)
+  }
+}
+
+function editGuideline() {
+  editingGuideline.value = guidelineContent.value
+  showGuidelineDialog.value = true
+}
+
+async function saveGuideline() {
+  try {
+    await request.post('/guidelines/save', {
+      semester: form.semester,
+      weekNumber: form.week_number,
+      content: editingGuideline.value
+    })
+    ElMessage.success('保存预发工作成功')
+    guidelineContent.value = editingGuideline.value
+    showGuidelineDialog.value = false
+  } catch (e) {
+    console.error('保存失败:', e)
+  }
 }
 
 function addItem() {
@@ -295,6 +361,7 @@ async function loadPlan() {
       form.items.push(item)
     })
   }
+  fetchGuideline()
 }
 
 onMounted(async () => {
@@ -322,6 +389,14 @@ onMounted(async () => {
 .page-container {
   padding: 24px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.guideline-content-box {
+  background: var(--color-primary-bg-subtle, rgba(59, 130, 246, 0.05));
+  border: 1px solid var(--color-border-light, #BAE6FD);
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 12px;
 }
 
 /* 页面头部 */

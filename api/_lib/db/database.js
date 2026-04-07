@@ -161,6 +161,19 @@ function createTables() {
       update_time TEXT
     )
   `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS biz_weekly_guideline (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      semester TEXT NOT NULL,
+      week_number INTEGER NOT NULL,
+      content TEXT NOT NULL,
+      create_time TEXT,
+      update_time TEXT,
+      create_by INTEGER,
+      UNIQUE(semester, week_number)
+    )
+  `);
 }
 
 function insertInitialData() {

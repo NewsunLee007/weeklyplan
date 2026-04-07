@@ -51,14 +51,14 @@
             </el-table-column>
             <el-table-column label="工作内容">
               <template #default="{row}">
-                <el-input v-if="isEditable" v-model="row.content" type="textarea" :rows="1" placeholder="工作内容" size="small" />
-                <span v-else>{{ row.content }}</span>
+                <el-input v-if="isEditable" v-model="row.content" type="textarea" :autosize="{ minRows: 1, maxRows: 6 }" placeholder="工作内容" size="small" />
+                <span v-else style="white-space: pre-wrap;">{{ row.content }}</span>
               </template>
             </el-table-column>
             <el-table-column label="负责人/部门" width="140">
               <template #default="{row}">
-                <el-input v-if="isEditable" v-model="row.responsible" placeholder="负责人" size="small" />
-                <span v-else>{{ row.responsible }}</span>
+                <el-input v-if="isEditable" v-model="row.responsible" type="textarea" :autosize="{ minRows: 1, maxRows: 6 }" placeholder="负责人" size="small" />
+                <span v-else style="white-space: pre-wrap;">{{ row.responsible }}</span>
               </template>
             </el-table-column>
             <el-table-column label="操作" width="70" align="center" v-if="isEditable">
@@ -97,6 +97,9 @@
               <el-input v-model="comment" type="textarea" :rows="3" placeholder="请输入审核意见（退回时必填）" />
             </el-form-item>
             <el-form-item>
+              <el-button type="warning" plain :icon="Check" @click="saveChanges" :loading="acting">
+                仅保存修改
+              </el-button>
               <el-button type="success" :icon="Check" @click="approve" :loading="acting" v-if="role !== 'PRINCIPAL'">
                 {{ (role === 'OFFICE_HEAD' && plan.status === 'DEPT_APPROVED') ? '通过并交校长审核' : '通过并保存修改' }}
               </el-button>
@@ -222,6 +225,14 @@ async function approveAndPublish() {
     await request.post(`/reviews/${route.params.id}/approve`, { comment: comment.value, updatedItems: plan.value.items, publish: true })
     ElMessage.success('已发布')
     router.push('/review/pending')
+  } finally { acting.value = false }
+}
+
+async function saveChanges() {
+  acting.value = true
+  try {
+    await request.post(`/reviews/${route.params.id}/save`, { updatedItems: plan.value.items })
+    ElMessage.success('暂存修改成功')
   } finally { acting.value = false }
 }
 

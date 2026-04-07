@@ -47,6 +47,7 @@ app.use('/api/export', require('./_lib/routes/export'));
 app.use('/api/dashboard', require('./_lib/routes/dashboard'));
 app.use('/api/ai', require('./_lib/routes/ai'));
 app.use('/api/knowledge', require('./_lib/routes/knowledge'));
+app.use('/api/guidelines', require('./_lib/routes/guidelines'));
 
 // 全局错误处理
 app.use((err, req, res, next) => {
