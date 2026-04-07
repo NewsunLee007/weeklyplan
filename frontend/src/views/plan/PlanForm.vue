@@ -133,30 +133,30 @@
               </template>
             </el-table-column>
             <el-table-column label="工作内容" min-width="300">
-              <template #default="{row}">
-                <el-input 
-                  v-model="row.content" 
-                  type="textarea" 
-                  :autosize="{ minRows: 3, maxRows: 6 }" 
-                  placeholder="工作内容" 
-                  size="small" 
-                  class="form-input" 
-                  @blur="onContentBlur(row)"
-                />
-              </template>
-            </el-table-column>
-            <el-table-column label="负责人/部门" width="160">
-              <template #default="{row}">
-                <el-input 
-                  v-model="row.responsible" 
-                  type="textarea" 
-                  :autosize="{ minRows: 3, maxRows: 6 }" 
-                  placeholder="负责人或部门" 
-                  size="small" 
-                  class="form-input" 
-                />
-              </template>
-            </el-table-column>
+            <template #default="{row}">
+              <el-input 
+                v-model="row.content" 
+                type="textarea" 
+                :autosize="{ minRows: 3, maxRows: 6 }" 
+                placeholder="工作内容" 
+                size="small" 
+                class="content-input" 
+                @blur="onContentBlur(row)"
+              />
+            </template>
+          </el-table-column>
+          <el-table-column label="负责人/部门" width="160">
+            <template #default="{row}">
+              <el-input 
+                v-model="row.responsible" 
+                type="textarea" 
+                :autosize="{ minRows: 3, maxRows: 6 }" 
+                placeholder="负责人或部门" 
+                size="small" 
+                class="content-input" 
+              />
+            </template>
+          </el-table-column>
             <el-table-column label="操作" width="70" align="center">
               <template #default="{$index}">
                 <el-button link type="danger" :icon="Delete" @click="removeItem($index)" class="delete-btn" />
@@ -576,7 +576,6 @@ onMounted(async () => {
 }
 
 /* 表单输入框 */
-.form-input,
 .form-select,
 .form-textarea {
   border-radius: 8px;
@@ -584,7 +583,6 @@ onMounted(async () => {
   transition: all 0.3s var(--transition-base);
 }
 
-.form-input:focus,
 .form-select:focus,
 .form-textarea:focus {
   border-color: var(--color-primary, #3B82F6);
@@ -628,27 +626,6 @@ onMounted(async () => {
 .date-picker:focus-within :deep(.el-input__wrapper) {
   border-color: var(--color-primary, #3B82F6) !important;
   box-shadow: 0 0 0 3px var(--color-primary-bg, rgba(59, 130, 246, 0.1)) !important;
-}
-
-/* 工作内容输入框 */
-.content-input {
-  border-radius: 8px;
-  border: 1px solid var(--color-border-light, #E0F2FE);
-  transition: all 0.3s var(--transition-base);
-  min-height: 64px;
-}
-
-.content-input .el-textarea__inner {
-  border-radius: 8px;
-  border: 1px solid var(--color-border-light, #E0F2FE);
-  min-height: 64px;
-  background-color: var(--color-bg-primary, #ffffff);
-  color: var(--color-text-primary, #1e293b);
-}
-
-.content-input:focus-within .el-textarea__inner {
-  border-color: var(--color-primary, #3B82F6);
-  box-shadow: 0 0 0 3px var(--color-primary-bg, rgba(59, 130, 246, 0.1));
 }
 
 /* 表单输入框 */

@@ -72,7 +72,7 @@
                   :autosize="{ minRows: 3, maxRows: 6 }" 
                   placeholder="工作内容" 
                   size="small" 
-                  class="form-input" 
+                  class="content-input" 
                   @blur="onContentBlur(row)"
                 />
               </template>
@@ -85,7 +85,7 @@
                   :autosize="{ minRows: 3, maxRows: 6 }" 
                   placeholder="负责人或部门" 
                   size="small" 
-                  class="form-input" 
+                  class="content-input" 
                 />
               </template>
             </el-table-column>
@@ -306,15 +306,6 @@ onMounted(() => {
 
 .section-icon {
   color: var(--color-primary, #3B82F6);
-}
-
-.form-input {
-  border-radius: 8px;
-  border: 1px solid #E0F2FE;
-}
-
-.form-input:focus-within {
-  border-color: var(--color-primary, #3B82F6);
 }
 
 .disabled-input {

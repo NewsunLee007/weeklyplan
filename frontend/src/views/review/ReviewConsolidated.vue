@@ -47,6 +47,7 @@
                   :autosize="{ minRows: 3, maxRows: 6 }" 
                   placeholder="工作内容" 
                   size="small" 
+                  class="content-input"
                   @blur="onContentBlur(row)"
                 />
               </template>
@@ -59,6 +60,7 @@
                   :autosize="{ minRows: 3, maxRows: 6 }" 
                   placeholder="负责人" 
                   size="small" 
+                  class="content-input"
                 />
               </template>
             </el-table-column>
