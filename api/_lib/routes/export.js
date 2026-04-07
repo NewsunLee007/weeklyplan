@@ -18,6 +18,48 @@ const FONT_TITLE = '黑体';
 const FONT_TABLE_HEADER = '宋体';
 const FONT_TABLE_CONTENT = '宋体';
 
+// 辅助函数：处理多行文本并清理手动序号
+function processMultilineItems(dayItems) {
+  const processed = [];
+  dayItems.forEach(item => {
+    const contentStr = item.content || '';
+    const respStr = item.responsible || '';
+    
+    // 按换行符分割，并过滤空行
+    const contentLines = contentStr.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+    const respLines = respStr.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+    
+    if (contentLines.length === 0) {
+      processed.push({ ...item, content: '', responsible: respLines[0] || '——' });
+      return;
+    }
+    
+    // 匹配并清理开头的手动序号 (例如 "1. ", "2、", "(1) ", "①")
+    const numberRegex = /^(\d+[\.、\)]|[（\(]\d+[）\)]|[①-⑳])\s*/;
+    
+    contentLines.forEach((cLine, i) => {
+      const cleanContent = cLine.replace(numberRegex, '');
+      let cleanResp = '——';
+      
+      // 负责人的匹配逻辑：如果负责人行数和内容行数一致，则一一对应；
+      // 如果负责人只有一行，则多行内容共用这一个负责人；
+      // 否则，超出部分的负责人为空（或——）
+      if (respLines[i] !== undefined) {
+        cleanResp = respLines[i].replace(numberRegex, '');
+      } else if (respLines.length === 1) {
+        cleanResp = respLines[0].replace(numberRegex, '');
+      }
+      
+      processed.push({
+        ...item,
+        content: cleanContent,
+        responsible: cleanResp
+      });
+    });
+  });
+  return processed;
+}
+
 // 部门排序（办公室、教务处、政教处、其他）
 const DEPT_ORDER = ['办公室', '教务处', '政教处', '后勤部', '生活中心', '七年级', '八年级', '九年级'];
 
@@ -111,10 +153,22 @@ function buildDocxFromPlan(plan, items, schoolName, schoolSubName) {
     ]
   });
 
-  // 数据行
-  const dataRows = items.map(item => {
+  // 2. 数据行
+  const processedItems = processMultilineItems(items);
+  let currentDay = null;
+  let dailyIndex = 0;
+
+  const dataRows = processedItems.map(item => {
     const d = new Date(item.plan_date);
     const dateStr = `${d.getMonth() + 1}月${d.getDate()}日`;
+
+    if (dateStr !== currentDay) {
+      currentDay = dateStr;
+      dailyIndex = 1;
+    } else {
+      dailyIndex++;
+    }
+
     return new TableRow({
       children: [
         new TableCell({
@@ -128,7 +182,10 @@ function buildDocxFromPlan(plan, items, schoolName, schoolSubName) {
           margins: { top: 80, bottom: 80, left: 120, right: 120 }
         }),
         new TableCell({
-          children: [new Paragraph({ children: [new TextRun({ text: item.content || '', font: FONT_TABLE_CONTENT, size: 20 })] })],
+          children: [new Paragraph({ children: [
+            new TextRun({ text: `${dailyIndex}. `, font: FONT_TABLE_CONTENT, size: 20 }),
+            new TextRun({ text: item.content || '', font: FONT_TABLE_CONTENT, size: 20 })
+          ] })],
           borders: tableBorder,
           margins: { top: 80, bottom: 80, left: 120, right: 120 }
         }),
@@ -432,7 +489,8 @@ async function buildWeeklySummary(plans, weekNumber, schoolName, schoolSubName, 
       continue;
     }
 
-    const dayItems = itemsByWeekday[dayOfWeek] || [];
+    const rawDayItems = itemsByWeekday[dayOfWeek] || [];
+    const dayItems = processMultilineItems(rawDayItems);
 
     // 如果当天无任务，显示"无任务"
     if (dayItems.length === 0) {
@@ -492,7 +550,7 @@ async function buildWeeklySummary(plans, weekNumber, schoolName, schoolSubName, 
     const contentParagraphs = dayItems.map((item, index) => {
       return new Paragraph({
         children: [
-          new TextRun({ text: `${index + 1}. `, size: 20, color: '000000', font: FONT_TABLE_CONTENT }),
+          new TextRun({ text: `${index + 1}. `, size: 20, font: FONT_TABLE_CONTENT }),
           new TextRun({ text: item.content || '', size: 20, font: FONT_TABLE_CONTENT })
         ],
         spacing: { before: 100, after: 100 }
