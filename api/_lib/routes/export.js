@@ -249,7 +249,7 @@ function getLocalDateString(dateObj) {
 }
 
 // 全校汇总导出（新格式：按周日到周六编排，每天一行，同一天多个部门合并）
-async function buildWeeklySummary(plans, weekNumber, schoolName, schoolSubName) {
+async function buildWeeklySummary(plans, weekNumber, schoolName, schoolSubName, semesterStr) {
   const plan0 = plans[0];
   const sd = new Date(plan0.start_date);
   const ed = new Date(plan0.end_date);
@@ -304,6 +304,31 @@ async function buildWeeklySummary(plans, weekNumber, schoolName, schoolSubName) 
 
   // 收集所有部门的条目
   const allItems = [];
+  
+  // 1. 获取并添加本周预发工作指导
+  const currentSemester = semesterStr || (plans.length > 0 && plans[0].id !== 0 ? plans[0].semester : null);
+  if (currentSemester) {
+    const guideline = await queryOne(
+      `SELECT * FROM biz_weekly_guideline WHERE semester = ? AND week_number = ?`,
+      [currentSemester, weekNumber]
+    );
+    if (guideline && guideline.content) {
+      try {
+        const gItems = JSON.parse(guideline.content);
+        if (Array.isArray(gItems)) {
+          gItems.forEach(item => {
+            allItems.push({
+              ...item,
+              dept_name: '学校工作指导',
+              dept_sort: -1 // 保证排在最前面
+            });
+          });
+        }
+      } catch (e) {}
+    }
+  }
+
+  // 2. 添加各部门工作条目
   for (const plan of plans) {
     if (plan.id !== 0) { // 只对真实计划查询条目
       const items = await query(
@@ -708,9 +733,9 @@ router.get('/weekly-summary/:weekNumber', authMiddleware, async (req, res) => {
       fakePlan.start_date = '2026-01-01';
       fakePlan.end_date = '2026-01-07';
     }
-    doc = await buildWeeklySummary([fakePlan], weekNumber, schoolName, schoolSubName);
+    doc = await buildWeeklySummary([fakePlan], weekNumber, schoolName, schoolSubName, semester);
   } else {
-    doc = await buildWeeklySummary(plans, weekNumber, schoolName, schoolSubName);
+    doc = await buildWeeklySummary(plans, weekNumber, schoolName, schoolSubName, semester);
   }
 
   try {
@@ -884,9 +909,9 @@ router.get('/weekly-summary/:weekNumber/pdf', authMiddleware, async (req, res) =
       fakePlan.start_date = '2026-01-01';
       fakePlan.end_date = '2026-01-07';
     }
-    doc = await buildWeeklySummary([fakePlan], weekNumber, schoolName, schoolSubName);
+    doc = await buildWeeklySummary([fakePlan], weekNumber, schoolName, schoolSubName, semester);
   } else {
-    doc = await buildWeeklySummary(plans, weekNumber, schoolName, schoolSubName);
+    doc = await buildWeeklySummary(plans, weekNumber, schoolName, schoolSubName, semester);
   }
 
   try {

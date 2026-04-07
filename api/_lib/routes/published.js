@@ -42,6 +42,33 @@ router.get('/', authMiddleware, async (req, res) => {
     );
     plan.has_feedback = feedbackCount && parseInt(feedbackCount.count) > 0;
   }
+
+  // 追加预发工作（仅当且仅当未按部门过滤时，或如果需要全校可见）
+  // 为了让列表页也能看到预发工作，我们可以把它当成一个特殊的 plan 返回
+  if (semester && week_number && (!req.user.departmentId || ['ADMIN', 'PRINCIPAL', 'OFFICE_HEAD'].includes(req.user.role) || true)) {
+    const guideline = await queryOne(
+      `SELECT * FROM biz_weekly_guideline WHERE semester = ? AND week_number = ?`,
+      [semester, week_number]
+    );
+    if (guideline && guideline.content) {
+      try {
+        const gItems = JSON.parse(guideline.content);
+        if (Array.isArray(gItems) && gItems.length > 0) {
+          records.unshift({
+            id: 'guideline_' + guideline.id,
+            semester: guideline.semester,
+            week_number: guideline.week_number,
+            department_id: 0,
+            dept_name: '学校工作指导',
+            status: 'PUBLISHED',
+            title: gItems.map(i => i.content).join('；') || '无内容',
+            has_feedback: false,
+            is_guideline: true
+          });
+        }
+      } catch(e) {}
+    }
+  }
   
   return success(res, records);
 });
@@ -67,6 +94,31 @@ router.get('/:weekNumber', authMiddleware, async (req, res) => {
       `SELECT * FROM biz_plan_item WHERE plan_id = ? AND is_deleted = false ORDER BY plan_date, sort_order`,
       [plan.id]
     );
+  }
+
+  // 汇总预发工作
+  if (semester) {
+    const guideline = await queryOne(
+      `SELECT * FROM biz_weekly_guideline WHERE semester = ? AND week_number = ?`,
+      [semester, weekNumber]
+    );
+    if (guideline && guideline.content) {
+      try {
+        const gItems = JSON.parse(guideline.content);
+        if (Array.isArray(gItems) && gItems.length > 0) {
+          plans.unshift({
+            id: 'guideline_' + guideline.id,
+            semester: guideline.semester,
+            week_number: guideline.week_number,
+            department_id: 0,
+            dept_name: '学校工作指导',
+            status: 'PUBLISHED',
+            is_guideline: true,
+            items: gItems
+          });
+        }
+      } catch(e) {}
+    }
   }
 
   return success(res, plans);
