@@ -354,6 +354,7 @@ onMounted(() => {
   border-radius: 8px;
   padding: 6px 12px;
   font-weight: 500;
+  color: #FFFFFF;
 }
 
 .form-actions {
@@ -367,6 +368,7 @@ onMounted(() => {
 
 .submit-btn {
   background: var(--color-primary, #0891B2);
+  color: #FFFFFF;
   border: none;
   height: 48px;
   padding: 0 32px;

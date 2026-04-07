@@ -51,7 +51,7 @@
             <h3 class="section-title" style="margin-bottom: 0; border-bottom: none;">
               <el-icon class="section-icon"><Reading /></el-icon> 本周学校工作指导
             </h3>
-            <el-button v-if="isOfficeHeadOrAdmin" type="primary" plain :icon="Edit" size="small" @click="editGuideline">
+            <el-button v-if="isOfficeHeadOrAdmin" class="edit-guideline-btn" :icon="Edit" size="small" @click="editGuideline">
               编辑预发工作
             </el-button>
           </div>
@@ -455,6 +455,21 @@ onMounted(async () => {
 .guideline-table {
   border-radius: 8px;
   overflow: hidden;
+}
+
+.edit-guideline-btn {
+  color: var(--color-primary, #3B82F6);
+  background: var(--color-primary-bg-subtle, rgba(59, 130, 246, 0.1));
+  border: 1px solid var(--color-border-light, #BAE6FD);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.edit-guideline-btn:hover {
+  background: var(--color-bg-secondary, #F8FAFC);
+  border-color: var(--color-primary, #3B82F6);
 }
 
 /* 页面头部 */

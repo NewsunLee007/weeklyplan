@@ -198,6 +198,19 @@ async function initDatabase() {
         createTablePromises.push(pool.query('CREATE TABLE IF NOT EXISTS sys_school_config (id SERIAL PRIMARY KEY, is_deleted BOOLEAN DEFAULT FALSE)'));
         createTablePromises.push(pool.query('CREATE TABLE IF NOT EXISTS biz_calendar_event (id SERIAL PRIMARY KEY, is_deleted BOOLEAN DEFAULT FALSE)'));
 
+        createTablePromises.push(pool.query(`
+          CREATE TABLE IF NOT EXISTS biz_weekly_guideline (
+            id SERIAL PRIMARY KEY,
+            semester VARCHAR(20) NOT NULL,
+            week_number INTEGER NOT NULL,
+            content TEXT NOT NULL,
+            create_by INTEGER,
+            create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(semester, week_number)
+          )
+        `));
+
         // 等待表创建，但设置超时
         await Promise.race([
           Promise.all(createTablePromises),
