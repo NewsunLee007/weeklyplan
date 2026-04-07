@@ -56,7 +56,28 @@
             </el-button>
           </div>
           <div class="guideline-content-box">
-            <div v-if="guidelineContent" style="white-space: pre-wrap; line-height: 1.6; color: var(--color-text-primary);">{{ guidelineContent }}</div>
+            <template v-if="guidelineItems && guidelineItems.length > 0">
+              <el-table :data="guidelineItems" border size="small" class="guideline-table">
+                <el-table-column type="index" label="序号" width="60" align="center" />
+                <el-table-column label="日期" width="120" align="center">
+                  <template #default="{row}">
+                    {{ row.plan_date ? formatDate(row.plan_date) : '-' }}
+                  </template>
+                </el-table-column>
+                <el-table-column prop="weekday" label="星期" width="70" align="center" />
+                <el-table-column label="工作内容" min-width="300">
+                  <template #default="{row}">
+                    <span style="white-space: pre-wrap;">{{ row.content }}</span>
+                  </template>
+                </el-table-column>
+                <el-table-column label="负责人/部门" width="160">
+                  <template #default="{row}">
+                    <span style="white-space: pre-wrap;">{{ row.responsible }}</span>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </template>
+            <div v-else-if="guidelineContent" style="white-space: pre-wrap; line-height: 1.6; color: var(--color-text-primary);">{{ guidelineContent }}</div>
             <div v-else style="color: var(--color-text-secondary); font-style: italic;">暂无本周预发工作内容</div>
           </div>
         </div>
@@ -113,14 +134,29 @@
             </el-table-column>
             <el-table-column label="工作内容" min-width="300">
               <template #default="{row}">
-                <el-input v-model="row.content" type="textarea" :autosize="{ minRows: 1, maxRows: 6 }" placeholder="工作内容" size="small" class="form-input" />
+                <el-input 
+                  v-model="row.content" 
+                  type="textarea" 
+                  :autosize="{ minRows: 3, maxRows: 6 }" 
+                  placeholder="工作内容" 
+                  size="small" 
+                  class="form-input" 
+                  @blur="onContentBlur(row)"
+                />
               </template>
             </el-table-column>
             <el-table-column label="负责人/部门" width="160">
-            <template #default="{row}">
-              <el-input v-model="row.responsible" type="textarea" :autosize="{ minRows: 1, maxRows: 6 }" placeholder="负责人或部门" size="small" class="form-input" />
-            </template>
-          </el-table-column>
+              <template #default="{row}">
+                <el-input 
+                  v-model="row.responsible" 
+                  type="textarea" 
+                  :autosize="{ minRows: 3, maxRows: 6 }" 
+                  placeholder="负责人或部门" 
+                  size="small" 
+                  class="form-input" 
+                />
+              </template>
+            </el-table-column>
             <el-table-column label="操作" width="70" align="center">
               <template #default="{$index}">
                 <el-button link type="danger" :icon="Delete" @click="removeItem($index)" class="delete-btn" />
@@ -151,17 +187,6 @@
       </el-form>
     </el-card>
   </div>
-
-    <!-- 编辑预发工作弹窗 -->
-    <el-dialog v-model="showGuidelineDialog" title="编辑本周学校工作指导" width="600px">
-      <el-input v-model="editingGuideline" type="textarea" :autosize="{ minRows: 4, maxRows: 10 }" placeholder="请输入本周大致工作内容，全员可见..." />
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="showGuidelineDialog = false">取消</el-button>
-          <el-button type="primary" @click="saveGuideline">保存发布</el-button>
-        </span>
-      </template>
-    </el-dialog>
 </template>
 
 <script setup>
@@ -249,37 +274,37 @@ function onWeekChange(w) {
 // 预发计划相关逻辑
 const isOfficeHeadOrAdmin = computed(() => ['OFFICE_HEAD', 'ADMIN'].includes(userStore.userInfo?.role))
 const guidelineContent = ref('')
-const showGuidelineDialog = ref(false)
-const editingGuideline = ref('')
+const guidelineItems = ref(null)
 
 async function fetchGuideline() {
   if (!form.semester || !form.week_number) return
   try {
     const res = await request.get(`/guidelines/current?semester=${form.semester}&weekNumber=${form.week_number}`)
-    guidelineContent.value = res ? res.content : ''
+    if (res && res.content) {
+      try {
+        const parsed = JSON.parse(res.content)
+        if (Array.isArray(parsed)) {
+          guidelineItems.value = parsed
+          guidelineContent.value = ''
+        } else {
+          guidelineContent.value = res.content
+          guidelineItems.value = null
+        }
+      } catch (e) {
+        guidelineContent.value = res.content
+        guidelineItems.value = null
+      }
+    } else {
+      guidelineContent.value = ''
+      guidelineItems.value = null
+    }
   } catch (e) {
     console.warn('获取预发计划失败', e)
   }
 }
 
 function editGuideline() {
-  editingGuideline.value = guidelineContent.value
-  showGuidelineDialog.value = true
-}
-
-async function saveGuideline() {
-  try {
-    await request.post('/guidelines/save', {
-      semester: form.semester,
-      weekNumber: form.week_number,
-      content: editingGuideline.value
-    })
-    ElMessage.success('保存预发工作成功')
-    guidelineContent.value = editingGuideline.value
-    showGuidelineDialog.value = false
-  } catch (e) {
-    console.error('保存失败:', e)
-  }
+  router.push(`/guideline/edit?semester=${form.semester}&week=${form.week_number}`)
 }
 
 function addItem() {
@@ -288,6 +313,34 @@ function addItem() {
 
 function removeItem(index) {
   form.items.splice(index, 1)
+}
+
+function onContentBlur(row) {
+  if (!row.content) return
+  const lines = row.content.split('\n').filter(line => line.trim() !== '')
+  if (lines.length > 1) {
+    const formattedLines = lines.map((line, index) => {
+      const trimmed = line.trim()
+      if (/^\d+[.、\s]/.test(trimmed)) {
+        return trimmed
+      }
+      return `${index + 1}. ${trimmed}`
+    })
+    row.content = formattedLines.join('\n')
+
+    let respLines = (row.responsible || '').split('\n').filter(line => line.trim() !== '')
+    const formattedResp = formattedLines.map((_, index) => {
+      const existing = respLines[index] ? respLines[index].trim() : ''
+      if (existing) {
+        if (/^\d+[.、\s]/.test(existing)) {
+          return existing
+        }
+        return `${index + 1}. ${existing}`
+      }
+      return `${index + 1}. `
+    })
+    row.responsible = formattedResp.join('\n')
+  }
 }
 
 async function save(mode) {
@@ -392,11 +445,16 @@ onMounted(async () => {
 }
 
 .guideline-content-box {
-  background: var(--color-primary-bg-subtle, rgba(59, 130, 246, 0.05));
+  background: var(--color-bg-secondary, #F8FAFC);
   border: 1px solid var(--color-border-light, #BAE6FD);
   border-radius: 8px;
   padding: 16px;
   margin-top: 12px;
+}
+
+.guideline-table {
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 /* 页面头部 */

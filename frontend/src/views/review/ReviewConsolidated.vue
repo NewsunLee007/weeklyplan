@@ -41,12 +41,25 @@
             <el-table-column prop="creator_name" label="提交人" width="100" />
             <el-table-column prop="content" label="工作内容">
               <template #default="{row}">
-                <el-input v-model="row.content" type="textarea" :autosize="{ minRows: 1, maxRows: 6 }" placeholder="工作内容" size="small" />
+                <el-input 
+                  v-model="row.content" 
+                  type="textarea" 
+                  :autosize="{ minRows: 3, maxRows: 6 }" 
+                  placeholder="工作内容" 
+                  size="small" 
+                  @blur="onContentBlur(row)"
+                />
               </template>
             </el-table-column>
             <el-table-column prop="responsible" label="负责人/部门" width="130">
               <template #default="{row}">
-                <el-input v-model="row.responsible" type="textarea" :autosize="{ minRows: 1, maxRows: 6 }" placeholder="负责人" size="small" />
+                <el-input 
+                  v-model="row.responsible" 
+                  type="textarea" 
+                  :autosize="{ minRows: 3, maxRows: 6 }" 
+                  placeholder="负责人" 
+                  size="small" 
+                />
               </template>
             </el-table-column>
             <el-table-column label="操作" width="70" align="center">
@@ -155,6 +168,34 @@ async function loadData() {
 
 function removeItem(index) {
   data.items.splice(index, 1)
+}
+
+function onContentBlur(row) {
+  if (!row.content) return
+  const lines = row.content.split('\n').filter(line => line.trim() !== '')
+  if (lines.length > 1) {
+    const formattedLines = lines.map((line, index) => {
+      const trimmed = line.trim()
+      if (/^\d+[.、\s]/.test(trimmed)) {
+        return trimmed
+      }
+      return `${index + 1}. ${trimmed}`
+    })
+    row.content = formattedLines.join('\n')
+
+    let respLines = (row.responsible || '').split('\n').filter(line => line.trim() !== '')
+    const formattedResp = formattedLines.map((_, index) => {
+      const existing = respLines[index] ? respLines[index].trim() : ''
+      if (existing) {
+        if (/^\d+[.、\s]/.test(existing)) {
+          return existing
+        }
+        return `${index + 1}. ${existing}`
+      }
+      return `${index + 1}. `
+    })
+    row.responsible = formattedResp.join('\n')
+  }
 }
 
 async function approveAll() {
