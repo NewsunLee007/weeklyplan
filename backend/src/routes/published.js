@@ -14,8 +14,8 @@ router.get('/', authMiddleware, async (req, res) => {
   if (semester) { where += ` AND p.semester = ?`; params.push(semester); }
   if (week_number) { where += ` AND p.week_number = ?`; params.push(week_number); }
 
-  // 如果不是管理员/校长，只能看到自己部门的反馈计划
-  if (req.user && !['ADMIN', 'PRINCIPAL'].includes(req.user.role) && req.user.departmentId) {
+  // 如果不是管理员/校长/办公室主任，只能看到自己部门的反馈计划
+  if (req.user && !['ADMIN', 'PRINCIPAL', 'OFFICE_HEAD'].includes(req.user.role) && req.user.departmentId) {
     where += " AND p.department_id = $1";
     params.push(req.user.departmentId);
   }
