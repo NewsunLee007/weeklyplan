@@ -190,7 +190,7 @@ function buildDocxFromPlan(plan, items, schoolName, schoolSubName) {
           margins: { top: 80, bottom: 80, left: 120, right: 120 }
         }),
         new TableCell({
-          children: [new Paragraph({ children: [new TextRun({ text: item.responsible || '', font: FONT_TABLE_CONTENT, size: 20 })], alignment: AlignmentType.CENTER })],
+          children: [new Paragraph({ children: [new TextRun({ text: `${dailyIndex}. ${item.responsible || ''}`, font: FONT_TABLE_CONTENT, size: 20 })], alignment: AlignmentType.LEFT })],
           borders: tableBorder,
           margins: { top: 80, bottom: 80, left: 120, right: 120 }
         })
@@ -558,11 +558,11 @@ async function buildWeeklySummary(plans, weekNumber, schoolName, schoolSubName, 
     });
 
     // 构建负责人单元格（直接使用计划中的responsible字段）
-    const responsibleParagraphs = dayItems.map(item => {
+    const responsibleParagraphs = dayItems.map((item, index) => {
       return new Paragraph({
-        children: [new TextRun({ text: `${item.responsible || '——'}`, font: FONT_TABLE_CONTENT, size: 20 })],
+        children: [new TextRun({ text: `${index + 1}. ${item.responsible || '——'}`, font: FONT_TABLE_CONTENT, size: 20 })],
         spacing: { before: 100, after: 100 },
-        alignment: AlignmentType.CENTER
+        alignment: AlignmentType.LEFT
       });
     });
 

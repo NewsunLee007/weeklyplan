@@ -81,6 +81,23 @@
       </el-row>
     </div>
 
+    <!-- 预发工作指导区域 -->
+    <div class="guideline-section" v-if="!loadingGuideline && (upcomingGuideline?.content || ['OFFICE_HEAD', 'ADMIN'].includes(role))">
+      <div class="section-header">
+        <h2 class="section-title">
+          <el-icon class="title-icon"><Calendar /></el-icon>
+          下周工作指导 (第{{ (stats?.currentWeekNum || 0) + 1 }}周)
+        </h2>
+        <el-tag size="small" :type="upcomingGuideline?.content ? 'success' : 'info'" effect="light" round class="guideline-tag">
+          {{ upcomingGuideline?.content ? '已预发' : '未预发' }}
+        </el-tag>
+      </div>
+      <div class="guideline-card" :class="{ 'is-empty': !upcomingGuideline?.content }">
+        <div v-if="upcomingGuideline?.content" class="guideline-content" v-html="formatGuidelineContent(upcomingGuideline?.content)"></div>
+        <el-empty v-else description="暂无下周预发工作指导" :image-size="60" />
+      </div>
+    </div>
+
     <!-- 快速操作区域 -->
     <div class="quick-actions-section">
       <h2 class="section-title">快速操作</h2>
@@ -367,6 +384,8 @@ const recentActivities = ref([])
 const chartData = ref(null)
 const semesterWeeks = ref(20) // 学期周次总数
 const activeTab = ref('chart')
+const upcomingGuideline = ref(null)
+const loadingGuideline = ref(false)
 
 let planStatusChart = null
 let departmentPlanChart = null
@@ -1079,6 +1098,17 @@ function getActivityIcon(iconName) {
   return icons[iconName] || Document
 }
 
+function formatGuidelineContent(content) {
+  if (!content) return ''
+  const escaped = content
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+  return escaped.replace(/\n/g, '<br>')
+}
+
 async function fetchRecentActivities() {
   try {
     const data = await request.get('/dashboard/recent-activities')
@@ -1089,44 +1119,21 @@ async function fetchRecentActivities() {
     }))
   } catch (error) {
     console.error('获取最近活动失败:', error)
-    recentActivities.value = [
-      {
-        icon: Document,
-        title: '创建了新计划',
-        description: '数学教研组学期计划',
-        time: '2小时前',
-        status: 'success',
-        statusText: '已完成',
-        color: '#0891B2'
-      },
-      {
-        icon: EditPen,
-        title: '审核了计划',
-        description: '语文教研组学期计划',
-        time: '4小时前',
-        status: 'warning',
-        statusText: '待修改',
-        color: '#F59E0B'
-      },
-      {
-        icon: ChatDotRound,
-        title: '收到了反馈',
-        description: '关于教学设备的反馈',
-        time: '昨天',
-        status: 'info',
-        statusText: '已查看',
-        color: '#3B82F6'
-      },
-      {
-        icon: DocumentChecked,
-        title: '发布了计划',
-        description: '学校年度工作计划',
-        time: '2天前',
-        status: 'success',
-        statusText: '已发布',
-        color: '#22C55E'
-      }
-    ]
+    recentActivities.value = []
+  }
+}
+
+async function fetchUpcomingGuideline(semester, weekNumber) {
+  loadingGuideline.value = true
+  try {
+    const data = await request.get(`/guidelines/current`, { params: { semester, weekNumber } })
+    if (data) {
+      upcomingGuideline.value = data
+    }
+  } catch (error) {
+    console.error('获取预发工作指导失败:', error)
+  } finally {
+    loadingGuideline.value = false
   }
 }
 
@@ -1161,6 +1168,9 @@ function handleResize() {
 onMounted(async () => {
   try {
     stats.value = await request.get('/dashboard/stats')
+    if (stats.value?.currentSemester && stats.value?.currentWeekNum !== undefined) {
+      fetchUpcomingGuideline(stats.value.currentSemester, stats.value.currentWeekNum + 1)
+    }
   } catch {}
   
   await fetchQuickActionsStats()
@@ -1523,6 +1533,51 @@ onUnmounted(() => {
 .stat-progress {
   margin-top: 16px;
   transition: all var(--transition-base);
+}
+
+/* 预发工作指导区域 */
+.guideline-section {
+  margin-bottom: 40px;
+}
+
+.guideline-section .section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.guideline-section .section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.guideline-section .title-icon {
+  color: #0891B2;
+}
+
+.guideline-card {
+  background: linear-gradient(to right, #F8FAFC, #FFFFFF);
+  border-left: 4px solid #0891B2;
+  border-radius: 12px;
+  padding: 20px 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border-top: 1px solid #E2E8F0;
+  border-right: 1px solid #E2E8F0;
+  border-bottom: 1px solid #E2E8F0;
+}
+
+.guideline-card.is-empty {
+  padding: 0;
+  background: #F8FAFC;
+  border-left-color: #94A3B8;
+}
+
+.guideline-content {
+  font-size: 15px;
+  color: #334155;
+  line-height: 1.6;
 }
 
 /* 快速操作区域 */
@@ -2306,6 +2361,23 @@ onUnmounted(() => {
   background: rgba(59, 130, 246, 0.25);
   color: #93C5FD;
   border-color: rgba(59, 130, 246, 0.5);
+}
+
+:root.dark-mode .guideline-card {
+  background: linear-gradient(to right, rgba(8, 145, 178, 0.1), rgba(15, 23, 42, 0.6));
+  border-left: 4px solid #0891B2;
+  border-top: 1px solid #1E293B;
+  border-right: 1px solid #1E293B;
+  border-bottom: 1px solid #1E293B;
+}
+
+:root.dark-mode .guideline-card.is-empty {
+  background: rgba(15, 23, 42, 0.4);
+  border-left-color: #475569;
+}
+
+:root.dark-mode .guideline-content {
+  color: #E2E8F0;
 }
 
 @keyframes pulse {

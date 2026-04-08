@@ -11,13 +11,18 @@ router.get('/stats', authMiddleware, async (req, res) => {
 
   // 获取系统配置
   let weekStartDate = '2026-02-25';
+  let currentSemester = '2025-2026学年第二学期';
   try {
-    const config = await queryOne("SELECT config_value FROM sys_config WHERE config_key = 'current_week_start'");
-    if (config?.config_value) {
-      weekStartDate = config.config_value;
-    }
+    const configs = await query("SELECT config_key, config_value FROM sys_config WHERE config_key IN ('current_week_start', 'current_semester')");
+    configs.forEach(config => {
+      if (config.config_key === 'current_week_start' && config.config_value) {
+        weekStartDate = config.config_value;
+      } else if (config.config_key === 'current_semester' && config.config_value) {
+        currentSemester = config.config_value;
+      }
+    });
   } catch (error) {
-    console.log('获取学期起始日期失败，使用默认值');
+    console.log('获取学期配置失败，使用默认值');
   }
 
   // 获取当前周数（根据学期起始日期计算）
@@ -152,6 +157,8 @@ router.get('/stats', authMiddleware, async (req, res) => {
   ))?.cnt || 0;
 
   return success(res, {
+    currentSemester,
+    currentWeekNum,
     myPlansTotal,
     myPlansTrend: calculateTrend(myPlansTotalThisWeek, myPlansTotalLastWeek),
     myPlansProgress: calculateProgress(myPlansCompleted, myPlansTotalThisWeek),
