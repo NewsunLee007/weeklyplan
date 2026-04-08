@@ -93,7 +93,28 @@
         </el-tag>
       </div>
       <div class="guideline-card" :class="{ 'is-empty': !upcomingGuideline?.content }">
-        <div v-if="upcomingGuideline?.content" class="guideline-content" v-html="formatGuidelineContent(upcomingGuideline?.content)"></div>
+        <div v-if="parsedGuideline.length > 0" class="guideline-table-container">
+          <el-table :data="parsedGuideline" border size="small" class="guideline-table">
+            <el-table-column type="index" label="序号" width="60" align="center" />
+            <el-table-column label="日期" width="120" align="center">
+              <template #default="{row}">
+                {{ row.plan_date ? formatDate(row.plan_date) : '-' }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="weekday" label="星期" width="70" align="center" />
+            <el-table-column label="工作内容" min-width="300">
+              <template #default="{row}">
+                <span style="white-space: pre-wrap; word-break: break-word;">{{ row.content }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="负责人/部门" width="160">
+              <template #default="{row}">
+                <span style="white-space: pre-wrap; word-break: break-word;">{{ row.responsible }}</span>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+        <div v-else-if="upcomingGuideline?.content" class="guideline-content" v-html="formatGuidelineContent(upcomingGuideline?.content)"></div>
         <el-empty v-else description="暂无下周预发工作指导" :image-size="60" />
       </div>
     </div>
@@ -1088,6 +1109,21 @@ async function loadConfig() {
   }
 }
 
+const parsedGuideline = computed(() => {
+  if (!upcomingGuideline.value?.content) return []
+  try {
+    const parsed = JSON.parse(upcomingGuideline.value.content)
+    return Array.isArray(parsed) ? parsed : []
+  } catch (e) {
+    return []
+  }
+})
+
+function formatDate(dateStr) {
+  if (!dateStr) return ''
+  return dayjs(dateStr).format('YYYY-MM-DD')
+}
+
 function getActivityIcon(iconName) {
   const icons = {
     'Document': Document,
@@ -1572,6 +1608,16 @@ onUnmounted(() => {
   padding: 0;
   background: #F8FAFC;
   border-left-color: #94A3B8;
+}
+
+.guideline-table-container {
+  width: 100%;
+}
+
+.guideline-table {
+  width: 100%;
+  border-radius: 4px;
+  overflow: hidden;
 }
 
 .guideline-content {
