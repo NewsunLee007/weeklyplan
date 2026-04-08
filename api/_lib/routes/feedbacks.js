@@ -181,8 +181,9 @@ router.get('/export/excel', authMiddleware, async (req, res) => {
     });
 
     const buffer = await workbook.xlsx.writeBuffer();
+    const filename = encodeURIComponent(`feedbacks_${semester}_week${weekNumber}.xlsx`);
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', `attachment; filename=feedbacks_${semester}_week${weekNumber}.xlsx`);
+    res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${filename}`);
     res.send(buffer);
   } catch (error) {
     console.error('导出 Excel 失败:', error);
